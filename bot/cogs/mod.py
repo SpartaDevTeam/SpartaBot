@@ -60,7 +60,7 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=infractions_embed)
 
-    @commands.command(name="clearinfractions", aliases=["clearinf"])
+    @commands.command(name="clearinfractions", aliases=["clearinf"], help="Clear somebody's infractions in the current server")
     @commands.has_guild_permissions(administrator=True)
     async def clear_infractions(self, ctx, member: discord.Member = None):
         Data.check_guild_entry(ctx.guild)
