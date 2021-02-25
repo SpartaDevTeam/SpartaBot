@@ -33,7 +33,7 @@ class Moderation(commands.Cog):
         Data.conn.commit()
         await ctx.send(f"**{member}** has been warned because: *{reason}*")
 
-    @commands.command(name="infractions", help="See all the times a person has been warned")
+    @commands.command(name="infractions", aliases=["inf"], help="See all the times a person has been warned")
     @commands.has_guild_permissions(administrator=True)
     async def infractions(self, ctx, member: discord.Member = None):
         Data.check_guild_entry(ctx.guild)
@@ -60,6 +60,31 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=infractions_embed)
 
+    @commands.command(name="clearinfractions", aliases=["clearinf"])
+    @commands.has_guild_permissions(administrator=True)
+    async def clear_infractions(self, ctx, member: discord.Member = None):
+        Data.check_guild_entry(ctx.guild)
+
+        if member is None:
+            Data.c.execute("UPDATE guilds SET infractions = '[]' WHERE id = :guild_id", {"guild_id": ctx.guild.id})
+            Data.conn.commit()
+
+            await ctx.send("Cleared all infractions in this server...")
+
+        else:
+            Data.c.execute("SELECT infractions FROM guilds WHERE id = :guild_id", {"guild_id": ctx.guild.id})
+            user_infractions = json.loads(Data.c.fetchone()[0])
+            new_infractions = [inf for inf in user_infractions if inf["member"] != member.id]
+            Data.c.execute(
+                "UPDATE guilds SET infractions = :new_infractions WHERE id = :guild_id",
+                {
+                    "new_infractions": json.dumps(new_infractions),
+                    "guild_id": ctx.guild.id
+                }
+            )
+            Data.conn.commit()
+
+            await ctx.send(f"Cleared all infractions by **{member}** in this server...")
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
