@@ -2,12 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f73aec66-d99e-4495-871f-7f4167714be4" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/bot/cogs/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bot/cogs/mod.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bot/data/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bot/data/data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bot/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
