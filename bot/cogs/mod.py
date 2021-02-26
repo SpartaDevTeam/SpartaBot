@@ -9,6 +9,51 @@ class Moderation(commands.Cog):
         self.bot = bot
         self.theme_color = discord.Color.blurple()
 
+    async def create_mute_role(self, guild: discord.Guild):
+        print(f"Creating new mute role for server {guild.name}")
+        role_perms = discord.Permissions(send_messages=False)
+        role_color = discord.Color.dark_gray()
+        mute_role = await guild.create_role(name="Muted", permissions=role_perms, color=role_color, reason="No existing mute role provided")
+
+        guild_channels = await guild.fetch_channels()
+
+        # Set permissions for channels
+        for channel in guild_channels:
+            await channel.set_permissions(mute_role, send_messages=False)
+
+        # Set permissions for categories
+        for category in guild.categories:
+            await category.set_permissions(mute_role, send_messages=False)
+
+        Data.c.execute(
+            "UPDATE guilds SET mute_role = :mute_role_id WHERE id = :guild_id",
+            {
+                "mute_role_id": mute_role.id,
+                "guild_id": guild.id
+            }
+        )
+        Data.conn.commit()
+
+        return mute_role
+
+    async def get_guild_mute_role(self, guild: discord.Guild):
+        Data.check_guild_entry(guild)
+
+        Data.c.execute("SELECT mute_role FROM guilds WHERE id = :guild_id", {"guild_id": guild.id})
+        mute_role_id = Data.c.fetchone()[0]
+
+        if mute_role_id is None:  # Create mute role if none is provided
+            mute_role = await self.create_mute_role(guild)
+
+        else:  # Get mute role if one was provided
+            mute_role = guild.get_role(mute_role_id)
+
+            # Check if the role provided still exists
+            if mute_role is None:
+                mute_role = await self.create_mute_role(guild)
+
+        return mute_role
+
     @commands.command(name="warn", help="Warn a member for doing something they weren't supposed to")
     @commands.has_guild_permissions(administrator=True)
     async def warn(self, ctx, member: discord.Member, *, reason: str):
@@ -85,6 +130,20 @@ class Moderation(commands.Cog):
             Data.conn.commit()
 
             await ctx.send(f"Cleared all infractions by **{member}** in this server...")
+
+    @commands.command(name="mute", help="Prevent someone from sending messages")
+    @commands.has_guild_permissions(manage_roles=True)
+    async def mute(self, ctx, member: discord.Member):
+        mute_role = await self.get_guild_mute_role(ctx.guild)
+        await member.add_roles(mute_role)
+        await ctx.send(f"**{member}** can no longer speak")
+
+    @commands.command(name="unmute", help="Return the ability to talk to someone")
+    @commands.has_guild_permissions(manage_roles=True)
+    async def unmute(self, ctx, member: discord.Member):
+        mute_role = await self.get_guild_mute_role(ctx.guild)
+        await member.remove_roles(mute_role)
+        await ctx.send(f"**{member}** can speak now")
 
 
 def setup(bot):
