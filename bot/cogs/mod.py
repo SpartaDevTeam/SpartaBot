@@ -7,7 +7,7 @@ from bot.data.data import Data
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.theme_color = discord.Color.blurple()
+        self.theme_color = discord.Color.purple()
 
     async def create_mute_role(self, guild: discord.Guild):
         print(f"Creating new mute role for server {guild.name}")
@@ -92,7 +92,7 @@ class Moderation(commands.Cog):
             infracs = [infrac for infrac in json.loads(Data.c.fetchone()[0]) if infrac["member"] == member.id]
             embed_title = f"Infractions by {member} in {ctx.guild.name}"
 
-        infractions_embed = discord.Embed(title=embed_title)
+        infractions_embed = discord.Embed(title=embed_title, color=self.theme_color)
 
         for infrac in infracs:
             if member is not None:
