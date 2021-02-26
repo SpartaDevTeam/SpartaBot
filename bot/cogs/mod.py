@@ -86,5 +86,6 @@ class Moderation(commands.Cog):
 
             await ctx.send(f"Cleared all infractions by **{member}** in this server...")
 
+
 def setup(bot):
     bot.add_cog(Moderation(bot))
