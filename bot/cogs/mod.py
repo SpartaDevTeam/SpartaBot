@@ -95,7 +95,7 @@ class Moderation(commands.Cog):
         infractions_embed = discord.Embed(title=embed_title, color=self.theme_color)
 
         for infrac in infracs:
-            if member is not None:
+            if member:
                 guild_member = member
             else:
                 guild_member = ctx.guild.get_member(infrac["member"])
@@ -160,6 +160,37 @@ class Moderation(commands.Cog):
         Data.conn.commit()
 
         await ctx.send(f"The mute role has been set to {role.mention}")
+
+    @commands.command(name="ban", help="Ban a person from the server")
+    @commands.has_guild_permissions(ban_members=True)
+    async def ban(self, ctx, member: discord.Member, *, reason=None):
+        await ctx.guild.ban(member, reason=reason, delete_message_days=0)
+        await ctx.send(f"**{member}** has been banned from this server")
+
+    @commands.command(name="unban", help="Unban a person from the server")
+    @commands.has_guild_permissions(ban_members=True)
+    async def unban(self, ctx, username: str):
+        if username[-5] != "#":
+            await ctx.send("Please give a username in this format: *username#0000*")
+            return
+
+        name = username[:-5]  # first character to 6th last character
+        discriminator = username[-4:]  # last 4 characters
+        guild_bans = await ctx.guild.bans()
+        user_to_unban = None
+
+        for ban_entry in guild_bans:
+            banned_user: discord.User = ban_entry.user
+
+            if banned_user.name == name and banned_user.discriminator == discriminator:
+                user_to_unban = banned_user
+                break
+
+        if user_to_unban:
+            await ctx.guild.unban(user_to_unban)
+            await ctx.send(f"**{user_to_unban}** has been unbanned from this server")
+        else:
+            await ctx.send("This person was not found to be banned")
 
 
 def setup(bot):
