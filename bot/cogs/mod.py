@@ -161,11 +161,12 @@ class Moderation(commands.Cog):
 
         await ctx.send(f"The mute role has been set to {role.mention}")
 
-    @commands.command(name="ban", help="Ban a person from the server")
+    @commands.command(name="ban", help="Permanently remove a person from the server")
     @commands.has_guild_permissions(ban_members=True)
     async def ban(self, ctx, member: discord.Member, *, reason=None):
         await ctx.guild.ban(member, reason=reason, delete_message_days=0)
         await ctx.send(f"**{member}** has been banned from this server")
+        await member.send(f"You have been banned from **{ctx.guild.name}**")
 
     @commands.command(name="unban", help="Unban a person from the server")
     @commands.has_guild_permissions(ban_members=True)
@@ -189,8 +190,16 @@ class Moderation(commands.Cog):
         if user_to_unban:
             await ctx.guild.unban(user_to_unban)
             await ctx.send(f"**{user_to_unban}** has been unbanned from this server")
+            await user_to_unban.send(f"You have been unbanned from **{ctx.guild.name}**")
         else:
             await ctx.send("This person was not found to be banned")
+
+    @commands.command(name="kick", help="Remove a person from the server")
+    @commands.has_guild_permissions(kick_members=True)
+    async def kick(self, ctx, member: discord.Member, *, reason=None):
+        await ctx.guild.kick(member, reason=reason)
+        await ctx.send(f"**{member}** has been kicked from this server")
+        await member.send(f"You have been kicked from **{ctx.guild.name}**")
 
 
 def setup(bot):
