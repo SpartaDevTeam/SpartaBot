@@ -145,22 +145,6 @@ class Moderation(commands.Cog):
         await member.remove_roles(mute_role)
         await ctx.send(f"**{member}** can speak now")
 
-    @commands.command(name="setmuterole", aliases=["setmute", "smr"], help="Set a role to give to people when you mute them")
-    @commands.has_guild_permissions(manage_roles=True)
-    async def set_mute_role(self, ctx, role: discord.Role):
-        Data.check_guild_entry(ctx.guild)
-
-        Data.c.execute(
-            "UPDATE guilds SET mute_role = :mute_role_id WHERE id = :guild_id",
-            {
-                "mute_role_id": role.id,
-                "guild_id": ctx.guild.id
-            }
-        )
-        Data.conn.commit()
-
-        await ctx.send(f"The mute role has been set to {role.mention}")
-
     @commands.command(name="ban", help="Permanently remove a person from the server")
     @commands.has_guild_permissions(ban_members=True)
     async def ban(self, ctx, member: discord.Member, *, reason=None):

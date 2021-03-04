@@ -3,9 +3,6 @@ import discord
 from discord.ext import commands
 from bot.data.data import Data
 
-# Import Cogs
-from bot.cogs import mod
-
 TOKEN = os.environ["SPARTA_TOKEN"]
 PREFIX = "sb!"  # TODO: Change to s! after rewrite complete
 
