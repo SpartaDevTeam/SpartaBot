@@ -207,6 +207,16 @@ class Moderation(commands.Cog):
         await ch.edit(sync_permissions=True)
         await ctx.send(f":unlock: {ch.mention} has been unlocked")
 
+    @commands.command(name="slowmode", help="Add slowmode delay on the current channel")
+    @commands.has_guild_permissions(manage_channels=True)
+    async def slowmode(self, ctx, time: int):
+        await ctx.channel.edit(slowmode_delay=time)
+
+        if time > 0:
+            await ctx.send(f"Added a slowmode delay of **{time} seconds**")
+        else:
+            await ctx.send("Slowmode has been disabled")
+
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
