@@ -15,7 +15,7 @@ class Moderation(commands.Cog):
         role_color = discord.Color.dark_gray()
         mute_role = await guild.create_role(name="Muted", permissions=role_perms, color=role_color, reason="No existing mute role provided")
 
-        guild_channels = await guild.fetch_channels()
+        guild_channels: list[discord.abc.GuildChannel] = await guild.fetch_channels()
 
         # Set permissions for channels
         for channel in guild_channels:
@@ -184,6 +184,28 @@ class Moderation(commands.Cog):
         await ctx.guild.kick(member, reason=reason)
         await ctx.send(f"**{member}** has been kicked from this server")
         await member.send(f"You have been kicked from **{ctx.guild.name}**")
+
+    @commands.command(name="lockchannel", aliases=["lock"], help="Prevent non-admins from sending messages in this channel")
+    @commands.has_guild_permissions(manage_channels=True)
+    async def lock_channel(self, ctx, channel: discord.TextChannel = None):
+        if channel:
+            ch = channel
+        else:
+            ch = ctx.channel
+
+        await ch.set_permissions(ctx.guild.default_role, send_messages=False)
+        await ctx.send(f":lock: {ch.mention} has been locked")
+
+    @commands.command(name="unlockchannel", aliases=["unlock"], help="Reverse the effects of lockchannel command")
+    @commands.has_guild_permissions(manage_channels=True)
+    async def unlock_channel(self, ctx, channel: discord.TextChannel = None):
+        if channel:
+            ch = channel
+        else:
+            ch = ctx.channel
+
+        await ch.edit(sync_permissions=True)
+        await ctx.send(f":unlock: {ch.mention} has been unlocked")
 
 
 def setup(bot):
