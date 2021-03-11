@@ -7,6 +7,7 @@ from bot.data.data import Data
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.description = "Commands to uphold the peace and integrity of the server"
         self.theme_color = discord.Color.purple()
 
     async def create_mute_role(self, guild: discord.Guild):

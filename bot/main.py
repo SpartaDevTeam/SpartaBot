@@ -1,10 +1,12 @@
 import os
 import discord
 from discord.ext import commands
+from pretty_help import Navigation, PrettyHelp
 from bot.data.data import Data
 
 TOKEN = os.environ["SPARTA_TOKEN"]
 PREFIX = "sb!"  # TODO: Change to s! after rewrite complete
+THEME = discord.Color.purple()
 
 intents = discord.Intents.default()
 intents.members = True
@@ -13,7 +15,8 @@ bot = commands.Bot(
     command_prefix=PREFIX,
     description="I'm a cool moderation and automation bot to help you manage your server better...",
     intents=intents,
-    case_insensitive=True
+    case_insensitive=True,
+    help_command=PrettyHelp(navigation=Navigation(), color=THEME)
 )
 
 

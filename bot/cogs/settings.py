@@ -6,6 +6,7 @@ from bot.data.data import Data
 class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.description = "Commands to change Sparta settings for the current server"
         self.theme_color = discord.Color.purple()
 
     @commands.command(name="setmuterole", aliases=["setmute", "smr"], help="Set a role to give to people when you mute them")
