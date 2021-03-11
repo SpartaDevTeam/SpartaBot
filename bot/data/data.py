@@ -13,7 +13,8 @@ class Data:
         cls.c.execute("""CREATE TABLE IF NOT EXISTS "guilds" (
             "id"	INTEGER,
             "infractions"	TEXT DEFAULT '[]',
-            "mute_role"	INTEGER DEFAULT NULL
+            "mute_role"	INTEGER DEFAULT NULL,
+            "activated_automod"	TEXT DEFAULT '[]'
         )""")
 
         cls.conn.commit()
@@ -21,7 +22,7 @@ class Data:
     # Guild Data
     @classmethod
     def create_new_guild_data(cls, guild):
-        cls.c.execute("INSERT INTO guilds VALUES (:guild_id, '[]', NULL)", {"guild_id": guild.id})
+        cls.c.execute("INSERT INTO guilds VALUES (:guild_id, '[]', NULL, '[]')", {"guild_id": guild.id})
         cls.conn.commit()
         print(f"Created data entry for guild {guild.name}")
 
