@@ -37,9 +37,9 @@ class AutoMod(commands.Cog):
             Data.conn.commit()
 
         mod_embed = discord.Embed(title='Auto-Mod', description='Allow Sparta to administrate on its own. Reply with a particular feature.', color=self.theme_color)
-        mod_embed.add_field(name='`links`', value='Bans links from being sent to this channel', inline=False)
-        mod_embed.add_field(name='`images`', value='Bans attachments from being sent to this channel', inline=False)
-        mod_embed.add_field(name='`spam`', value='Temporarily mutes users who are spamming in this channel', inline=False)
+        mod_embed.add_field(name='`links`', value='Bans links from being sent to this server', inline=False)
+        mod_embed.add_field(name='`images`', value='Bans attachments from being sent to this server', inline=False)
+        mod_embed.add_field(name='`spam`', value='Temporarily mutes users who are spamming in this server', inline=False)
         mod_embed.set_footer(text="Reply with `stop` if you want to stop adding auto-mod features")
         await ctx.send(embed=mod_embed)
 
