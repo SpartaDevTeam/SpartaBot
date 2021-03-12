@@ -14,7 +14,11 @@ class Data:
             "id"	INTEGER,
             "infractions"	TEXT DEFAULT '[]',
             "mute_role"	INTEGER DEFAULT NULL,
-            "activated_automod"	TEXT DEFAULT '[]'
+            "activated_automod"	TEXT DEFAULT '[]',
+            "welcome_message"	TEXT DEFAULT NULL,
+            "leave_message"	TEXT DEFAULT NULL,
+            "welcome_channel"	TEXT DEFAULT NULL,
+            "leave_channel"	TEXT DEFAULT NULL
         )""")
 
         cls.conn.commit()
@@ -22,7 +26,7 @@ class Data:
     # Guild Data
     @classmethod
     def create_new_guild_data(cls, guild):
-        cls.c.execute("INSERT INTO guilds VALUES (:guild_id, '[]', NULL, '[]')", {"guild_id": guild.id})
+        cls.c.execute("INSERT INTO guilds VALUES (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL)", {"guild_id": guild.id})
         cls.conn.commit()
         print(f"Created data entry for guild {guild.name}")
 
