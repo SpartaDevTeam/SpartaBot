@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from bot.data.data import Data
 
+
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
