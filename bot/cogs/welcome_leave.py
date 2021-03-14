@@ -46,6 +46,32 @@ class WelcomeLeave(commands.Cog):
 
         await welcome_channel.send(welcome_message)
 
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        guild: discord.Guild = member.guild
+        Data.check_guild_entry(guild)
+
+        Data.c.execute("SELECT leave_message, leave_channel FROM guilds WHERE id = :guild_id", {"guild_id": guild.id})
+        data = Data.c.fetchone()
+        leave_message = data[0]
+        leave_channel = guild.get_channel(int(data[1]))
+
+        if not leave_message:
+            leave_message = self.default_leave_msg(guild)
+
+        if not leave_channel:
+            leave_channel = await self.find_welcome_channel(guild)
+
+            # Exit the function if no leave channel is provided or automatically found
+            if not leave_channel:
+                return
+
+        # Replace placeholders with actual information
+        leave_message = leave_message.replace("[mention]", member.mention)
+        leave_message = leave_message.replace("[member]", str(member))
+
+        await leave_channel.send(leave_message)
+
 
 def setup(bot):
     bot.add_cog(WelcomeLeave(bot))
