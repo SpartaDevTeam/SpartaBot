@@ -23,7 +23,7 @@ class Settings(commands.Cog):
         )
         Data.conn.commit()
 
-        await ctx.send(f"The mute role has been set to {role.mention}")
+        await ctx.send(f"The mute role has been set to **{role}**")
 
     @commands.command(name="setwelcomemessage", aliases=["wmsg"], help="Change the welcome message of the current server")
     @commands.has_guild_permissions(administrator=True)
@@ -94,6 +94,22 @@ class Settings(commands.Cog):
         Data.conn.commit()
 
         await ctx.send(f"The server's leave channel has been set to {channel.mention}")
+
+    @commands.command(name="setautorole", aliases=["setauto", "autorole", "arole"], help="Set a role to give to new members of the server")
+    @commands.has_guild_permissions(administrator=True)
+    async def set_auto_role(self, ctx, role: discord.Role):
+        Data.check_guild_entry(ctx.guild)
+
+        Data.c.execute(
+            "UPDATE guilds SET auto_role = :auto_role_id WHERE id = :guild_id",
+            {
+                "auto_role_id": role.id,
+                "guild_id": ctx.guild.id
+            }
+        )
+        Data.conn.commit()
+
+        await ctx.send(f"The auto role has been set to **{role}**")
 
 
 def setup(bot):

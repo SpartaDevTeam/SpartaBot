@@ -25,10 +25,11 @@ class WelcomeLeave(commands.Cog):
         guild: discord.Guild = member.guild
         Data.check_guild_entry(guild)
 
-        Data.c.execute("SELECT welcome_message, welcome_channel FROM guilds WHERE id = :guild_id", {"guild_id": guild.id})
+        Data.c.execute("SELECT welcome_message, welcome_channel, auto_role FROM guilds WHERE id = :guild_id", {"guild_id": guild.id})
         data = Data.c.fetchone()
         welcome_message = data[0]
         welcome_channel = guild.get_channel(int(data[1]))
+        auto_role = guild.get_role(int(data[2]))
 
         if not welcome_message:
             welcome_message = self.default_welcome_msg(guild)
@@ -45,6 +46,10 @@ class WelcomeLeave(commands.Cog):
         welcome_message = welcome_message.replace("[member]", str(member))
 
         await welcome_channel.send(welcome_message)
+
+        # Give auto role to new member if they are not a bot
+        if not member.bot:
+            await member.add_roles(auto_role)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
