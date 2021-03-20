@@ -18,7 +18,8 @@ class Data:
             "welcome_message"	TEXT DEFAULT NULL,
             "leave_message"	TEXT DEFAULT NULL,
             "welcome_channel"	TEXT DEFAULT NULL,
-            "leave_channel"	TEXT DEFAULT NULL
+            "leave_channel"	TEXT DEFAULT NULL,
+            "auto_role"	TEXT DEFAULT NULL
         )""")
 
         cls.conn.commit()
