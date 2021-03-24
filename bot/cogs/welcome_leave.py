@@ -1,4 +1,3 @@
-import json
 import discord
 from discord.ext import commands
 from bot.data.data import Data
@@ -28,7 +27,13 @@ class WelcomeLeave(commands.Cog):
         Data.c.execute("SELECT welcome_message, welcome_channel, auto_role FROM guilds WHERE id = :guild_id", {"guild_id": guild.id})
         data = Data.c.fetchone()
         welcome_message = data[0]
-        welcome_channel = guild.get_channel(int(data[1]))
+
+        welcome_channel_id = data[1]
+
+        if welcome_channel_id == "disabled":
+            return
+
+        welcome_channel = guild.get_channel(int(welcome_channel_id))
         auto_role = guild.get_role(int(data[2]))
 
         if not welcome_message:
@@ -59,7 +64,12 @@ class WelcomeLeave(commands.Cog):
         Data.c.execute("SELECT leave_message, leave_channel FROM guilds WHERE id = :guild_id", {"guild_id": guild.id})
         data = Data.c.fetchone()
         leave_message = data[0]
-        leave_channel = guild.get_channel(int(data[1]))
+        leave_channel_id = data[1]
+
+        if leave_channel_id == "disabled":
+            return
+
+        leave_channel = guild.get_channel(int(leave_channel_id))
 
         if not leave_message:
             leave_message = self.default_leave_msg(guild)

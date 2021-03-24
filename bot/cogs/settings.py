@@ -65,35 +65,51 @@ class Settings(commands.Cog):
 
     @commands.command(name="setwelcomechannel", aliases=["wchannel"], help="Change the channel where welcome messages are sent")
     @commands.has_guild_permissions(administrator=True)
-    async def set_welcome_channel(self, ctx, *, channel: discord.TextChannel):
+    async def set_welcome_channel(self, ctx, *, channel: discord.TextChannel = None):
         Data.check_guild_entry(ctx.guild)
+
+        if channel:
+            channel_id = channel.id
+        else:
+            channel_id = "disabled"
 
         Data.c.execute(
             "UPDATE guilds SET welcome_channel = :channel_id WHERE id = :guild_id",
             {
-                "channel_id": channel.id,
+                "channel_id": channel_id,
                 "guild_id": ctx.guild.id
             }
         )
         Data.conn.commit()
 
-        await ctx.send(f"The server's welcome channel has been set to {channel.mention}")
+        if channel:
+            await ctx.send(f"The server's welcome channel has been set to {channel.mention}")
+        else:
+            await ctx.send("The server's welcome message has been disabled")
 
     @commands.command(name="setleavechannel", aliases=["lchannel"], help="Change the channel where leave messages are sent")
     @commands.has_guild_permissions(administrator=True)
-    async def set_leave_channel(self, ctx, *, channel: discord.TextChannel):
+    async def set_leave_channel(self, ctx, *, channel: discord.TextChannel = None):
         Data.check_guild_entry(ctx.guild)
+
+        if channel:
+            channel_id = channel.id
+        else:
+            channel_id = "disabled"
 
         Data.c.execute(
             "UPDATE guilds SET leave_channel = :channel_id WHERE id = :guild_id",
             {
-                "channel_id": channel.id,
+                "channel_id": channel_id,
                 "guild_id": ctx.guild.id
             }
         )
         Data.conn.commit()
 
-        await ctx.send(f"The server's leave channel has been set to {channel.mention}")
+        if channel:
+            await ctx.send(f"The server's leave channel has been set to {channel.mention}")
+        else:
+            await ctx.send("The server's leave message has been disabled")
 
     @commands.command(name="setautorole", aliases=["setauto", "autorole", "arole"], help="Set a role to give to new members of the server")
     @commands.has_guild_permissions(administrator=True)
@@ -110,6 +126,25 @@ class Settings(commands.Cog):
         Data.conn.commit()
 
         await ctx.send(f"The auto role has been set to **{role}**")
+
+    @commands.command(name="serverinfo", aliases=["si"], help="Get general information about the server")
+    async def server_info(self, ctx):
+        guild: discord.Guild = ctx.guild
+        human_count = len([member for member in guild.members if not member.bot])
+        bot_count = guild.member_count - human_count
+
+        si_embed = discord.Embed(title=f"{guild.name} Information", color=self.theme_color)
+        si_embed.set_thumbnail(url=guild.icon_url)
+
+        si_embed.add_field(name="Human Members", value=str(human_count), inline=False)
+        si_embed.add_field(name="Bot Members", value=str(bot_count), inline=False)
+        si_embed.add_field(name="Total Members", value=str(guild.member_count), inline=False)
+        si_embed.add_field(name="Role Count", value=str(len(guild.roles)), inline=False)
+        si_embed.add_field(name="Server Owner", value=str(guild.owner), inline=False)
+        si_embed.add_field(name="Server ID", value=guild.id, inline=False)
+        si_embed.add_field(name="Server Region", value=str(guild.region).title(), inline=False)
+
+        await ctx.send(embed=si_embed)
 
 
 def setup(bot):
