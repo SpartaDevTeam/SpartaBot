@@ -146,6 +146,28 @@ class Settings(commands.Cog):
 
         await ctx.send(embed=si_embed)
 
+    @commands.command(name="memberinfo", aliases=["mi", "ui"], help="Get general information about a member")
+    async def member_info(self, ctx, member: discord.Member = None):
+        if member:
+            m = member
+        else:
+            m = ctx.author
+
+        time_format = "%-d %b %Y %-I:%M %p"
+        created_at = m.created_at.strftime(time_format)
+        joined_at = m.joined_at.strftime(time_format)
+
+        mi_embed = discord.Embed(title=f"{m} Information", color=self.theme_color)
+        mi_embed.set_thumbnail(url=m.avatar_url)
+
+        mi_embed.add_field(name="Member ID", value=m.id, inline=False)
+        mi_embed.add_field(name="Joined Discord", value=created_at, inline=False)
+        mi_embed.add_field(name="Joined Server", value=joined_at, inline=False)
+        mi_embed.add_field(name="Highest Role", value=m.top_role.mention, inline=False)
+        mi_embed.add_field(name="Bot?", value="Yes" if m.bot else "No", inline=False)
+
+        await ctx.send(embed=mi_embed)
+
 
 def setup(bot):
     bot.add_cog(Settings(bot))
