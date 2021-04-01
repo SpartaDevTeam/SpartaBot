@@ -5,14 +5,23 @@ from pretty_help import Navigation, PrettyHelp
 from bot.data.data import Data
 
 TOKEN = os.environ["SPARTA_TOKEN"]
-PREFIX = "sb!"  # TODO: Change to s! after rewrite complete
 THEME = discord.Color.purple()
 
 intents = discord.Intents.default()
 intents.members = True
 
+
+def get_prefix(client, message):
+    Data.check_guild_entry(message.guild)
+
+    Data.c.execute("SELECT prefix FROM guilds WHERE id = :guild_id", {"guild_id": message.guild.id})
+    prefix = Data.c.fetchone()[0]
+
+    return prefix
+
+
 bot = commands.Bot(
-    command_prefix=PREFIX,
+    command_prefix=get_prefix,
     description="I'm a cool moderation and automation bot to help you manage your server better...",
     intents=intents,
     case_insensitive=True,

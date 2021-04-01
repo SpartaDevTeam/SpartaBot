@@ -168,6 +168,22 @@ class Settings(commands.Cog):
 
         await ctx.send(embed=mi_embed)
 
+    @commands.command(name="prefix", help="Change the command prefix for Sparta in this server")
+    @commands.has_guild_permissions(administrator=True)
+    async def prefix(self, ctx, pref: str = "sb!"):  # TODO: change to "s!" after rewrite
+        Data.check_guild_entry(ctx.guild)
+
+        Data.c.execute(
+            "UPDATE guilds SET prefix = :new_prefix WHERE id = :guild_id",
+            {
+                "new_prefix": pref,
+                "guild_id": ctx.guild.id
+            }
+        )
+        Data.conn.commit()
+
+        await ctx.send(f"The prefix has been changed to **{pref}**")
+
 
 def setup(bot):
     bot.add_cog(Settings(bot))

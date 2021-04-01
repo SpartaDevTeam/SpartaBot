@@ -19,15 +19,18 @@ class Data:
             "leave_message"	TEXT DEFAULT NULL,
             "welcome_channel"	TEXT DEFAULT NULL,
             "leave_channel"	TEXT DEFAULT NULL,
-            "auto_role"	TEXT DEFAULT NULL
+            "auto_role"	TEXT DEFAULT NULL,
+            "prefix"	TEXT DEFAULT 'sb!'
         )""")
+        # TODO: change prefix to "s!" after rewrite
 
         cls.conn.commit()
 
     # Guild Data
     @classmethod
     def create_new_guild_data(cls, guild):
-        cls.c.execute("INSERT INTO guilds VALUES (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL)", {"guild_id": guild.id})
+        # TODO: change prefix to "s!" after rewrite
+        cls.c.execute("INSERT INTO guilds VALUES (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 'sb!')", {"guild_id": guild.id})
         cls.conn.commit()
         print(f"Created data entry for guild {guild.name}")
 
