@@ -1,7 +1,7 @@
 import json
 import discord
 from discord.ext import commands
-from bot.data.data import Data
+from bot.data import Data
 
 
 class Moderation(commands.Cog):

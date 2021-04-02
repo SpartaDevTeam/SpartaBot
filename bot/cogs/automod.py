@@ -3,7 +3,7 @@ import datetime
 import discord
 from discord.ext import commands
 from re import search
-from bot.data.data import Data
+from bot.data import Data
 
 
 class AutoMod(commands.Cog):
