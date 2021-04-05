@@ -132,6 +132,7 @@ class Fun(commands.Cog):
             )
             Data.create_new_webhook_data(ctx.channel, webhook.url)
 
+        await ctx.message.delete()
         await webhook.send(message, username=member.display_name, avatar_url=member.avatar_url)
 
 
