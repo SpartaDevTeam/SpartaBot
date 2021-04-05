@@ -34,6 +34,12 @@ class Fun(commands.Cog):
         av_embed.set_image(url=m.avatar_url)
         await ctx.send(embed=av_embed)
 
+    @commands.command(name="choose", aliases=["choice"], help="Let Sparta choose the best option for you. Separate the choices with a comma (,)")
+    async def choose(self, ctx, *, options: str):
+        items = [option.strip().replace("*", "") for option in options.split(",")]
+        choice = random.choice(items)
+        await ctx.send(f"I choose **{choice}**")
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
