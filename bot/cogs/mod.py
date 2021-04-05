@@ -57,7 +57,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="warn", help="Warn a member for doing something they weren't supposed to")
     @commands.has_guild_permissions(administrator=True)
-    async def warn(self, ctx, member: discord.Member, *, reason: str):
+    async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute("SELECT infractions FROM guilds WHERE id = :guild_id", {"guild_id": ctx.guild.id})
@@ -81,7 +81,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="infractions", aliases=["inf"], help="See all the times a person has been warned")
     @commands.has_guild_permissions(administrator=True)
-    async def infractions(self, ctx, member: discord.Member = None):
+    async def infractions(self, ctx: commands.Context, member: discord.Member = None):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute("SELECT infractions FROM guilds WHERE id = :guild_id", {"guild_id": ctx.guild.id})
@@ -108,7 +108,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="clearinfractions", aliases=["clearinf"], help="Clear somebody's infractions in the current server")
     @commands.has_guild_permissions(administrator=True)
-    async def clear_infractions(self, ctx, member: discord.Member = None):
+    async def clear_infractions(self, ctx: commands.Context, member: discord.Member = None):
         Data.check_guild_entry(ctx.guild)
 
         if member is None:
@@ -134,28 +134,28 @@ class Moderation(commands.Cog):
 
     @commands.command(name="mute", help="Prevent someone from sending messages")
     @commands.has_guild_permissions(manage_roles=True)
-    async def mute(self, ctx, member: discord.Member):
+    async def mute(self, ctx: commands.Context, member: discord.Member):
         mute_role = await self.get_guild_mute_role(ctx.guild)
         await member.add_roles(mute_role)
         await ctx.send(f"**{member}** can no longer speak")
 
     @commands.command(name="unmute", help="Return the ability to talk to someone")
     @commands.has_guild_permissions(manage_roles=True)
-    async def unmute(self, ctx, member: discord.Member):
+    async def unmute(self, ctx: commands.Context, member: discord.Member):
         mute_role = await self.get_guild_mute_role(ctx.guild)
         await member.remove_roles(mute_role)
         await ctx.send(f"**{member}** can speak now")
 
     @commands.command(name="ban", help="Permanently remove a person from the server")
     @commands.has_guild_permissions(ban_members=True)
-    async def ban(self, ctx, member: discord.Member, *, reason=None):
+    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
         await ctx.guild.ban(member, reason=reason, delete_message_days=0)
         await ctx.send(f"**{member}** has been banned from this server")
         await member.send(f"You have been banned from **{ctx.guild.name}**")
 
     @commands.command(name="unban", help="Unban a person from the server")
     @commands.has_guild_permissions(ban_members=True)
-    async def unban(self, ctx, username: str):
+    async def unban(self, ctx: commands.Context, username: str):
         if username[-5] != "#":
             await ctx.send("Please give a username in this format: *username#0000*")
             return
@@ -181,14 +181,14 @@ class Moderation(commands.Cog):
 
     @commands.command(name="kick", help="Remove a person from the server")
     @commands.has_guild_permissions(kick_members=True)
-    async def kick(self, ctx, member: discord.Member, *, reason=None):
+    async def kick(self, ctx: commands.Context, member: discord.Member, *, reason=None):
         await ctx.guild.kick(member, reason=reason)
         await ctx.send(f"**{member}** has been kicked from this server")
         await member.send(f"You have been kicked from **{ctx.guild.name}**")
 
     @commands.command(name="lockchannel", aliases=["lock"], help="Prevent non-admins from sending messages in this channel")
     @commands.has_guild_permissions(manage_channels=True)
-    async def lock_channel(self, ctx, channel: discord.TextChannel = None):
+    async def lock_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         if channel:
             ch = channel
         else:
@@ -199,7 +199,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="unlockchannel", aliases=["unlock"], help="Reverse the effects of lockchannel command")
     @commands.has_guild_permissions(manage_channels=True)
-    async def unlock_channel(self, ctx, channel: discord.TextChannel = None):
+    async def unlock_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         if channel:
             ch = channel
         else:
@@ -210,7 +210,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="slowmode", help="Add slowmode delay on the current channel")
     @commands.has_guild_permissions(manage_channels=True)
-    async def slowmode(self, ctx, time: int):
+    async def slowmode(self, ctx: commands.Context, time: int):
         await ctx.channel.edit(slowmode_delay=time)
 
         if time > 0:

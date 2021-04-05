@@ -4,6 +4,8 @@ import pyfiglet
 import discord
 from discord.ext import commands
 
+from bot.data import Data
+
 
 class Fun(commands.Cog):
     def __init__(self, bot):
@@ -56,7 +58,7 @@ class Fun(commands.Cog):
         await ctx.send(f"The coin has been flipped and resulted in **{result}**")
 
     @commands.command(name="roll", aliases=["dice"], help="Roll a dice!")
-    async def dice_roll(self, ctx, dice_count: int = 1):
+    async def dice_roll(self, ctx: commands.Context, dice_count: int = 1):
         number = random.randint(1, dice_count * 6)
 
         if dice_count > 1:
@@ -65,7 +67,7 @@ class Fun(commands.Cog):
             await ctx.send(f"You rolled a **{number}**")
 
     @commands.command(name="avatar", aliases=["av", "pfp"], help="Get somebody's Discord avatar")
-    async def avatar(self, ctx, member: discord.Member = None):
+    async def avatar(self, ctx: commands.Context, member: discord.Member = None):
         if member:
             m = member
         else:
@@ -76,20 +78,20 @@ class Fun(commands.Cog):
         await ctx.send(embed=av_embed)
 
     @commands.command(name="choose", aliases=["choice"], help="Let Sparta choose the best option for you. Separate the choices with a comma (,)")
-    async def choose(self, ctx, *, options: str):
+    async def choose(self, ctx: commands.Context, *, options: str):
         items = [option.strip().replace("*", "") for option in options.split(",")]
         choice = random.choice(items)
         await ctx.send(f"I choose **{choice}**")
 
     @commands.command(name="8ball", aliases=["8"], help="Call upon the powers of the all knowing magic 8Ball")
-    async def eight_ball(self, ctx, question: str):
+    async def eight_ball(self, ctx: commands.Context, question: str):
         group = random.choice(self.eight_ball_responses)
         response = random.choice(group)
 
         await ctx.send(response)
 
     @commands.command(name="emojify", aliases=["emoji"], help="Turn a sentence into emojis")
-    async def emojify(self, ctx, *, sentence: str):
+    async def emojify(self, ctx: commands.Context, *, sentence: str):
         emojified_sentence = ""
 
         for char in sentence:
@@ -105,9 +107,32 @@ class Fun(commands.Cog):
         await ctx.send(emojified_sentence)
 
     @commands.command(name="ascii", help="Turn a sentence into cool ASCII art")
-    async def ascii(self, ctx, *, sentence: str):
+    async def ascii(self, ctx: commands.Context, *, sentence: str):
         ascii_text = pyfiglet.figlet_format(sentence)
         await ctx.send(f"```{ascii_text}```")
+
+    @commands.command(name="impersonate", aliases=["imp"], help="Pretend to be another member of your server")
+    async def impersonate(self, ctx: commands.Context, member: discord.Member, *, message: str):
+        webhook_url = Data.webhook_entry_exists(ctx.channel)
+
+        if webhook_url:
+            webhook = discord.utils.get(await ctx.channel.webhooks(), url=webhook_url)
+
+            if not webhook:
+                webhook: discord.Webhook = await ctx.channel.create_webhook(
+                    name="Sparta Impersonate Command",
+                    reason="Impersonation Command"
+                )
+                Data.create_new_webhook_data(ctx.channel, webhook.url)
+
+        else:
+            webhook: discord.Webhook = await ctx.channel.create_webhook(
+                name="Sparta Impersonate Command",
+                reason="Impersonation Command"
+            )
+            Data.create_new_webhook_data(ctx.channel, webhook.url)
+
+        await webhook.send(message, username=member.display_name, avatar_url=member.avatar_url)
 
 
 def setup(bot):

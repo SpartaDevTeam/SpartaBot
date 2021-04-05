@@ -24,6 +24,11 @@ class Data:
         )""")
         # TODO: change prefix to "s!" after rewrite
 
+        cls.c.execute("""CREATE TABLE IF NOT EXISTS "webhooks" (
+            "channel_id"	INTEGER,
+            "webhook_url"	TEXT
+        )""")
+
         cls.conn.commit()
 
     # Guild Data
@@ -41,3 +46,26 @@ class Data:
 
         if guild_data is None:
             cls.create_new_guild_data(guild)
+
+    # Webhook Data
+    @classmethod
+    def create_new_webhook_data(cls, channel, webhook_url):
+        cls.c.execute(
+            "INSERT INTO webhooks VALUES (:channel_id, :webhook_url)",
+            {
+                "channel_id": channel.id,
+                "webhook_url": webhook_url
+            }
+        )
+        cls.conn.commit()
+        print(f"Created webhook entry for channel with ID {channel.id}")
+
+    @classmethod
+    def webhook_entry_exists(cls, channel):
+        cls.c.execute("SELECT webhook_url FROM webhooks WHERE channel_id = :channel_id", {"channel_id": channel.id})
+        webhook_data = cls.c.fetchone()
+
+        if webhook_data:
+            return webhook_data[0]
+
+        return False

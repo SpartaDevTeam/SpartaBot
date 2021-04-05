@@ -11,7 +11,7 @@ class Settings(commands.Cog):
 
     @commands.command(name="setmuterole", aliases=["setmute", "smr"], help="Set a role to give to people when you mute them")
     @commands.has_guild_permissions(manage_roles=True)
-    async def set_mute_role(self, ctx, role: discord.Role):
+    async def set_mute_role(self, ctx: commands.Context, role: discord.Role):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -27,7 +27,7 @@ class Settings(commands.Cog):
 
     @commands.command(name="setwelcomemessage", aliases=["wmsg"], help="Change the welcome message of the current server")
     @commands.has_guild_permissions(administrator=True)
-    async def set_welcome_message(self, ctx, *, message: str = None):
+    async def set_welcome_message(self, ctx: commands.Context, *, message: str = None):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -46,7 +46,7 @@ class Settings(commands.Cog):
 
     @commands.command(name="setleavemessage", aliases=["lmsg"], help="Change the leave message of the current server")
     @commands.has_guild_permissions(administrator=True)
-    async def set_leave_message(self, ctx, *, message: str = None):
+    async def set_leave_message(self, ctx: commands.Context, *, message: str = None):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -65,7 +65,7 @@ class Settings(commands.Cog):
 
     @commands.command(name="setwelcomechannel", aliases=["wchannel"], help="Change the channel where welcome messages are sent")
     @commands.has_guild_permissions(administrator=True)
-    async def set_welcome_channel(self, ctx, *, channel: discord.TextChannel = None):
+    async def set_welcome_channel(self, ctx: commands.Context, *, channel: discord.TextChannel = None):
         Data.check_guild_entry(ctx.guild)
 
         if channel:
@@ -89,7 +89,7 @@ class Settings(commands.Cog):
 
     @commands.command(name="setleavechannel", aliases=["lchannel"], help="Change the channel where leave messages are sent")
     @commands.has_guild_permissions(administrator=True)
-    async def set_leave_channel(self, ctx, *, channel: discord.TextChannel = None):
+    async def set_leave_channel(self, ctx: commands.Context, *, channel: discord.TextChannel = None):
         Data.check_guild_entry(ctx.guild)
 
         if channel:
@@ -113,7 +113,7 @@ class Settings(commands.Cog):
 
     @commands.command(name="setautorole", aliases=["setauto", "autorole", "arole"], help="Set a role to give to new members of the server")
     @commands.has_guild_permissions(administrator=True)
-    async def set_auto_role(self, ctx, role: discord.Role):
+    async def set_auto_role(self, ctx: commands.Context, role: discord.Role):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -147,7 +147,7 @@ class Settings(commands.Cog):
         await ctx.send(embed=si_embed)
 
     @commands.command(name="memberinfo", aliases=["mi", "ui"], help="Get general information about a member")
-    async def member_info(self, ctx, member: discord.Member = None):
+    async def member_info(self, ctx: commands.Context, member: discord.Member = None):
         if member:
             m = member
         else:
@@ -170,7 +170,7 @@ class Settings(commands.Cog):
 
     @commands.command(name="prefix", help="Change the command prefix for Sparta in this server")
     @commands.has_guild_permissions(administrator=True)
-    async def prefix(self, ctx, pref: str = "sb!"):  # TODO: change to "s!" after rewrite
+    async def prefix(self, ctx: commands.Context, pref: str = "sb!"):  # TODO: change to "s!" after rewrite
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
