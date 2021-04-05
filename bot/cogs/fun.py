@@ -40,6 +40,36 @@ class Fun(commands.Cog):
         choice = random.choice(items)
         await ctx.send(f"I choose **{choice}**")
 
+    @commands.command(name="8ball", aliases=["8"], help="Call upon the powers of the all knowing magic 8Ball")
+    async def eight_ball(self, ctx, question: str):
+        responses = [
+            [
+                'No.',
+                'Nope.',
+                'Highly Doubtful.',
+                'Not a chance.',
+                'Not possible.',
+                'Don\'t count on it.'
+            ],
+            [
+                'Yes.',
+                'Yup',
+                'Extremely Likely',
+                'It is possible',
+                'Very possibly.'
+            ],
+            [
+                "I'm not sure",
+                "Maybe get a second opinion",
+                "Maybe"
+            ]
+        ]
+
+        group = random.choice(responses)
+        response = random.choice(group)
+
+        await ctx.send(response)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
