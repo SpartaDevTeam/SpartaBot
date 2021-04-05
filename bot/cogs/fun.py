@@ -23,6 +23,17 @@ class Fun(commands.Cog):
         else:
             await ctx.send(f"You rolled a **{number}**")
 
+    @commands.command(name="avatar", aliases=["av", "pfp"], help="Get somebody's Discord avatar")
+    async def avatar(self, ctx, member: discord.Member = None):
+        if member:
+            m = member
+        else:
+            m = ctx.author
+
+        av_embed = discord.Embed(title=f"{m}'s Avatar", color=self.theme_color)
+        av_embed.set_image(url=m.avatar_url)
+        await ctx.send(embed=av_embed)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
