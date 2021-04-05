@@ -1,3 +1,4 @@
+import string
 import random
 import discord
 from discord.ext import commands
@@ -8,6 +9,45 @@ class Fun(commands.Cog):
         self.bot = bot
         self.description = "Commands to have some fun and relieve stress (or induce it)"
         self.theme_color = discord.Color.purple()
+        self.eight_ball_responses = [
+            [
+                'No.',
+                'Nope.',
+                'Highly Doubtful.',
+                'Not a chance.',
+                'Not possible.',
+                'Don\'t count on it.'
+            ],
+            [
+                'Yes.',
+                'Yup',
+                'Extremely Likely',
+                'It is possible',
+                'Very possibly.'
+            ],
+            [
+                "I'm not sure",
+                "Maybe get a second opinion",
+                "Maybe"
+            ]
+        ]
+
+        self.emojify_symbols = {
+            '0': ':zero:',
+            '1': ':one:',
+            '2': ':two:',
+            '3': ':three:',
+            '4': ':four:',
+            '5': ':five:',
+            '6': ':six:',
+            '7': ':seven:',
+            '8': ':eight:',
+            '9': ':nine:',
+            '!': ':exclamation:',
+            '#': ':hash:',
+            '?': ':question:',
+            '*': ':asterisk:'
+        }
 
     @commands.command(name="coinflip", aliases=["coin", "flip"], help="Flip a coin!")
     async def coin_flip(self, ctx):
@@ -42,33 +82,26 @@ class Fun(commands.Cog):
 
     @commands.command(name="8ball", aliases=["8"], help="Call upon the powers of the all knowing magic 8Ball")
     async def eight_ball(self, ctx, question: str):
-        responses = [
-            [
-                'No.',
-                'Nope.',
-                'Highly Doubtful.',
-                'Not a chance.',
-                'Not possible.',
-                'Don\'t count on it.'
-            ],
-            [
-                'Yes.',
-                'Yup',
-                'Extremely Likely',
-                'It is possible',
-                'Very possibly.'
-            ],
-            [
-                "I'm not sure",
-                "Maybe get a second opinion",
-                "Maybe"
-            ]
-        ]
-
-        group = random.choice(responses)
+        group = random.choice(self.eight_ball_responses)
         response = random.choice(group)
 
         await ctx.send(response)
+
+    @commands.command(name="emojify", aliases=["emoji"], help="Turn a sentence into emojis")
+    async def emojify(self, ctx, *, sentence: str):
+        emojified_sentence = ""
+
+        for char in sentence:
+            char_lower = char.lower()
+
+            if char_lower in string.ascii_lowercase:
+                emojified_sentence += f":regional_indicator_{char}:"
+            elif char_lower in self.emojify_symbols:
+                emojified_sentence += self.emojify_symbols[char_lower]
+            else:
+                emojified_sentence += char
+
+        await ctx.send(emojified_sentence)
 
 
 def setup(bot):
