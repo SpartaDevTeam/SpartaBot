@@ -1,5 +1,6 @@
 import string
 import random
+import pyfiglet
 import discord
 from discord.ext import commands
 
@@ -102,6 +103,11 @@ class Fun(commands.Cog):
                 emojified_sentence += char
 
         await ctx.send(emojified_sentence)
+
+    @commands.command(name="ascii", help="Turn a sentence into cool ASCII art")
+    async def ascii(self, ctx, *, sentence: str):
+        ascii_text = pyfiglet.figlet_format(sentence)
+        await ctx.send(f"```{ascii_text}```")
 
 
 def setup(bot):
