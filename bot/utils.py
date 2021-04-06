@@ -22,8 +22,6 @@ def str_time_to_datetime(
     minutes = get_time("m", time_string)
     seconds = get_time("s", time_string)
 
-    print(days, hours, minutes, seconds)
-
     actual_seconds = 0
     if hours:
         actual_seconds += hours*3600
