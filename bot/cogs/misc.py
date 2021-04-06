@@ -1,5 +1,9 @@
+import asyncio
 import discord
 from discord.ext import commands
+from datetime import datetime
+
+from bot.utils import str_time_to_datetime
 
 
 class Miscellaneous(commands.Cog):
@@ -7,6 +11,11 @@ class Miscellaneous(commands.Cog):
         self.bot: commands.Bot = bot
         self.description = "Some commands to do general tasks"
         self.theme_color = discord.Color.purple()
+
+    async def reminder(self, user: discord.User, seconds: float, reminder_msg: str, reminder_start_time: datetime):
+        await asyncio.sleep(seconds)
+        rem_start_time_str = reminder_start_time.strftime("%-d %B %Y, %-I:%M %p")
+        await user.send(f"You asked me to remind you on {rem_start_time_str} about:\n*{reminder_msg}*")
 
     @commands.command(name="info", help="Display bot information")
     async def info(self, ctx: commands.Context):
@@ -61,6 +70,33 @@ class Miscellaneous(commands.Cog):
     async def support(self, ctx: commands.Context):
         support_link = "https://discord.gg/RrVY4bP"
         await ctx.send(support_link)
+
+    @commands.command(name="vote", help="Get bot list links to vote for Sparta")
+    async def vote(self, ctx: commands.Context):
+        top_gg_link = "https://top.gg/bot/731763013417435247"
+
+        vote_embed = discord.Embed(title="Vote for Sparta Bot", color=self.theme_color)
+
+        vote_embed.add_field(name="Vote every 12 hours", value=f"[Top.gg]({top_gg_link})")
+
+        await ctx.send(embed=vote_embed)
+
+    @commands.command(name="remind", aliases=["rem"], brief="Set a reminder", help="Set a reminder. Example: 1d 2h 12m 5s, make lunch (Note: all time options are not required)")
+    async def remind(self, ctx: commands.Context, *, options: str):
+        args = options.split(',')
+        remind_time_string = args[0]
+        reminder_msg = args[1].strip()
+
+        now = datetime.now()
+        start_of_month = datetime(year=now.year, month=now.month, day=1, hour=0, minute=0, second=0)
+        remind_time = str_time_to_datetime(remind_time_string)
+        total_seconds = (remind_time - start_of_month).total_seconds()
+
+        remind_time_string = remind_time.strftime(f"{remind_time.day - 1} days %-H hours %-M minutes %-S seconds")
+        await ctx.send(f"I will remind you in {remind_time_string} about:\n*{reminder_msg}*")
+
+        # TODO: Store reminders in DB until completed
+        await asyncio.create_task(self.reminder(ctx.author, total_seconds, reminder_msg, now))
 
 
 def setup(bot):
