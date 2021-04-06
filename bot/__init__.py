@@ -1,7 +1,9 @@
 import os
+
 import discord
 from discord.ext import commands
 from pretty_help import Navigation, PrettyHelp
+
 from bot.data import Data
 
 TOKEN = os.environ["SPARTA_TOKEN"]
@@ -14,7 +16,10 @@ intents.members = True
 def get_prefix(client, message):
     Data.check_guild_entry(message.guild)
 
-    Data.c.execute("SELECT prefix FROM guilds WHERE id = :guild_id", {"guild_id": message.guild.id})
+    Data.c.execute(
+        "SELECT prefix FROM guilds WHERE id = :guild_id",
+        {"guild_id": message.guild.id},
+    )
     prefix = Data.c.fetchone()[0]
 
     return prefix
@@ -25,7 +30,7 @@ bot = commands.Bot(
     description="I'm a cool moderation and automation bot to help you manage your server better...",
     intents=intents,
     case_insensitive=True,
-    help_command=PrettyHelp(navigation=Navigation(), color=THEME)
+    help_command=PrettyHelp(navigation=Navigation(), color=THEME),
 )
 
 
@@ -36,7 +41,9 @@ async def on_ready():
 
 
 def add_cogs():
-    cogs_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cogs")
+    cogs_dir = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "cogs"
+    )
     for filename in os.listdir(cogs_dir):
         if filename.endswith(".py") and filename != "__init__.py":
             bot.load_extension(f"bot.cogs.{filename[:-3]}")
