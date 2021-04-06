@@ -42,6 +42,11 @@ class Miscellaneous(commands.Cog):
         github_embed = discord.Embed(title="GitHub Repository", color=self.theme_color, url=github_link)
         await ctx.send(embed=github_embed)
 
+    @commands.command(name="support", help="Invite link for Sparta Support Server")
+    async def support(self, ctx: commands.Context):
+        support_link = "https://discord.gg/RrVY4bP"
+        await ctx.send(support_link)
+
 
 def setup(bot):
     bot.add_cog(Miscellaneous(bot))
