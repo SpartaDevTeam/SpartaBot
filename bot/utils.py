@@ -8,11 +8,13 @@ def get_time(key: str, string: str) -> int:  # CircuitSacul == pog (he made this
     if len(list(results)) < 1:
         return 0
     r = results[0]
-    r = r[1:0-len(key)]
+    r = r[1 : 0 - len(key)]
     return int(r)
 
 
-def str_time_to_datetime(time_string: str) -> datetime:  # CircuitSacul == pog (he made this)
+def str_time_to_datetime(
+    time_string: str,
+) -> datetime:  # CircuitSacul == pog (he made this)
     time_string = time_string.lower()
 
     days = get_time("d", time_string) + 1
@@ -21,7 +23,14 @@ def str_time_to_datetime(time_string: str) -> datetime:  # CircuitSacul == pog (
     seconds = get_time("s", time_string)
 
     now = datetime.now()
-    datetime_obj = datetime(year=now.year, month=now.month, day=days, hour=hours, minute=minutes, second=seconds)
+    datetime_obj = datetime(
+        year=now.year,
+        month=now.month,
+        day=days,
+        hour=hours,
+        minute=minutes,
+        second=seconds,
+    )
     return datetime_obj
 
 
