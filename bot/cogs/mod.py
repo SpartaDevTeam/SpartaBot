@@ -10,9 +10,7 @@ from bot.data import Data
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
-        self.description = (
-            "Commands to uphold the peace and integrity of the server"
-        )
+        self.description = "Commands to uphold the peace and integrity of the server"
         self.theme_color = discord.Color.purple()
         self.nuke_gifs = [
             "https://media1.tenor.com/images/3ddd966749079d6802bcea8dbcceb365/tenor.gif",
@@ -31,9 +29,7 @@ class Moderation(commands.Cog):
             reason="No existing mute role provided",
         )
 
-        guild_channels: list[
-            discord.abc.GuildChannel
-        ] = await guild.fetch_channels()
+        guild_channels: list[discord.abc.GuildChannel] = await guild.fetch_channels()
 
         # Set permissions for channels
         for channel in guild_channels:
@@ -77,9 +73,7 @@ class Moderation(commands.Cog):
         help="Warn a member for doing something they weren't supposed to",
     )
     @commands.has_guild_permissions(administrator=True)
-    async def warn(
-        self, ctx: commands.Context, member: discord.Member, *, reason: str
-    ):
+    async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -107,9 +101,7 @@ class Moderation(commands.Cog):
         help="See all the times a person has been warned",
     )
     @commands.has_guild_permissions(administrator=True)
-    async def infractions(
-        self, ctx: commands.Context, member: discord.Member = None
-    ):
+    async def infractions(self, ctx: commands.Context, member: discord.Member = None):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -128,9 +120,7 @@ class Moderation(commands.Cog):
             ]
             embed_title = f"Infractions by {member} in {ctx.guild.name}"
 
-        infractions_embed = discord.Embed(
-            title=embed_title, color=self.theme_color
-        )
+        infractions_embed = discord.Embed(title=embed_title, color=self.theme_color)
 
         for infrac in infracs:
             if member:
@@ -185,35 +175,25 @@ class Moderation(commands.Cog):
             )
             Data.conn.commit()
 
-            await ctx.send(
-                f"Cleared all infractions by **{member}** in this server..."
-            )
+            await ctx.send(f"Cleared all infractions by **{member}** in this server...")
 
-    @commands.command(
-        name="mute", help="Prevent someone from sending messages"
-    )
+    @commands.command(name="mute", help="Prevent someone from sending messages")
     @commands.has_guild_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member):
         mute_role = await self.get_guild_mute_role(ctx.guild)
         await member.add_roles(mute_role)
         await ctx.send(f"**{member}** can no longer speak")
 
-    @commands.command(
-        name="unmute", help="Return the ability to talk to someone"
-    )
+    @commands.command(name="unmute", help="Return the ability to talk to someone")
     @commands.has_guild_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member):
         mute_role = await self.get_guild_mute_role(ctx.guild)
         await member.remove_roles(mute_role)
         await ctx.send(f"**{member}** can speak now")
 
-    @commands.command(
-        name="ban", help="Permanently remove a person from the server"
-    )
+    @commands.command(name="ban", help="Permanently remove a person from the server")
     @commands.has_guild_permissions(ban_members=True)
-    async def ban(
-        self, ctx: commands.Context, member: discord.Member, *, reason=None
-    ):
+    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
         await ctx.guild.ban(member, reason=reason, delete_message_days=0)
         await ctx.send(f"**{member}** has been banned from this server")
         await member.send(f"You have been banned from **{ctx.guild.name}**")
@@ -222,9 +202,7 @@ class Moderation(commands.Cog):
     @commands.has_guild_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, username: str):
         if username[-5] != "#":
-            await ctx.send(
-                "Please give a username in this format: *username#0000*"
-            )
+            await ctx.send("Please give a username in this format: *username#0000*")
             return
 
         name = username[:-5]  # first character to 6th last character
@@ -235,18 +213,13 @@ class Moderation(commands.Cog):
         for ban_entry in guild_bans:
             banned_user: discord.User = ban_entry.user
 
-            if (
-                banned_user.name == name
-                and banned_user.discriminator == discriminator
-            ):
+            if banned_user.name == name and banned_user.discriminator == discriminator:
                 user_to_unban = banned_user
                 break
 
         if user_to_unban:
             await ctx.guild.unban(user_to_unban)
-            await ctx.send(
-                f"**{user_to_unban}** has been unbanned from this server"
-            )
+            await ctx.send(f"**{user_to_unban}** has been unbanned from this server")
             await user_to_unban.send(
                 f"You have been unbanned from **{ctx.guild.name}**"
             )
@@ -255,9 +228,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="kick", help="Remove a person from the server")
     @commands.has_guild_permissions(kick_members=True)
-    async def kick(
-        self, ctx: commands.Context, member: discord.Member, *, reason=None
-    ):
+    async def kick(self, ctx: commands.Context, member: discord.Member, *, reason=None):
         await ctx.guild.kick(member, reason=reason)
         await ctx.send(f"**{member}** has been kicked from this server")
         await member.send(f"You have been kicked from **{ctx.guild.name}**")
@@ -296,9 +267,7 @@ class Moderation(commands.Cog):
         await ch.edit(sync_permissions=True)
         await ctx.send(f":unlock: {ch.mention} has been unlocked")
 
-    @commands.command(
-        name="slowmode", help="Add slowmode delay on the current channel"
-    )
+    @commands.command(name="slowmode", help="Add slowmode delay on the current channel")
     @commands.has_guild_permissions(manage_channels=True)
     async def slowmode(self, ctx: commands.Context, time: int):
         await ctx.channel.edit(slowmode_delay=time)
@@ -325,13 +294,9 @@ class Moderation(commands.Cog):
         temp_msg = await ctx.send(f"Cleared {message_count} message(s)")
         await temp_msg.delete(delay=5)
 
-    @commands.command(
-        name="nuke", help="Clear all messages at once in a channel"
-    )
+    @commands.command(name="nuke", help="Clear all messages at once in a channel")
     @commands.has_guild_permissions(administrator=True)
-    async def nuke(
-        self, ctx: commands.Context, channel: discord.TextChannel = None
-    ):
+    async def nuke(self, ctx: commands.Context, channel: discord.TextChannel = None):
         if channel:
             ch = channel
         else:

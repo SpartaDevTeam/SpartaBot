@@ -35,8 +35,7 @@ class AutoMod(commands.Cog):
 
         def check(message: discord.Message):
             return (
-                message.channel == ctx.channel
-                and message.author == ctx.message.author
+                message.channel == ctx.channel and message.author == ctx.message.author
             )
 
         def save():
@@ -107,9 +106,7 @@ class AutoMod(commands.Cog):
             return (
                 (msg.author == message.author)
                 and (len(msg.mentions))
-                and (
-                    (datetime.datetime.utcnow() - msg.created_at).seconds < 30
-                )
+                and ((datetime.datetime.utcnow() - msg.created_at).seconds < 30)
             )
 
         Data.check_guild_entry(message.guild)
@@ -141,13 +138,7 @@ class AutoMod(commands.Cog):
         # if channel id's data contains "spam":
         if "images" in activated_features:
             if (
-                len(
-                    list(
-                        filter(
-                            lambda m: spam_check(m), self.bot.cached_messages
-                        )
-                    )
-                )
+                len(list(filter(lambda m: spam_check(m), self.bot.cached_messages)))
                 >= 5
             ):
                 await message.channel.send(

@@ -5,9 +5,7 @@ from discord.ext import commands
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
-        self.description = (
-            "Some commands to do general tasks"
-        )
+        self.description = "Some commands to do general tasks"
         self.theme_color = discord.Color.purple()
 
     @commands.command(name="info", help="Display bot information")
@@ -24,12 +22,8 @@ class Miscellaneous(commands.Cog):
         )
         info_embed.set_thumbnail(url=self.bot.user.avatar_url)
 
-        info_embed.add_field(
-            name="Latency/Ping", value=f"{ping}ms", inline=False
-        )
-        info_embed.add_field(
-            name="Server Count", value=guild_count, inline=False
-        )
+        info_embed.add_field(name="Latency/Ping", value=f"{ping}ms", inline=False)
+        info_embed.add_field(name="Server Count", value=guild_count, inline=False)
         info_embed.add_field(
             name="Total Member Count",
             value=str(total_member_count),
@@ -63,9 +57,7 @@ class Miscellaneous(commands.Cog):
         )
         await ctx.send(embed=github_embed)
 
-    @commands.command(
-        name="support", help="Invite link for Sparta Support Server"
-    )
+    @commands.command(name="support", help="Invite link for Sparta Support Server")
     async def support(self, ctx: commands.Context):
         support_link = "https://discord.gg/RrVY4bP"
         await ctx.send(support_link)
