@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import humanize
 from discord.ext import commands
 from datetime import datetime
 
@@ -20,9 +21,9 @@ class Miscellaneous(commands.Cog):
         reminder_start_time: datetime,
     ):
         await asyncio.sleep(seconds)
-        rem_start_time_str = reminder_start_time.strftime("%-d %B %Y, %-I:%M %p")
+        rem_start_time_str = humanize.naturaltime(reminder_start_time, datetime.now())
         await user.send(
-            f"You asked me to remind you on {rem_start_time_str} about:\n*{reminder_msg}*"
+            f"You asked me to remind you {rem_start_time_str} about:\n*{reminder_msg}*"
         )
 
     @commands.command(name="info", help="Display bot information")
@@ -103,22 +104,17 @@ class Miscellaneous(commands.Cog):
         reminder_msg = args[1].strip()
 
         now = datetime.now()
-        start_of_month = datetime(
-            year=now.year, month=now.month, day=1, hour=0, minute=0, second=0
-        )
         remind_time = str_time_to_datetime(remind_time_string)
-        total_seconds = (remind_time - start_of_month).total_seconds()
 
-        remind_time_string = remind_time.strftime(
-            f"{remind_time.day - 1} days %-H hours %-M minutes %-S seconds"
-        )
+        time_to_end = humanize.naturaldelta(remind_time)
+
         await ctx.send(
-            f"I will remind you in {remind_time_string} about:\n*{reminder_msg}*"
+            f"I will remind you in {time_to_end} about:\n*{reminder_msg}*"
         )
 
         # TODO: Store reminders in DB until completed
         await asyncio.create_task(
-            self.reminder(ctx.author, total_seconds, reminder_msg, now)
+            self.reminder(ctx.author, remind_time.total_seconds(), reminder_msg, now)
         )
 
 
