@@ -6,7 +6,7 @@ from bot.data import Data
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.description = "Commands to uphold the peace and integrity of the server"
         self.theme_color = discord.Color.purple()
 

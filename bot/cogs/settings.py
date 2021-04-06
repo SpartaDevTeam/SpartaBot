@@ -5,7 +5,7 @@ from bot.data import Data
 
 class Settings(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.description = "Commands to change Sparta settings for the current server"
         self.theme_color = discord.Color.purple()
 

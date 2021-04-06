@@ -9,7 +9,7 @@ from bot.data import Data
 
 class Fun(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.description = "Commands to have some fun and relieve stress (or induce it)"
         self.theme_color = discord.Color.purple()
         self.eight_ball_responses = [

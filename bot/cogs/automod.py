@@ -8,7 +8,7 @@ from bot.data import Data
 
 class AutoMod(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.description = "Commands to setup Auto-Mod in Sparta"
         self.theme_color = discord.Colour.purple()
         self.url_regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<" \

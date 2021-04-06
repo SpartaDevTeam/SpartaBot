@@ -5,7 +5,7 @@ from bot.data import Data
 
 class WelcomeLeave(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.theme_color = discord.Color.purple()
         self.default_welcome_msg = lambda guild: f"Hello [mention], welcome to {guild.name}!"
         self.default_leave_msg = lambda guild: f"Goodbye [member], thanks for staying at {guild.name}!"
