@@ -5,8 +5,10 @@ from discord.ext import commands
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
+        self.description = (
+            "Some commands to do general tasks"
+        )
         self.theme_color = discord.Color.purple()
-        self.description = "Some commands to do general tasks"
 
     @commands.command(name="info", help="Display bot information")
     async def info(self, ctx: commands.Context):
