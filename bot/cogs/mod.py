@@ -1,5 +1,5 @@
 import json
-import asyncio
+import random
 import discord
 from discord.ext import commands
 from bot.data import Data
@@ -251,7 +251,7 @@ class Moderation(commands.Cog):
         await new_ch.edit(reason=reason, position=ch_pos)
 
         nuke_embed = discord.Embed(title=reason, color=self.theme_color)
-        nuke_embed.set_image(url="https://tenor.com/view/pepe-nuke-apocalypse-meme-gif-9579985")
+        nuke_embed.set_image(url=random.choice(self.nuke_gifs))
 
         await new_ch.send(embed=nuke_embed)
 
