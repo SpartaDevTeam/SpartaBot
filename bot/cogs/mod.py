@@ -11,9 +11,9 @@ class Moderation(commands.Cog):
         self.description = "Commands to uphold the peace and integrity of the server"
         self.theme_color = discord.Color.purple()
         self.nuke_gifs = [
-            "https://tenor.com/view/pepe-nuke-apocalypse-meme-gif-9579985",
-            "https://tenor.com/view/bites-za-dusto-jojo-killer-queen-jojo-jojos-bizarre-adventure-bites-za-dusto-killer-queen-gif-16070616",
-            "https://tenor.com/view/nuke-bomb-deaf-dool-explode-gif-14424973"
+            "https://media1.tenor.com/images/3ddd966749079d6802bcea8dbcceb365/tenor.gif",
+            "https://media1.tenor.com/images/403968cd056f0d0bfb5cce75e131b4d4/tenor.gif",
+            "https://media1.tenor.com/images/1daf50232c9eda10459560e8c1e532ea/tenor.gif"
         ]
 
     async def create_mute_role(self, guild: discord.Guild):
