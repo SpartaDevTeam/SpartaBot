@@ -36,6 +36,12 @@ class Miscellaneous(commands.Cog):
         await ctx.send(embed=invite_embed)
         await ctx.send(embed=beta_invite_embed)
 
+    @commands.command(name="github", help="Link to the GitHub Repository")
+    async def github(self, ctx: commands.Context):
+        github_link = "https://github.com/SpartaDevTeam/SpartaBot"
+        github_embed = discord.Embed(title="GitHub Repository", color=self.theme_color, url=github_link)
+        await ctx.send(embed=github_embed)
+
 
 def setup(bot):
     bot.add_cog(Miscellaneous(bot))
