@@ -1,3 +1,4 @@
+import asyncio
 import random
 import string
 
@@ -50,6 +51,74 @@ class Fun(commands.Cog):
             "?": ":question:",
             "*": ":asterisk:",
         }
+
+        self.emoji_numbers = {
+            1: "1️⃣",
+            2: "2️⃣",
+            3: "3️⃣",
+            4: "4️⃣",
+            5: "5️⃣",
+            6: "6️⃣",
+            7: "7️⃣",
+            8: "8️⃣",
+            9: "9️⃣",
+        }
+
+    @commands.command(
+        name="poll", help="Makes a poll!"
+    )
+    async def make_poll(
+        self, ctx, length: int, *, poll: str
+    ):
+        """Usage: poll time description | option 1 | option 2
+        Example: poll 30 Cats or Dogs? | Dogs | Cats
+        """
+        split = poll.split("|")
+        description = split.pop(0)
+
+        if length < 5:
+            await ctx.send("The poll must last at least 5 seconds.")
+            return
+        if length > 120:
+            await ctx.send("The poll must last less than 120 seconds.")
+            return
+        if len(split) > 9:
+            await ctx.send("You can only have up to 9 options.")
+            return
+
+        options = [
+            f"{self.emoji_numbers[i+1]} {t}\n"
+            for i, t in enumerate(split)
+        ]
+
+        embed = discord.Embed(
+            title=description,
+            description=(
+                "".join(options)
+            ),
+            color=self.theme_color
+        ).set_author(
+            name=str(ctx.author),
+            icon_url=ctx.author.avatar_url
+        )
+        m: discord.Message = await ctx.send(embed=embed)
+
+        for i in range(len(options)):
+            await m.add_reaction(self.emoji_numbers[i+1])
+
+        await asyncio.sleep(length)
+
+        m = await ctx.channel.fetch_message(m.id)
+
+        results = []
+
+        for r in m.reactions:
+            results.append((r.emoji, r.count))
+
+        results.sort(key=lambda t: t[1], reverse=True)
+
+        embed = embed.add_field(name="Result", value=results[0][0])
+        await m.edit(embed=embed)
 
     @commands.command(
         name="coinflip", aliases=["coin", "flip"], help="Flip a coin!"
