@@ -16,12 +16,22 @@ class Miscellaneous(commands.Cog):
         for guild in self.bot.guilds:
             total_member_count += guild.member_count
 
-        info_embed = discord.Embed(title="Sparta Bot Information", color=self.theme_color)
+        info_embed = discord.Embed(
+            title="Sparta Bot Information", color=self.theme_color
+        )
         info_embed.set_thumbnail(url=self.bot.user.avatar_url)
 
-        info_embed.add_field(name="Latency/Ping", value=f"{ping}ms", inline=False)
-        info_embed.add_field(name="Server Count", value=guild_count, inline=False)
-        info_embed.add_field(name="Total Member Count", value=str(total_member_count), inline=False)
+        info_embed.add_field(
+            name="Latency/Ping", value=f"{ping}ms", inline=False
+        )
+        info_embed.add_field(
+            name="Server Count", value=guild_count, inline=False
+        )
+        info_embed.add_field(
+            name="Total Member Count",
+            value=str(total_member_count),
+            inline=False,
+        )
 
         await ctx.send(embed=info_embed)
 
@@ -30,8 +40,14 @@ class Miscellaneous(commands.Cog):
         invite_url = "https://discord.com/oauth2/authorize?client_id=731763013417435247&scope=bot&permissions=403176703"
         beta_invite_url = "https://discord.com/api/oauth2/authorize?client_id=775798822844629013&permissions=8&scope=bot"
 
-        invite_embed = discord.Embed(title="Sparta Invite", color=self.theme_color, url=invite_url)
-        beta_invite_embed = discord.Embed(title="Sparta Beta Invite", color=self.theme_color, url=beta_invite_url)
+        invite_embed = discord.Embed(
+            title="Sparta Invite", color=self.theme_color, url=invite_url
+        )
+        beta_invite_embed = discord.Embed(
+            title="Sparta Beta Invite",
+            color=self.theme_color,
+            url=beta_invite_url,
+        )
 
         await ctx.send(embed=invite_embed)
         await ctx.send(embed=beta_invite_embed)
@@ -39,10 +55,14 @@ class Miscellaneous(commands.Cog):
     @commands.command(name="github", help="Link to the GitHub Repository")
     async def github(self, ctx: commands.Context):
         github_link = "https://github.com/SpartaDevTeam/SpartaBot"
-        github_embed = discord.Embed(title="GitHub Repository", color=self.theme_color, url=github_link)
+        github_embed = discord.Embed(
+            title="GitHub Repository", color=self.theme_color, url=github_link
+        )
         await ctx.send(embed=github_embed)
 
-    @commands.command(name="support", help="Invite link for Sparta Support Server")
+    @commands.command(
+        name="support", help="Invite link for Sparta Support Server"
+    )
     async def support(self, ctx: commands.Context):
         support_link = "https://discord.gg/RrVY4bP"
         await ctx.send(support_link)
