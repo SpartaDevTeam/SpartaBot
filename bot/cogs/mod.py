@@ -1,4 +1,5 @@
 import json
+import asyncio
 import discord
 from discord.ext import commands
 from bot.data import Data
@@ -217,6 +218,37 @@ class Moderation(commands.Cog):
             await ctx.send(f"Added a slowmode delay of **{time} seconds**")
         else:
             await ctx.send("Slowmode has been disabled")
+
+    @commands.command(name="clear", help="Clear messages in a channel")
+    @commands.has_guild_permissions(manage_messages=True)
+    async def clear(self, ctx: commands.Context, message_count: int, channel: discord.TextChannel = None):
+        if channel:
+            ch = channel
+        else:
+            ch = ctx.channel
+
+        await ch.purge(limit=message_count + 1)
+        temp_msg = await ctx.send(f"Cleared {message_count} message(s)")
+        await temp_msg.delete(delay=5)
+
+    @commands.command(name="nuke", help="Clear all messages at once in a channel")
+    @commands.has_guild_permissions(administrator=True)
+    async def nuke(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        if channel:
+            ch = channel
+        else:
+            ch = ctx.channel
+
+        reason = f"Channel Nuke by {ctx.author}"
+        ch_pos = ch.position
+        new_ch = await ch.clone(reason=reason)
+        await ch.delete(reason=reason)
+        await new_ch.edit(reason=reason, position=ch_pos)
+
+        nuke_embed = discord.Embed(title=reason, color=self.theme_color)
+        nuke_embed.set_image(url="https://tenor.com/view/pepe-nuke-apocalypse-meme-gif-9579985")
+
+        await new_ch.send(embed=nuke_embed)
 
 
 def setup(bot):
