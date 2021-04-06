@@ -10,6 +10,11 @@ class Moderation(commands.Cog):
         self.bot: commands.Bot = bot
         self.description = "Commands to uphold the peace and integrity of the server"
         self.theme_color = discord.Color.purple()
+        self.nuke_gifs = [
+            "https://tenor.com/view/pepe-nuke-apocalypse-meme-gif-9579985",
+            "https://tenor.com/view/bites-za-dusto-jojo-killer-queen-jojo-jojos-bizarre-adventure-bites-za-dusto-killer-queen-gif-16070616",
+            "https://tenor.com/view/nuke-bomb-deaf-dool-explode-gif-14424973"
+        ]
 
     async def create_mute_role(self, guild: discord.Guild):
         print(f"Creating new mute role for server {guild.name}")
