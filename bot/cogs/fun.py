@@ -65,7 +65,7 @@ class Fun(commands.Cog):
         }
 
     @commands.command(
-        name="poll", help="Makes a poll!"
+        name="poll", brief="Makes a poll!"
     )
     async def make_poll(
         self, ctx, length: int, *, poll: str
