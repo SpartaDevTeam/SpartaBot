@@ -74,7 +74,7 @@ class Data:
         print(f"Created webhook entry for channel with ID {channel.id}")
 
     @classmethod
-    def webhook_entry_exists(cls, channel) -> list or bool:
+    def webhook_entry_exists(cls, channel) -> str or bool:
         cls.c.execute(
             "SELECT webhook_url FROM webhooks WHERE channel_id = :channel_id",
             {"channel_id": channel.id},
