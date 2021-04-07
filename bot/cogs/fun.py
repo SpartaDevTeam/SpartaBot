@@ -175,6 +175,7 @@ class Fun(commands.Cog):
     )
     async def emojify(self, ctx: commands.Context, *, sentence: str):
         emojified_sentence = ""
+        sentence = sentence.lower()
 
         for char in sentence:
             char_lower = char.lower()
