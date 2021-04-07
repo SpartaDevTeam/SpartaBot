@@ -15,11 +15,24 @@ class WelcomeLeave(commands.Cog):
             lambda guild: f"Goodbye [member], thanks for staying at {guild.name}!"
         )
 
-    async def find_welcome_channel(self, guild: discord.Guild):
+    async def find_welcome_channel(
+        self, guild: discord.Guild
+    ) -> discord.TextChannel or None:
         channels: list[discord.TextChannel] = await guild.fetch_channels()
 
         for channel in channels:
             if "welcome" in channel.name:
+                return channel
+
+        return None
+
+    async def find_leave_channel(
+        self, guild: discord.Guild
+    ) -> discord.TextChannel or None:
+        channels: list[discord.TextChannel] = await guild.fetch_channels()
+
+        for channel in channels:
+            if "bye" in channel.name:
                 return channel
 
         return None
@@ -42,7 +55,10 @@ class WelcomeLeave(commands.Cog):
             return
 
         welcome_channel = guild.get_channel(int(welcome_channel_id))
-        auto_role = guild.get_role(int(data[2]))
+        if data[2]:
+            auto_role = guild.get_role(int(data[2]))
+        else:
+            auto_role = None
 
         if not welcome_message:
             welcome_message = self.default_welcome_msg(guild)
@@ -61,7 +77,7 @@ class WelcomeLeave(commands.Cog):
         await welcome_channel.send(welcome_message)
 
         # Give auto role to new member if they are not a bot
-        if not member.bot:
+        if not member.bot and auto_role:
             await member.add_roles(auto_role)
 
     @commands.Cog.listener()
@@ -86,7 +102,7 @@ class WelcomeLeave(commands.Cog):
             leave_message = self.default_leave_msg(guild)
 
         if not leave_channel:
-            leave_channel = await self.find_welcome_channel(guild)
+            leave_channel = await self.find_leave_channel(guild)
 
             # Exit the function if no leave channel is provided or automatically found
             if not leave_channel:

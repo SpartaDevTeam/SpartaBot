@@ -33,6 +33,13 @@ class Data:
         )"""
         )
 
+        cls.c.execute(
+            """CREATE TABLE IF NOT EXISTS "afks" (
+            "user_id"	INTEGER,
+            "afk_reason"	TEXT
+        )"""
+        )
+
         cls.conn.commit()
 
     # Guild Data
@@ -67,7 +74,7 @@ class Data:
         print(f"Created webhook entry for channel with ID {channel.id}")
 
     @classmethod
-    def webhook_entry_exists(cls, channel) -> list or bool:
+    def webhook_entry_exists(cls, channel) -> str or bool:
         cls.c.execute(
             "SELECT webhook_url FROM webhooks WHERE channel_id = :channel_id",
             {"channel_id": channel.id},
@@ -78,3 +85,27 @@ class Data:
             return webhook_data[0]
 
         return False
+
+    # AFK Data
+    @classmethod
+    def create_new_afk_data(cls, user, afk_reason):
+        cls.c.execute(
+            "INSERT INTO afks VALUES (:user_id, :afk_reason)",
+            {"user_id": user.id, "afk_reason": afk_reason},
+        )
+        cls.conn.commit()
+        print(f"Created AFK entry for user {user}")
+
+    @classmethod
+    def delete_afk_data(cls, user):
+        cls.c.execute("DELETE FROM afks WHERE user_id = :user_id", {"user_id": user.id})
+        cls.conn.commit()
+        print(f"Deleted AFK entry for user {user}")
+
+    @classmethod
+    def afk_entry_exists(cls, user) -> bool:
+        cls.c.execute(
+            "SELECT afk_reason FROM afks WHERE user_id = :user_id", {"user_id": user.id}
+        )
+        afk_data = cls.c.fetchone()
+        return afk_data is not None

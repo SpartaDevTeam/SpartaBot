@@ -4,6 +4,7 @@ import humanize
 from discord.ext import commands
 from datetime import datetime
 
+from bot.data import Data
 from bot.utils import str_time_to_datetime
 
 
@@ -21,9 +22,7 @@ class Miscellaneous(commands.Cog):
         reminder_start_time: datetime,
     ):
         await asyncio.sleep(seconds)
-        rem_start_time_str = humanize.naturaltime(
-            reminder_start_time, datetime.now()
-        )
+        rem_start_time_str = humanize.naturaltime(reminder_start_time)
         await user.send(
             f"You asked me to remind you {rem_start_time_str} about:\n*{reminder_msg}*"
         )
@@ -110,14 +109,29 @@ class Miscellaneous(commands.Cog):
 
         time_to_end = humanize.precisedelta(remind_time, format="%0")
 
-        await ctx.send(
-            f"I will remind you in {time_to_end} about:\n*{reminder_msg}*"
-        )
+        await ctx.send(f"I will remind you in {time_to_end} about:\n*{reminder_msg}*")
 
         # TODO: Store reminders in DB until completed
         await asyncio.create_task(
             self.reminder(ctx.author, remind_time.total_seconds(), reminder_msg, now)
         )
+
+    @commands.command(
+        name="afk", help="Lets others know that you are AFK when someone mentions you"
+    )
+    async def afk(self, ctx: commands.Context, *, reason: str):
+        already_afk = Data.afk_entry_exists(ctx.author)
+
+        if already_afk:
+            Data.c.execute(
+                "UPDATE afks SET afk_reason = :new_reason WHERE user_id = :user_id",
+                {"new_reason": reason, "user_id": ctx.author.id},
+            )
+        else:
+            Data.create_new_afk_data(ctx.author, reason)
+
+        Data.conn.commit()
+        await ctx.send(f"You have been AFK'd for the following reason:\n*{reason}*")
 
 
 def setup(bot):
