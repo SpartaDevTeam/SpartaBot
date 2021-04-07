@@ -20,7 +20,9 @@ class AFK(commands.Cog):
 
         for afk in afks:
             guild_prefix = get_prefix(self.bot, message)
-            if int(afk[0]) == message.author.id and not message.content.startswith(
+            if int(
+                afk[0]
+            ) == message.author.id and not message.content.startswith(
                 guild_prefix
             ):
                 await message.channel.send(

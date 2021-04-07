@@ -7,7 +7,9 @@ from bot.data import Data
 class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
-        self.description = "Commands to change Sparta settings for the current server"
+        self.description = (
+            "Commands to change Sparta settings for the current server"
+        )
         self.theme_color = discord.Color.purple()
 
     @commands.command(
@@ -34,7 +36,9 @@ class Settings(commands.Cog):
         help="Change the welcome message of the current server. Use [mention] to mention the new member and [member] to display their username.",
     )
     @commands.has_guild_permissions(administrator=True)
-    async def set_welcome_message(self, ctx: commands.Context, *, message: str = None):
+    async def set_welcome_message(
+        self, ctx: commands.Context, *, message: str = None
+    ):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -44,9 +48,13 @@ class Settings(commands.Cog):
         Data.conn.commit()
 
         if message:
-            await ctx.send(f"This server's welcome message has been set to:\n{message}")
+            await ctx.send(
+                f"This server's welcome message has been set to:\n{message}"
+            )
         else:
-            await ctx.send("This server's welcome message has been reset to default")
+            await ctx.send(
+                "This server's welcome message has been reset to default"
+            )
 
     @commands.command(
         name="setleavemessage",
@@ -55,7 +63,9 @@ class Settings(commands.Cog):
         help="Change the leave message of the current server. Use [mention] to mention the new member and [member] to display their username.",
     )
     @commands.has_guild_permissions(administrator=True)
-    async def set_leave_message(self, ctx: commands.Context, *, message: str = None):
+    async def set_leave_message(
+        self, ctx: commands.Context, *, message: str = None
+    ):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -65,9 +75,13 @@ class Settings(commands.Cog):
         Data.conn.commit()
 
         if message:
-            await ctx.send(f"This server's leave message has been set to:\n{message}")
+            await ctx.send(
+                f"This server's leave message has been set to:\n{message}"
+            )
         else:
-            await ctx.send("This server's leave message has been reset to default")
+            await ctx.send(
+                "This server's leave message has been reset to default"
+            )
 
     @commands.command(
         name="setwelcomechannel",
@@ -151,7 +165,9 @@ class Settings(commands.Cog):
     )
     async def server_info(self, ctx):
         guild: discord.Guild = ctx.guild
-        human_count = len([member for member in guild.members if not member.bot])
+        human_count = len(
+            [member for member in guild.members if not member.bot]
+        )
         bot_count = guild.member_count - human_count
 
         si_embed = discord.Embed(
@@ -159,13 +175,21 @@ class Settings(commands.Cog):
         )
         si_embed.set_thumbnail(url=guild.icon_url)
 
-        si_embed.add_field(name="Human Members", value=str(human_count), inline=False)
-        si_embed.add_field(name="Bot Members", value=str(bot_count), inline=False)
+        si_embed.add_field(
+            name="Human Members", value=str(human_count), inline=False
+        )
+        si_embed.add_field(
+            name="Bot Members", value=str(bot_count), inline=False
+        )
         si_embed.add_field(
             name="Total Members", value=str(guild.member_count), inline=False
         )
-        si_embed.add_field(name="Role Count", value=str(len(guild.roles)), inline=False)
-        si_embed.add_field(name="Server Owner", value=str(guild.owner), inline=False)
+        si_embed.add_field(
+            name="Role Count", value=str(len(guild.roles)), inline=False
+        )
+        si_embed.add_field(
+            name="Server Owner", value=str(guild.owner), inline=False
+        )
         si_embed.add_field(name="Server ID", value=guild.id, inline=False)
         si_embed.add_field(
             name="Server Region", value=str(guild.region).title(), inline=False
@@ -178,7 +202,9 @@ class Settings(commands.Cog):
         aliases=["mi", "ui"],
         help="Get general information about a member",
     )
-    async def member_info(self, ctx: commands.Context, member: discord.Member = None):
+    async def member_info(
+        self, ctx: commands.Context, member: discord.Member = None
+    ):
         if member:
             m = member
         else:
@@ -188,14 +214,22 @@ class Settings(commands.Cog):
         created_at = m.created_at.strftime(time_format)
         joined_at = m.joined_at.strftime(time_format)
 
-        mi_embed = discord.Embed(title=f"{m} Information", color=self.theme_color)
+        mi_embed = discord.Embed(
+            title=f"{m} Information", color=self.theme_color
+        )
         mi_embed.set_thumbnail(url=m.avatar_url)
 
         mi_embed.add_field(name="Member ID", value=m.id, inline=False)
-        mi_embed.add_field(name="Joined Discord", value=created_at, inline=False)
+        mi_embed.add_field(
+            name="Joined Discord", value=created_at, inline=False
+        )
         mi_embed.add_field(name="Joined Server", value=joined_at, inline=False)
-        mi_embed.add_field(name="Highest Role", value=m.top_role.mention, inline=False)
-        mi_embed.add_field(name="Bot?", value="Yes" if m.bot else "No", inline=False)
+        mi_embed.add_field(
+            name="Highest Role", value=m.top_role.mention, inline=False
+        )
+        mi_embed.add_field(
+            name="Bot?", value="Yes" if m.bot else "No", inline=False
+        )
 
         await ctx.send(embed=mi_embed)
 

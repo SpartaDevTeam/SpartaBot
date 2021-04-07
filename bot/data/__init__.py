@@ -47,7 +47,9 @@ class Data:
     def create_new_guild_data(cls, guild):
         # TODO: change prefix to "s!" after rewrite
         cls.c.execute(
-            "INSERT INTO guilds VALUES (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 'sb!')",
+            """INSERT INTO guilds VALUES
+            (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 'sb!')
+            """,
             {"guild_id": guild.id},
         )
         cls.conn.commit()
@@ -98,14 +100,17 @@ class Data:
 
     @classmethod
     def delete_afk_data(cls, user):
-        cls.c.execute("DELETE FROM afks WHERE user_id = :user_id", {"user_id": user.id})
+        cls.c.execute(
+            "DELETE FROM afks WHERE user_id = :user_id", {"user_id": user.id}
+        )
         cls.conn.commit()
         print(f"Deleted AFK entry for user {user}")
 
     @classmethod
     def afk_entry_exists(cls, user) -> bool:
         cls.c.execute(
-            "SELECT afk_reason FROM afks WHERE user_id = :user_id", {"user_id": user.id}
+            "SELECT afk_reason FROM afks WHERE user_id = :user_id",
+            {"user_id": user.id},
         )
         afk_data = cls.c.fetchone()
         return afk_data is not None

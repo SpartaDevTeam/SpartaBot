@@ -12,7 +12,10 @@ class WelcomeLeave(commands.Cog):
             lambda guild: f"Hello [mention], welcome to {guild.name}!"
         )
         self.default_leave_msg = (
-            lambda guild: f"Goodbye [member], thanks for staying at {guild.name}!"
+            lambda guild: (
+                "Goodbye [member], "
+                f"thanks for staying at {guild.name}!"
+            )
         )
 
     async def find_welcome_channel(
@@ -43,7 +46,8 @@ class WelcomeLeave(commands.Cog):
         Data.check_guild_entry(guild)
 
         Data.c.execute(
-            "SELECT welcome_message, welcome_channel, auto_role FROM guilds WHERE id = :guild_id",
+            """SELECT welcome_message, welcome_channel, auto_role
+            FROM guilds WHERE id = :guild_id""",
             {"guild_id": guild.id},
         )
         data = Data.c.fetchone()
@@ -66,7 +70,8 @@ class WelcomeLeave(commands.Cog):
         if not welcome_channel:
             welcome_channel = await self.find_welcome_channel(guild)
 
-            # Exit the function if no welcome channel is provided or automatically found
+            # Exit the function if no welcome channel is provided or
+            # automatically found
             if not welcome_channel:
                 return
 
@@ -86,7 +91,8 @@ class WelcomeLeave(commands.Cog):
         Data.check_guild_entry(guild)
 
         Data.c.execute(
-            "SELECT leave_message, leave_channel FROM guilds WHERE id = :guild_id",
+            """SELECT leave_message, leave_channel FROM guilds
+            WHERE id = :guild_id""",
             {"guild_id": guild.id},
         )
         data = Data.c.fetchone()
@@ -104,7 +110,8 @@ class WelcomeLeave(commands.Cog):
         if not leave_channel:
             leave_channel = await self.find_leave_channel(guild)
 
-            # Exit the function if no leave channel is provided or automatically found
+            # Exit the function if no leave channel is provided or
+            # automatically found
             if not leave_channel:
                 return
 

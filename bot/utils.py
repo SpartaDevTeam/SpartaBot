@@ -2,7 +2,9 @@ import re
 from datetime import timedelta
 
 
-def get_time(key: str, string: str) -> int:  # CircuitSacul == pog (he made this)
+def get_time(
+    key: str, string: str
+) -> int:  # CircuitSacul == pog (he made this)
     string = f" {string} "
     results = re.findall(f" [0-9]+{key}", string)
     if len(list(results)) < 1:

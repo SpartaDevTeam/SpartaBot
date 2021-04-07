@@ -14,8 +14,10 @@ class AutoMod(commands.Cog):
         self.description = "Commands to setup Auto-Mod in Sparta"
         self.theme_color = discord.Colour.purple()
         self.url_regex = (
-            r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<"
-            r">]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+            r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.]"
+            r"[a-z]{2,4}/)("r"?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<"
+            r">]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^"
+            r"\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
         )
 
     @commands.command(
@@ -35,12 +37,14 @@ class AutoMod(commands.Cog):
 
         def check(message: discord.Message):
             return (
-                message.channel == ctx.channel and message.author == ctx.message.author
+                message.channel == ctx.channel
+                and message.author == ctx.message.author
             )
 
         def save():
             Data.c.execute(
-                "UPDATE guilds SET activated_automod = :new_activated_features WHERE id = :guild_id",
+                """"UPDATE guilds SET activated_automod = :new_activated_features
+                WHERE id = :guild_id""",
                 {
                     "new_activated_features": json.dumps(activated_features),
                     "guild_id": ctx.guild.id,
@@ -50,7 +54,10 @@ class AutoMod(commands.Cog):
 
         mod_embed = discord.Embed(
             title="Auto-Mod",
-            description="Allow Sparta to administrate on its own. Reply with a particular feature.",
+            description=(
+                "Allow Sparta to administrate on its own. "
+                "Reply with a particular feature."
+            ),
             color=self.theme_color,
         )
         mod_embed.add_field(
@@ -69,14 +76,18 @@ class AutoMod(commands.Cog):
             inline=False,
         )
         mod_embed.set_footer(
-            text="Reply with `stop` if you want to stop adding auto-mod features"
+            text=(
+                "Reply with `stop` if you want to stop "
+                "adding auto-mod features"
+            )
         )
         await ctx.send(embed=mod_embed)
 
         while True:
             if len(activated_features) == len(available_features):
                 await ctx.send(
-                    "You have activated all the features. Changes have been saved!"
+                    "You have activated all the features. Changes "
+                    "have been saved!"
                 )
                 save()
                 break
@@ -104,11 +115,14 @@ class AutoMod(commands.Cog):
     async def on_message(self, message: discord.Message):
         if not message.guild:
             return
+
         def spam_check(msg):
             return (
                 (msg.author == message.author)
                 and (len(msg.mentions))
-                and ((datetime.datetime.utcnow() - msg.created_at).seconds < 30)
+                and (
+                    (datetime.datetime.utcnow() - msg.created_at).seconds < 30
+                )
             )
 
         Data.check_guild_entry(message.guild)
@@ -124,7 +138,8 @@ class AutoMod(commands.Cog):
             if search(self.url_regex, message.content):
                 await message.delete()
                 await message.channel.send(
-                    f"{message.author.mention}, You cannot send links in this channel!",
+                    f"{message.author.mention}, You cannot send links "
+                    "in this channel!",
                     delete_after=3,
                 )
 
@@ -133,18 +148,26 @@ class AutoMod(commands.Cog):
             if any([hasattr(a, "width") for a in message.attachments]):
                 await message.delete()
                 await message.channel.send(
-                    f"{message.author.mention}, You cannot send images in this channel!",
+                    f"{message.author.mention}, You cannot send images "
+                    "in this channel!",
                     delete_after=3,
                 )
 
         # if channel id's data contains "spam":
         if "images" in activated_features:
             if (
-                len(list(filter(lambda m: spam_check(m), self.bot.cached_messages)))
+                len(
+                    list(
+                        filter(
+                            lambda m: spam_check(m), self.bot.cached_messages
+                        )
+                    )
+                )
                 >= 5
             ):
                 await message.channel.send(
-                    f"{message.author.mention}, Do not spam mentions in this channel!",
+                    f"{message.author.mention}, Do not spam mentions "
+                    "in this channel!",
                     delete_after=3,
                 )
 

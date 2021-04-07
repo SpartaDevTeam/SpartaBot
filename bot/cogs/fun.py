@@ -12,7 +12,9 @@ from bot.data import Data
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
-        self.description = "Commands to have some fun and relieve stress (or induce it)"
+        self.description = (
+            "Commands to have some fun and relieve stress (or induce it)"
+        )
         self.theme_color = discord.Color.purple()
         self.eight_ball_responses = [
             [
@@ -80,10 +82,14 @@ class Fun(commands.Cog):
             await ctx.send("You can only have up to 9 options.")
             return
 
-        options = [f"{self.emoji_numbers[i+1]} {t}\n" for i, t in enumerate(split)]
+        options = [
+            f"{self.emoji_numbers[i+1]} {t}\n" for i, t in enumerate(split)
+        ]
 
         embed = discord.Embed(
-            title=description, description=("".join(options)), color=self.theme_color
+            title=description,
+            description=("".join(options)),
+            color=self.theme_color,
         ).set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
         m: discord.Message = await ctx.send(embed=embed)
 
@@ -104,17 +110,23 @@ class Fun(commands.Cog):
         embed = embed.add_field(name="Result", value=results[0][0])
         await m.edit(embed=embed)
 
-    @commands.command(name="coinflip", aliases=["coin", "flip"], help="Flip a coin!")
+    @commands.command(
+        name="coinflip", aliases=["coin", "flip"], help="Flip a coin!"
+    )
     async def coin_flip(self, ctx):
         result = random.choice(["heads", "tails"])
-        await ctx.send(f"The coin has been flipped and resulted in **{result}**")
+        await ctx.send(
+            f"The coin has been flipped and resulted in **{result}**"
+        )
 
     @commands.command(name="roll", aliases=["dice"], help="Roll a dice!")
     async def dice_roll(self, ctx: commands.Context, dice_count: int = 1):
         number = random.randint(1, dice_count * 6)
 
         if dice_count > 1:
-            await ctx.send(f"You rolled **{dice_count} dice** and got a **{number}**")
+            await ctx.send(
+                f"You rolled **{dice_count} dice** and got a **{number}**"
+            )
         else:
             await ctx.send(f"You rolled a **{number}**")
 
@@ -123,7 +135,9 @@ class Fun(commands.Cog):
         aliases=["av", "pfp"],
         help="Get somebody's Discord avatar",
     )
-    async def avatar(self, ctx: commands.Context, member: discord.Member = None):
+    async def avatar(
+        self, ctx: commands.Context, member: discord.Member = None
+    ):
         if member:
             m = member
         else:
@@ -139,7 +153,9 @@ class Fun(commands.Cog):
         help="Let Sparta choose the best option for you. Separate the choices with a comma (,)",
     )
     async def choose(self, ctx: commands.Context, *, options: str):
-        items = [option.strip().replace("*", "") for option in options.split(",")]
+        items = [
+            option.strip().replace("*", "") for option in options.split(",")
+        ]
         choice = random.choice(items)
         await ctx.send(f"I choose **{choice}**")
 
@@ -188,7 +204,9 @@ class Fun(commands.Cog):
         webhook_url = Data.webhook_entry_exists(ctx.channel)
 
         if webhook_url:
-            webhook = discord.utils.get(await ctx.channel.webhooks(), url=webhook_url)
+            webhook = discord.utils.get(
+                await ctx.channel.webhooks(), url=webhook_url
+            )
 
             if not webhook:
                 webhook: discord.Webhook = await ctx.channel.create_webhook(
