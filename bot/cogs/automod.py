@@ -102,6 +102,8 @@ class AutoMod(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        if not message.guild:
+            return
         def spam_check(msg):
             return (
                 (msg.author == message.author)
