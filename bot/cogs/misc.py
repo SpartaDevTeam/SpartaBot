@@ -109,21 +109,24 @@ class Miscellaneous(commands.Cog):
 
         time_to_end = humanize.naturaldelta(remind_time)
 
-        await ctx.send(
-            f"I will remind you in {time_to_end} about:\n*{reminder_msg}*"
-        )
+        await ctx.send(f"I will remind you in {time_to_end} about:\n*{reminder_msg}*")
 
         # TODO: Store reminders in DB until completed
         await asyncio.create_task(
             self.reminder(ctx.author, remind_time.total_seconds(), reminder_msg, now)
         )
 
-    @commands.command(name="afk", help="Lets others know that you are AFK when someone mentions you")
+    @commands.command(
+        name="afk", help="Lets others know that you are AFK when someone mentions you"
+    )
     async def afk(self, ctx: commands.Context, *, reason: str):
         already_afk = Data.afk_entry_exists(ctx.author)
 
         if already_afk:
-            Data.c.execute("UPDATE afks SET afk_reason = :new_reason WHERE user_id = :user_id", {"new_reason": reason, "user_id": ctx.author.id})
+            Data.c.execute(
+                "UPDATE afks SET afk_reason = :new_reason WHERE user_id = :user_id",
+                {"new_reason": reason, "user_id": ctx.author.id},
+            )
         else:
             Data.create_new_afk_data(ctx.author, reason)
 

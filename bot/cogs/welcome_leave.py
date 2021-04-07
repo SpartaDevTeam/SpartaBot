@@ -15,7 +15,9 @@ class WelcomeLeave(commands.Cog):
             lambda guild: f"Goodbye [member], thanks for staying at {guild.name}!"
         )
 
-    async def find_welcome_channel(self, guild: discord.Guild) -> discord.TextChannel or None:
+    async def find_welcome_channel(
+        self, guild: discord.Guild
+    ) -> discord.TextChannel or None:
         channels: list[discord.TextChannel] = await guild.fetch_channels()
 
         for channel in channels:
@@ -24,7 +26,9 @@ class WelcomeLeave(commands.Cog):
 
         return None
 
-    async def find_leave_channel(self, guild: discord.Guild) -> discord.TextChannel or None:
+    async def find_leave_channel(
+        self, guild: discord.Guild
+    ) -> discord.TextChannel or None:
         channels: list[discord.TextChannel] = await guild.fetch_channels()
 
         for channel in channels:

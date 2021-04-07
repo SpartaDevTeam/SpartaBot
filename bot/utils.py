@@ -24,9 +24,9 @@ def str_time_to_datetime(
 
     actual_seconds = 0
     if hours:
-        actual_seconds += hours*3600
+        actual_seconds += hours * 3600
     if minutes:
-        actual_seconds += minutes*60
+        actual_seconds += minutes * 60
     if seconds:
         actual_seconds += seconds
 
