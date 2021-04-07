@@ -11,11 +11,8 @@ class WelcomeLeave(commands.Cog):
         self.default_welcome_msg = (
             lambda guild: f"Hello [mention], welcome to {guild.name}!"
         )
-        self.default_leave_msg = (
-            lambda guild: (
-                "Goodbye [member], "
-                f"thanks for staying at {guild.name}!"
-            )
+        self.default_leave_msg = lambda guild: (
+            "Goodbye [member], " f"thanks for staying at {guild.name}!"
         )
 
     async def find_welcome_channel(
