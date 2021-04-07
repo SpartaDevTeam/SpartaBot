@@ -75,7 +75,9 @@ class Moderation(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str):
         if ctx.author.top_role <= member.top_role:
-            await ctx.send(f"You cannot use the command on this person because their top role is higher than or equal to yours.")
+            await ctx.send(
+                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+            )
             return
 
         Data.check_guild_entry(ctx.guild)
@@ -151,7 +153,9 @@ class Moderation(commands.Cog):
         self, ctx: commands.Context, member: discord.Member = None
     ):
         if ctx.author.top_role <= member.top_role:
-            await ctx.send(f"You cannot use the command on this person because their top role is higher than or equal to yours.")
+            await ctx.send(
+                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+            )
             return
         Data.check_guild_entry(ctx.guild)
 
@@ -188,7 +192,9 @@ class Moderation(commands.Cog):
     @commands.has_guild_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member):
         if ctx.author.top_role <= member.top_role:
-            await ctx.send(f"You cannot use the command on this person because their top role is higher than or equal to yours.")
+            await ctx.send(
+                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+            )
             return
 
         mute_role = await self.get_guild_mute_role(ctx.guild)
@@ -199,7 +205,9 @@ class Moderation(commands.Cog):
     @commands.has_guild_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member):
         if ctx.author.top_role <= member.top_role:
-            await ctx.send(f"You cannot use the command on this person because their top role is higher than or equal to yours.")
+            await ctx.send(
+                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+            )
             return
 
         mute_role = await self.get_guild_mute_role(ctx.guild)
@@ -210,7 +218,9 @@ class Moderation(commands.Cog):
     @commands.has_guild_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context, member: discord.Member, *, reason=None):
         if ctx.author.top_role <= member.top_role:
-            await ctx.send(f"You cannot use the command on this person because their top role is higher than or equal to yours.")
+            await ctx.send(
+                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+            )
             return
 
         await ctx.guild.ban(member, reason=reason, delete_message_days=0)
@@ -249,7 +259,9 @@ class Moderation(commands.Cog):
     @commands.has_guild_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason=None):
         if ctx.author.top_role <= member.top_role:
-            await ctx.send(f"You cannot use the command on this person because their top role is higher than or equal to yours.")
+            await ctx.send(
+                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+            )
             return
 
         await ctx.guild.kick(member, reason=reason)
