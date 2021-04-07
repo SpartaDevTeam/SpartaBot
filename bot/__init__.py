@@ -16,6 +16,7 @@ intents.members = True
 def get_prefix(client, message):
     if not message.guild:
         return "sb!"
+
     Data.check_guild_entry(message.guild)
 
     Data.c.execute(
