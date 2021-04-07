@@ -41,6 +41,22 @@ async def on_ready():
 
 
 @bot.event
+async def on_command_error(ctx: commands.Context, exception):
+    if isinstance(exception, commands.errors.MissingRequiredArgument):
+        prefix = get_prefix(bot, ctx.message)
+        await ctx.send(f"`{exception.param.name}` is a required input. Try using `{prefix}help {ctx.invoked_with}` for more information.")
+
+    elif isinstance(exception, commands.MissingPermissions):
+        await ctx.send("You don't have permission to run this command. You need the following permissions:")
+
+        for missing_perm in exception.missing_perms:
+            await ctx.send(missing_perm.title())
+
+    else:
+        raise exception
+
+
+@bot.event
 async def on_message(message: discord.Message):
     if bot.user in message.mentions:
         guild_prefix = get_prefix(bot, message)
