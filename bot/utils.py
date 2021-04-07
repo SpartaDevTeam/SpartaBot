@@ -1,5 +1,5 @@
-from datetime import timedelta
 import re
+from datetime import timedelta
 
 
 def get_time(key: str, string: str) -> int:  # CircuitSacul == pog (he made this)
@@ -35,24 +35,3 @@ def str_time_to_datetime(
         seconds=actual_seconds,
     )
     return datetime_obj
-
-
-def str_time_to_seconds(time_string: str) -> int:
-    split_terms = time_string.split()
-    total_seconds = 0
-
-    for term in split_terms:
-        if "d" in term:
-            term = term.replace("d", "")
-            total_seconds += int(term) * 86400
-        elif "h" in term:
-            term = term.replace("h", "")
-            total_seconds += int(term) * 3600
-        elif "m" in term:
-            term = term.replace("m", "")
-            total_seconds += int(term) * 60
-        elif "s" in term:
-            term = term.replace("s", "")
-            total_seconds += int(term)
-
-    return total_seconds
