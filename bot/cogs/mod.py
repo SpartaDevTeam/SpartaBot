@@ -291,8 +291,7 @@ class Moderation(commands.Cog):
             ch = ctx.channel
 
         await ch.purge(limit=message_count + 1)
-        temp_msg = await ctx.send(f"Cleared {message_count} message(s)")
-        await temp_msg.delete(delay=5)
+        await ctx.send(f"Cleared {message_count} message(s)", delete_after=3)
 
     @commands.command(name="nuke", help="Clear all messages at once in a channel")
     @commands.has_guild_permissions(administrator=True)

@@ -40,6 +40,15 @@ async def on_ready():
     print(f"Bot logged into {guild_count} guilds...")
 
 
+@bot.event
+async def on_message(message: discord.Message):
+    if bot.user in message.mentions:
+        guild_prefix = get_prefix(bot, message)
+        await message.channel.send(f"{message.author.mention}, my prefix in this server is `{guild_prefix}`")
+
+    await bot.process_commands(message)
+
+
 def add_cogs():
     cogs_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "cogs")
     for filename in os.listdir(cogs_dir):
