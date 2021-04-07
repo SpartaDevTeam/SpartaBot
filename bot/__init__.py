@@ -56,6 +56,9 @@ def add_cogs():
             bot.load_extension(f"bot.cogs.{filename[:-3]}")
             print(f"Loaded {filename[:-3]} cog!")
 
+    # Extensions
+    bot.load_extension("jishaku")
+
 
 def main():
     Data.create_tables()
