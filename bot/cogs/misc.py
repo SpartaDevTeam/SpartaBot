@@ -21,7 +21,9 @@ class Miscellaneous(commands.Cog):
         reminder_start_time: datetime,
     ):
         await asyncio.sleep(seconds)
-        rem_start_time_str = humanize.naturaltime(reminder_start_time, datetime.now())
+        rem_start_time_str = humanize.naturaltime(
+            reminder_start_time, datetime.now()
+        )
         await user.send(
             f"You asked me to remind you {rem_start_time_str} about:\n*{reminder_msg}*"
         )
@@ -106,7 +108,7 @@ class Miscellaneous(commands.Cog):
         now = datetime.now()
         remind_time = str_time_to_datetime(remind_time_string)
 
-        time_to_end = humanize.naturaldelta(remind_time)
+        time_to_end = humanize.precisedelta(remind_time, format="%0")
 
         await ctx.send(
             f"I will remind you in {time_to_end} about:\n*{reminder_msg}*"
