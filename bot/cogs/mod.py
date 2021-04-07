@@ -277,7 +277,9 @@ class Moderation(commands.Cog):
         else:
             await ctx.send("Slowmode has been disabled")
 
-    @commands.command(name="clear", help="Clear messages in a channel")
+    @commands.command(
+        name="clear", aliases=["purge"], help="Clear messages in a channel"
+    )
     @commands.has_guild_permissions(manage_messages=True)
     async def clear(
         self,

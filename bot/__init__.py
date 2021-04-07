@@ -56,6 +56,12 @@ async def on_command_error(ctx: commands.Context, exception):
         for missing_perm in exception.missing_perms:
             await ctx.send(missing_perm.title())
 
+    elif isinstance(exception, commands.NotOwner):
+        await ctx.send("You must be the bot owner to use this command.")
+
+    elif isinstance(exception, commands.CommandNotFound):
+        await ctx.send(f"Unknown command: `{ctx.invoked_with}`")
+
     else:
         raise exception
 
