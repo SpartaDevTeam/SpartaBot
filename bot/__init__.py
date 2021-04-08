@@ -1,7 +1,7 @@
 import os
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, ipc
 from pretty_help import Navigation, PrettyHelp
 
 from bot.data import Data
@@ -11,6 +11,22 @@ THEME = discord.Color.purple()
 
 intents = discord.Intents.default()
 intents.members = True
+
+
+class MyBot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ipc = ipc.Server(self, secret_key=os.environ["SPARTA_SECRET_KEY"])
+
+    async def on_ready(self):
+        guild_count = len(self.guilds)
+        print(f"Bot logged into {guild_count} guilds...")
+
+    async def on_ipc_ready(self):
+        print("IPC Server is ready!")
+
+    async def on_ipc_error(self, endpoint, error):
+        print("Endpoint", endpoint, "threw error:", error)
 
 
 def get_prefix(client, message):
@@ -28,7 +44,7 @@ def get_prefix(client, message):
     return prefix
 
 
-bot = commands.Bot(
+bot = MyBot(
     command_prefix=get_prefix,
     description=(
         "I'm a cool moderation and automation bot to help "
@@ -38,12 +54,6 @@ bot = commands.Bot(
     case_insensitive=True,
     help_command=PrettyHelp(navigation=Navigation(), color=THEME),
 )
-
-
-@bot.event
-async def on_ready():
-    guild_count = len(bot.guilds)
-    print(f"Bot logged into {guild_count} guilds...")
 
 
 @bot.event
@@ -104,6 +114,9 @@ def main():
     add_cogs()
 
     try:
+        from bot import ipc_routes
+
+        bot.ipc.start()
         bot.run(TOKEN)
     except KeyboardInterrupt:
         pass

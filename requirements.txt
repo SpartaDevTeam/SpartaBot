@@ -1,4 +1,5 @@
 discord.py
+discord-ext-ipc
 discord-pretty-help
 pyfiglet
 humanize
