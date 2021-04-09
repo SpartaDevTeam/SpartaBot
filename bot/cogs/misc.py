@@ -30,7 +30,7 @@ class Miscellaneous(commands.Cog):
             now = datetime.now()
             due_at = datetime.strptime(rem[4], Data.datetime_format)
 
-            await asyncio.create_task(
+            asyncio.create_task(
                 self.reminder(
                     reminder_id,
                     user,
@@ -176,7 +176,7 @@ class Miscellaneous(commands.Cog):
             (now + remind_time).strftime(Data.datetime_format),
         )
 
-        await asyncio.create_task(
+        asyncio.create_task(
             self.reminder(
                 reminder_id.hex,
                 ctx.author,
