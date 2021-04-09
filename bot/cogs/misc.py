@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-
+import uuid
 import discord
 import humanize
 from discord.ext import commands
@@ -15,8 +15,36 @@ class Miscellaneous(commands.Cog):
         self.description = "Some commands to do general tasks"
         self.theme_color = discord.Color.purple()
 
+    async def load_pending_reminders(self):
+        print("Loading pending reminders...")
+
+        Data.c.execute("SELECT * FROM reminders")
+        reminders = Data.c.fetchall()
+
+        for rem in reminders:
+            reminder_id = rem[0]
+            user = await self.bot.fetch_user(rem[1])
+            reminder_msg = rem[2]
+            started_at = datetime.strptime(rem[3], Data.datetime_format)
+
+            now = datetime.now()
+            due_at = datetime.strptime(rem[4], Data.datetime_format)
+
+            await asyncio.create_task(
+                self.reminder(
+                    reminder_id,
+                    user,
+                    (due_at - now).total_seconds(),
+                    reminder_msg,
+                    started_at,
+                )
+            )
+
+        print(f"Loaded {len(reminders)} pending reminders!")
+
     async def reminder(
         self,
+        reminder_id: str,
         user: discord.User,
         seconds: float,
         reminder_msg: str,
@@ -28,6 +56,11 @@ class Miscellaneous(commands.Cog):
             f"You asked me to remind you {rem_start_time_str} about:"
             f"\n*{reminder_msg}*"
         )
+        Data.delete_reminder_entry(reminder_id)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.load_pending_reminders()
 
     @commands.command(name="info", help="Display bot information")
     async def info(self, ctx: commands.Context):
@@ -134,10 +167,22 @@ class Miscellaneous(commands.Cog):
             f"I will remind you in {time_to_end} about:\n*{reminder_msg}*"
         )
 
-        # TODO: Store reminders in DB until completed
+        reminder_id = uuid.uuid4()
+        Data.create_new_reminder_entry(
+            reminder_id.hex,
+            ctx.author,
+            reminder_msg,
+            now.strftime(Data.datetime_format),
+            (now + remind_time).strftime(Data.datetime_format),
+        )
+
         await asyncio.create_task(
             self.reminder(
-                ctx.author, remind_time.total_seconds(), reminder_msg, now
+                reminder_id.hex,
+                ctx.author,
+                remind_time.total_seconds(),
+                reminder_msg,
+                now,
             )
         )
 

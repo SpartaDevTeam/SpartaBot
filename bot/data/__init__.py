@@ -7,6 +7,7 @@ class Data:
     filename = os.path.join(data_dir, "db.sqlite3")
     conn = sqlite3.connect(filename)
     c = conn.cursor()
+    datetime_format = "%Y-%m-%d %H:%M:%S"
 
     @classmethod
     def create_tables(cls):
@@ -37,6 +38,16 @@ class Data:
             """CREATE TABLE IF NOT EXISTS "afks" (
             "user_id"	INTEGER,
             "afk_reason"	TEXT
+        )"""
+        )
+
+        cls.c.execute(
+            """CREATE TABLE IF NOT EXISTS "reminders" (
+            "id"	TEXT,
+            "user_id"	INTEGER,
+            "reminder_msg"	TEXT,
+            "start_time"	DATETIME,
+            "due"	DATETIME
         )"""
         )
 
@@ -114,3 +125,29 @@ class Data:
         )
         afk_data = cls.c.fetchone()
         return afk_data is not None
+
+    # Reminders Data
+    @classmethod
+    def create_new_reminder_entry(
+        cls, reminder_id, user, msg, start_time, due
+    ):
+        cls.c.execute(
+            "INSERT INTO reminders VALUES (:id, :user_id, :msg, :start_time, :due)",
+            {
+                "id": reminder_id,
+                "user_id": user.id,
+                "msg": msg,
+                "start_time": start_time,
+                "due": due,
+            },
+        )
+        cls.conn.commit()
+        print(f"Created reminder for user {user}")
+
+    @classmethod
+    def delete_reminder_entry(cls, reminder_id):
+        cls.c.execute(
+            "DELETE FROM reminders WHERE id = :id", {"id": reminder_id}
+        )
+        cls.conn.commit()
+        print(f"Deleted reminder with ID {reminder_id}")
