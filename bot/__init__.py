@@ -16,7 +16,12 @@ intents.members = True
 class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ipc = ipc.Server(self, secret_key=os.environ["SPARTA_SECRET_KEY"])
+        self.ipc = ipc.Server(
+            self,
+            host="0.0.0.0",
+            port=6000,
+            secret_key=os.environ["SPARTA_SECRET_KEY"],
+        )
 
     async def on_ready(self):
         guild_count = len(self.guilds)
