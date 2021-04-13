@@ -48,6 +48,5 @@ def ping_prot(ctx: commands.Context):
 
 def mass_ping_prot(ctx: commands.Context):
     mentions = ctx.message.role_mentions
-    def_role = ctx.guild.default_role
-    return mentions != [] and def_role not in mentions
+    return mentions != []
 
