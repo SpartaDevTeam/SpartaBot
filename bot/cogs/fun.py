@@ -202,7 +202,6 @@ class Fun(commands.Cog):
         aliases=["imp"],
         help="Pretend to be another member of your server",
     )
-    @commands.check(mass_ping_prot)
     async def impersonate(
         self, ctx: commands.Context, member: discord.Member, *, message: str
     ):
