@@ -7,6 +7,7 @@ import pyfiglet
 from discord.ext import commands
 
 from bot.data import Data
+from bot.utils import ping_prot, mass_ping_prot
 
 
 class Fun(commands.Cog):
@@ -152,6 +153,7 @@ class Fun(commands.Cog):
         aliases=["choice"],
         help="Let Sparta choose the best option for you. Separate the choices with a comma (,)",
     )
+    @commands.check(ping_prot)
     async def choose(self, ctx: commands.Context, *, options: str):
         items = [
             option.strip().replace("*", "") for option in options.split(",")
@@ -199,6 +201,7 @@ class Fun(commands.Cog):
         aliases=["imp"],
         help="Pretend to be another member of your server",
     )
+    @commands.check(mass_ping_prot)
     async def impersonate(
         self, ctx: commands.Context, member: discord.Member, *, message: str
     ):

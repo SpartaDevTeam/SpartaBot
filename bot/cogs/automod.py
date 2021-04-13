@@ -154,7 +154,7 @@ class AutoMod(commands.Cog):
                 )
 
         # if channel id's data contains "spam":
-        if "images" in activated_features:
+        if "spam" in activated_features:
             if (
                 len(
                     list(

@@ -1,4 +1,5 @@
 import re
+from discord.ext import commands
 from datetime import timedelta
 
 
@@ -37,3 +38,16 @@ def str_time_to_datetime(
         seconds=actual_seconds,
     )
     return datetime_obj
+
+
+def ping_prot(ctx: commands.Context):
+    mentions = ctx.message.mentions
+    role_mentions = ctx.message.role_mentions
+    return mentions != [] and role_mentions != []
+
+
+def mass_ping_prot(ctx: commands.Context):
+    mentions = ctx.message.role_mentions
+    def_role = ctx.guild.default_role
+    return mentions != [] and def_role not in mentions
+
