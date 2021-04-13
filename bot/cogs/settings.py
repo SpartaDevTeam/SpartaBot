@@ -240,9 +240,7 @@ class Settings(commands.Cog):
     )
     @commands.has_guild_permissions(administrator=True)
     @commands.check(ping_prot)
-    async def prefix(
-        self, ctx: commands.Context, pref: str = "s!"
-    ):
+    async def prefix(self, ctx: commands.Context, pref: str = "s!"):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
