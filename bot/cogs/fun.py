@@ -159,7 +159,7 @@ class Fun(commands.Cog):
         choice = random.choice(items)
         await ctx.send(
             f"I choose **{choice}**",
-            allowed_mentions=discord.AllowedMentions.none,
+            allowed_mentions=discord.AllowedMentions.none(),
         )
 
     @commands.command(
@@ -231,7 +231,7 @@ class Fun(commands.Cog):
             message,
             username=member.display_name,
             avatar_url=member.avatar_url,
-            allowed_mentions=discord.AllowedMentions.none,
+            allowed_mentions=discord.AllowedMentions.none(),
         )
 
 
