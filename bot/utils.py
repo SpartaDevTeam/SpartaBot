@@ -43,10 +43,10 @@ def str_time_to_datetime(
 def ping_prot(ctx: commands.Context):
     mentions = ctx.message.mentions
     role_mentions = ctx.message.role_mentions
-    return mentions != [] and role_mentions != []
+    return mentions == [] and role_mentions == []
 
 
 def mass_ping_prot(ctx: commands.Context):
     mentions = ctx.message.role_mentions
-    return mentions != []
+    return mentions == []
 
