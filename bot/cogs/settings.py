@@ -149,6 +149,7 @@ class Settings(commands.Cog):
         aliases=["setauto", "autorole", "arole"],
         help="Set a role to give to new members of the server",
     )
+    @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(administrator=True)
     async def set_auto_role(self, ctx: commands.Context, role: discord.Role):
         Data.check_guild_entry(ctx.guild)
@@ -256,6 +257,7 @@ class Settings(commands.Cog):
         name="steal",
         help="Add an emoji from another server to yours",
     )
+    @commands.bot_has_guild_permissions(manage_emojis=True)
     @commands.has_guild_permissions(manage_emojis=True)
     async def steal(
         self,
