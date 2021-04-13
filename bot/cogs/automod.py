@@ -44,10 +44,9 @@ class AutoMod(commands.Cog):
 
         def save():
             Data.c.execute(
-                """"UPDATE guilds SET activated_automod = :new_activated_features
-                WHERE id = :guild_id""",
+                "UPDATE guilds SET activated_automod = :new_features WHERE id = :guild_id",
                 {
-                    "new_activated_features": json.dumps(activated_features),
+                    "new_features": json.dumps(activated_features),
                     "guild_id": ctx.guild.id,
                 },
             )
