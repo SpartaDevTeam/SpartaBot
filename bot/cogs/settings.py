@@ -1,5 +1,6 @@
-import discord
 import requests
+import discord
+from typing import Union
 from discord.ext import commands
 from discord import utils
 
@@ -251,45 +252,55 @@ class Settings(commands.Cog):
 
         await ctx.send(f"The prefix has been changed to **{pref}**")
 
-
-    
-    @commands.command(name="steal",
-        help="Add a emoji of other server in yours",
+    @commands.command(
+        name="steal",
+        help="Add an emoji from another server to yours",
     )
     @commands.has_guild_permissions(manage_emojis=True)
-    async def steal(self, ctx ,name=None ,emoji=None):
-        if emoji:
-            emoji=str(emoji).replace("<","")
-            emoji=str(emoji).replace(">","")
-            emoji=emoji.split(":")
-            if emoji[0] == "a":
-                url="https://cdn.discordapp.com/emojis/"+str(emoji[2])+".gif?v=1"
-            else:
-                url="https://cdn.discordapp.com/emojis/"+str(emoji[2])+".png?v=1"
-            try:
-                response = requests.get(url)
-                if name:
-                    await ctx.guild.create_custom_emoji(name=name, image=response.content)
-                    emote = utils.get(self.emojis, name=name)
-                    if emote.animated:
-                        add="a"
-                    else:
-                        add=""
-                    emote_display=f"<{add}:{emote.name}:{emote.id}>"
-                    await ctx.send(f'{emote_display} added with the name "{name}"')
-                else:
-                    await ctx.guild.create_custom_emoji(name=emoji[1], image=response.content)
-                    emote = utils.get(self.emojis, name =emoji[1])
-                    if emote.animated:
-                        add="a"
-                    else:
-                        add=""
-                    emote_display=f"<{add}:{emote.name}:{emote.id}>"
-                    await ctx.send(f'{emote_display} added with the name "{name}"')
-            except:
-                await ctx.send("Faield to add emoji.")
+    async def steal(self, ctx, name: str, emoji: Union[discord.Emoji, str]):
+        emoji = str(emoji).replace("<", "")
+        emoji = str(emoji).replace(">", "")
+        emoji = emoji.split(":")
+
+        if emoji[0] == "a":
+            url = (
+                "https://cdn.discordapp.com/emojis/"
+                + str(emoji[2])
+                + ".gif?v=1"
+            )
         else:
-            await ctx.send("Provide a emoji.")
+            url = (
+                "https://cdn.discordapp.com/emojis/"
+                + str(emoji[2])
+                + ".png?v=1"
+            )
+        try:
+            response = requests.get(url)
+            if name:
+                await ctx.guild.create_custom_emoji(
+                    name=name, image=response.content
+                )
+                emote = utils.get(self.emojis, name=name)
+                if emote.animated:
+                    add = "a"
+                else:
+                    add = ""
+                emote_display = f"<{add}:{emote.name}:{emote.id}>"
+                await ctx.send(f'{emote_display} added with the name "{name}"')
+            else:
+                await ctx.guild.create_custom_emoji(
+                    name=emoji[1], image=response.content
+                )
+                emote = utils.get(self.emojis, name=emoji[1])
+                if emote.animated:
+                    add = "a"
+                else:
+                    add = ""
+                emote_display = f"<{add}:{emote.name}:{emote.id}>"
+                await ctx.send(f'{emote_display} added with the name "{name}"')
+        except:
+            await ctx.send("Faield to add emoji.")
+
 
 def setup(bot):
     bot.add_cog(Settings(bot))

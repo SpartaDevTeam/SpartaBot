@@ -4,3 +4,4 @@ discord-pretty-help
 pyfiglet
 humanize
 jishaku
+requests
