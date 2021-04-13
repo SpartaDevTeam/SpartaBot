@@ -298,8 +298,9 @@ class Settings(commands.Cog):
                     add = ""
                 emote_display = f"<{add}:{emote.name}:{emote.id}>"
                 await ctx.send(f'{emote_display} added with the name "{name}"')
-        except:
+        except Exception as e:
             await ctx.send("Faield to add emoji.")
+            raise e
 
 
 def setup(bot):
