@@ -38,27 +38,3 @@ def str_time_to_datetime(
         seconds=actual_seconds,
     )
     return datetime_obj
-
-
-def ping_prot(ctx: commands.Context):
-    mentions = ctx.message.mentions
-    role_mentions = ctx.message.role_mentions
-
-    pings_everyone = "@everyone" in ctx.message.clean_content
-    pings_here = "@here" in ctx.message.clean_content
-
-    return (
-        mentions == []
-        and role_mentions == []
-        and not pings_everyone
-        and not pings_here
-    )
-
-
-def mass_ping_prot(ctx: commands.Context):
-    mentions = ctx.message.role_mentions
-
-    pings_everyone = "@everyone" in ctx.message.clean_content
-    pings_here = "@here" in ctx.message.clean_content
-
-    return mentions == [] and not pings_everyone and not pings_here
