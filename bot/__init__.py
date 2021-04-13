@@ -85,6 +85,9 @@ async def on_command_error(ctx: commands.Context, exception):
     elif isinstance(exception, commands.CommandNotFound):
         pass
 
+    elif isinstance(exception, commands.CheckFailure):
+        pass
+
     else:
         raise exception
 
