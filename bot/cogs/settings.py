@@ -257,7 +257,12 @@ class Settings(commands.Cog):
         help="Add an emoji from another server to yours",
     )
     @commands.has_guild_permissions(manage_emojis=True)
-    async def steal(self, ctx, name: str, emoji: Union[discord.Emoji, str]):
+    async def steal(
+        self,
+        ctx: commands.Context,
+        name: str,
+        emoji: Union[discord.Emoji, str],
+    ):
         emoji = str(emoji).replace("<", "")
         emoji = str(emoji).replace(">", "")
         emoji = emoji.split(":")
@@ -274,13 +279,14 @@ class Settings(commands.Cog):
                 + str(emoji[2])
                 + ".png?v=1"
             )
+
         try:
             response = requests.get(url)
             if name:
                 await ctx.guild.create_custom_emoji(
                     name=name, image=response.content
                 )
-                emote = utils.get(self.emojis, name=name)
+                emote = utils.get(ctx.guild.emojis, name=name)
                 if emote.animated:
                     add = "a"
                 else:
@@ -291,15 +297,16 @@ class Settings(commands.Cog):
                 await ctx.guild.create_custom_emoji(
                     name=emoji[1], image=response.content
                 )
-                emote = utils.get(self.emojis, name=emoji[1])
+                emote = utils.get(ctx.guild.emojis, name=emoji[1])
                 if emote.animated:
                     add = "a"
                 else:
                     add = ""
                 emote_display = f"<{add}:{emote.name}:{emote.id}>"
-                await ctx.send(f'{emote_display} added with the name "{name}"')
+                await ctx.send(f"{emote_display} has been added as `{name}")
+
         except Exception as e:
-            await ctx.send("Faield to add emoji.")
+            await ctx.send("Failed to add emoji.")
             raise e
 
 
