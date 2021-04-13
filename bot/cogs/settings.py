@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 from bot.data import Data
+from bot.utils import ping_prot
 
 
 class Settings(commands.Cog):
@@ -238,9 +239,10 @@ class Settings(commands.Cog):
         help="Change the command prefix for Sparta in this server",
     )
     @commands.has_guild_permissions(administrator=True)
+    @commands.check(ping_prot)
     async def prefix(
-        self, ctx: commands.Context, pref: str = "sb!"
-    ):  # TODO: change to "s!" after rewrite
+        self, ctx: commands.Context, pref: str = "s!"
+    ):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
