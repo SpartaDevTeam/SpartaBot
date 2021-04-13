@@ -94,7 +94,7 @@ async def on_command_error(ctx: commands.Context, exception):
 
 @bot.event
 async def on_message(message: discord.Message):
-    if bot.user in message.mentions:
+    if bot.user in message.mentions and message.author != bot.user:
         guild_prefix = get_prefix(bot, message)
         await message.channel.send(
             f"{message.author.mention}, my prefix in this server "
