@@ -121,7 +121,7 @@ class Fun(commands.Cog):
 
     @commands.command(name="roll", aliases=["dice"], help="Roll a dice!")
     async def dice_roll(self, ctx: commands.Context, dice_count: int = 1):
-        number = random.randint(1, dice_count * 6)
+        number = random.randint(dice_count, dice_count * 6)
 
         if dice_count > 1:
             await ctx.send(
