@@ -5,7 +5,9 @@ from discord.ext import commands
 class Snipe(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
-        self.description = "Snipe out messages that people try to hide"
+        self.description = (
+            "Commands to snipe out messages that people try to hide"
+        )
         self.theme_color = discord.Color.purple()
 
         self.deleted_msgs = {}

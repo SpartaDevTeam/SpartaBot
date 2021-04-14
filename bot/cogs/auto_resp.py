@@ -23,3 +23,7 @@ class AutoResponse(commands.Cog):
         response = options_split[1].strip()
 
         # TODO: add auto response
+
+
+def setup(bot):
+    bot.add_cog(AutoResponse(bot))
