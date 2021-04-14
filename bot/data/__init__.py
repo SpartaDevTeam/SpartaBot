@@ -22,10 +22,9 @@ class Data:
             "welcome_channel"	TEXT DEFAULT NULL,
             "leave_channel"	TEXT DEFAULT NULL,
             "auto_role"	TEXT DEFAULT NULL,
-            "prefix"	TEXT DEFAULT 'sb!'
+            "prefix"	TEXT DEFAULT 's!'
         )"""
         )
-        # TODO: change prefix to "s!" after rewrite
 
         cls.c.execute(
             """CREATE TABLE IF NOT EXISTS "webhooks" (
@@ -56,10 +55,9 @@ class Data:
     # Guild Data
     @classmethod
     def create_new_guild_data(cls, guild):
-        # TODO: change prefix to "s!" after rewrite
         cls.c.execute(
             """INSERT INTO guilds VALUES
-            (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 'sb!')
+            (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 's!')
             """,
             {"guild_id": guild.id},
         )
