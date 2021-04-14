@@ -77,8 +77,8 @@ class AutoMod(commands.Cog):
         )
         mod_embed.set_footer(
             text=(
-                "Reply with `stop` if you want to stop "
-                "adding auto-mod features"
+                "Reply with stop if you want to stop "
+                "adding auto-mod features and save your changes"
             )
         )
         await ctx.send(embed=mod_embed)
@@ -117,12 +117,8 @@ class AutoMod(commands.Cog):
             return
 
         def spam_check(msg):
-            return (
-                (msg.author == message.author)
-                and (len(msg.mentions))
-                and (
-                    (datetime.datetime.utcnow() - msg.created_at).seconds < 30
-                )
+            return (msg.author == message.author) and (
+                (datetime.datetime.utcnow() - msg.created_at).seconds < 10
             )
 
         Data.check_guild_entry(message.guild)
