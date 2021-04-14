@@ -55,7 +55,16 @@ class WelcomeLeave(commands.Cog):
         if welcome_channel_id == "disabled":
             return
 
-        welcome_channel = guild.get_channel(int(welcome_channel_id))
+        if not welcome_channel_id:
+            welcome_channel = await self.find_welcome_channel(guild)
+
+            # Exit the function if no welcome channel is provided or
+            # automatically found
+            if not welcome_channel:
+                return
+        else:
+            welcome_channel = guild.get_channel(int(welcome_channel_id))
+
         if data[2]:
             auto_role = guild.get_role(int(data[2]))
         else:
@@ -63,14 +72,6 @@ class WelcomeLeave(commands.Cog):
 
         if not welcome_message:
             welcome_message = self.default_welcome_msg(guild)
-
-        if not welcome_channel:
-            welcome_channel = await self.find_welcome_channel(guild)
-
-            # Exit the function if no welcome channel is provided or
-            # automatically found
-            if not welcome_channel:
-                return
 
         # Replace placeholders with actual information
         welcome_message = welcome_message.replace("[mention]", member.mention)
@@ -99,18 +100,18 @@ class WelcomeLeave(commands.Cog):
         if leave_channel_id == "disabled":
             return
 
-        leave_channel = guild.get_channel(int(leave_channel_id))
-
-        if not leave_message:
-            leave_message = self.default_leave_msg(guild)
-
-        if not leave_channel:
+        if not leave_channel_id:
             leave_channel = await self.find_leave_channel(guild)
 
             # Exit the function if no leave channel is provided or
             # automatically found
             if not leave_channel:
                 return
+        else:
+            leave_channel = guild.get_channel(int(leave_channel_id))
+
+        if not leave_message:
+            leave_message = self.default_leave_msg(guild)
 
         # Replace placeholders with actual information
         leave_message = leave_message.replace("[mention]", member.mention)
