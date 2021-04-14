@@ -95,7 +95,6 @@ class AutoMod(commands.Cog):
                     await ctx.send(f"Added `{msg}`!")
                     activated_features.append(msg)
 
-                
                 if len(activated_features) == len(available_features):
                     await ctx.send(
                         "You have activated all the features. Changes "
