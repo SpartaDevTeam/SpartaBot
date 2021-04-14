@@ -84,14 +84,6 @@ class AutoMod(commands.Cog):
         await ctx.send(embed=mod_embed)
 
         while True:
-            if len(activated_features) == len(available_features):
-                await ctx.send(
-                    "You have activated all the features. Changes "
-                    "have been saved!"
-                )
-                save()
-                break
-
             msg = await self.bot.wait_for("message", check=check)
             msg = str(msg.content)
 
@@ -102,6 +94,15 @@ class AutoMod(commands.Cog):
                 else:
                     await ctx.send(f"Added `{msg}`!")
                     activated_features.append(msg)
+
+                
+                if len(activated_features) == len(available_features):
+                    await ctx.send(
+                        "You have activated all the features. Changes "
+                        "have been saved!"
+                    )
+                    save()
+                    break
 
             elif msg == "stop":
                 await ctx.send("The changes have been saved!")
