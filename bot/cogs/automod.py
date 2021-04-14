@@ -12,7 +12,7 @@ class AutoMod(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
         self.description = "Commands to setup Auto-Mod in Sparta"
-        self.theme_color = discord.Colour.purple()
+        self.theme_color = discord.Color.purple()
         self.url_regex = (
             r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.]"
             r"[a-z]{2,4}/)("

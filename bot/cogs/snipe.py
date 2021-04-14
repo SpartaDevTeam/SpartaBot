@@ -26,7 +26,9 @@ class Snipe(commands.Cog):
                 self.deleted_msgs[ch_id].pop(0)
 
     @commands.Cog.listener()
-    async def on_message_edit(self, before, after):
+    async def on_message_edit(
+        self, before: discord.Message, after: discord.Message
+    ):
         ch_id = before.channel.id
 
         if not before.author.bot:
@@ -43,7 +45,7 @@ class Snipe(commands.Cog):
         aliases=["sn"],
         help="See recently deleted messages in the current channel",
     )
-    async def snipe(self, ctx, limit: int = 1):
+    async def snipe(self, ctx: commands.Context, limit: int = 1):
         if limit > self.snipe_limit:
             await ctx.send(f"Maximum snipe limit is {self.snipe_limit}")
             return
@@ -65,7 +67,7 @@ class Snipe(commands.Cog):
         aliases=["esn"],
         help="See recently edited messages in the current channel",
     )
-    async def editsnipe(self, ctx, limit: int = 1):
+    async def editsnipe(self, ctx: commands.Context, limit: int = 1):
         if limit > self.snipe_limit:
             await ctx.send(f"Maximum snipe limit is {self.snipe_limit}")
             return

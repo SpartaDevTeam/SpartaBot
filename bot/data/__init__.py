@@ -22,7 +22,8 @@ class Data:
             "welcome_channel"	TEXT DEFAULT NULL,
             "leave_channel"	TEXT DEFAULT NULL,
             "auto_role"	TEXT DEFAULT NULL,
-            "prefix"	TEXT DEFAULT 's!'
+            "prefix"	TEXT DEFAULT 's!',
+            "auto_responses"	TEXT DEFAULT '[]'
         )"""
         )
 
@@ -57,7 +58,7 @@ class Data:
     def create_new_guild_data(cls, guild):
         cls.c.execute(
             """INSERT INTO guilds VALUES
-            (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 's!')
+            (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 's!', '[]')
             """,
             {"guild_id": guild.id},
         )
