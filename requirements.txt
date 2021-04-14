@@ -5,3 +5,4 @@ pyfiglet
 humanize
 jishaku
 requests
+pytest

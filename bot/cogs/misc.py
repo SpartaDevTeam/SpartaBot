@@ -6,7 +6,7 @@ import humanize
 from discord.ext import commands
 
 from bot.data import Data
-from bot.utils import str_time_to_datetime
+from bot.utils import str_time_to_timedelta
 
 
 class Miscellaneous(commands.Cog):
@@ -159,7 +159,7 @@ class Miscellaneous(commands.Cog):
         reminder_msg = args[1].strip()
 
         now = datetime.now()
-        remind_time = str_time_to_datetime(remind_time_string)
+        remind_time = str_time_to_timedelta(remind_time_string)
 
         time_to_end = humanize.precisedelta(remind_time, format="%0")
 

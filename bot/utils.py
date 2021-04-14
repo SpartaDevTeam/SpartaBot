@@ -14,7 +14,7 @@ def get_time(
     return int(r)
 
 
-def str_time_to_datetime(
+def str_time_to_timedelta(
     time_string: str,
 ) -> timedelta:  # CircuitSacul == pog (he made this)
     time_string = time_string.lower()
