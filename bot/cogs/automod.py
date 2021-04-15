@@ -72,7 +72,7 @@ class AutoMod(commands.Cog):
         )
         mod_embed.add_field(
             name="`spam`",
-            value="Temporarily mutes users who are spamming in this server",
+            value="Temporarily mutes users who are spamming mentions in this server",
             inline=False,
         )
         mod_embed.set_footer(
@@ -117,8 +117,8 @@ class AutoMod(commands.Cog):
             return
 
         def spam_check(msg):
-            return (msg.author == message.author) and (
-                (datetime.datetime.utcnow() - msg.created_at).seconds < 10
+            return (msg.author == message.author) and len(msg.mentions) and (
+                (datetime.datetime.utcnow() - msg.created_at).seconds < 20
             )
 
         Data.check_guild_entry(message.guild)
