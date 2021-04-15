@@ -226,7 +226,7 @@ class Fun(commands.Cog):
                     )
                     Data.conn.commit()
 
-                except discord.errors.HTTPException:
+                except discord.HTTPException:
                     await ctx.send(
                         "Maximum webhook limit reached, please delete some unused webhooks first."
                     )
