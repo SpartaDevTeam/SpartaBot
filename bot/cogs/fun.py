@@ -213,24 +213,15 @@ class Fun(commands.Cog):
             )
 
             if not webhook:
-                try:
-                    webhook: discord.Webhook = (
-                        await ctx.channel.create_webhook(
-                            name="Sparta Impersonate Command",
-                            reason="Impersonation Command",
-                        )
-                    )
-                    Data.c.execute(
-                        "UPDATE webhooks SET webhook_url = :new_url WHERE channel_id = :ch_id",
-                        {"new_url": webhook.url, "ch_id": ctx.channel.id},
-                    )
-                    Data.conn.commit()
-
-                except discord.HTTPException:
-                    await ctx.send(
-                        "Maximum webhook limit reached, please delete some unused webhooks first."
-                    )
-                    return
+                webhook: discord.Webhook = await ctx.channel.create_webhook(
+                    name="Sparta Impersonate Command",
+                    reason="Impersonation Command",
+                )
+                Data.c.execute(
+                    "UPDATE webhooks SET webhook_url = :new_url WHERE channel_id = :ch_id",
+                    {"new_url": webhook.url, "ch_id": ctx.channel.id},
+                )
+                Data.conn.commit()
 
         else:
             webhook: discord.Webhook = await ctx.channel.create_webhook(
