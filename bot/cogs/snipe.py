@@ -59,7 +59,7 @@ class Snipe(commands.Cog):
 
         for msg in msgs:
             snipe_embed.add_field(
-                name=msg.author.display_name, value=msg.content, inline=False
+                name=str(msg.author), value=msg.content, inline=False
             )
 
         await ctx.send(embed=snipe_embed)
@@ -81,7 +81,7 @@ class Snipe(commands.Cog):
 
         for msg in msgs:
             editsnipe_embed.add_field(
-                name=msg[0].author.display_name,
+                name=str(msg[0].author),
                 value=f"{msg[0].content} **-->** {msg[1].content}",
                 inline=False,
             )
