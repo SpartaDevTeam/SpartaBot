@@ -23,7 +23,7 @@ class Data:
             "leave_channel"	TEXT DEFAULT NULL,
             "auto_role"	TEXT DEFAULT NULL,
             "prefix"	TEXT DEFAULT 's!',
-            "auto_responses"	TEXT DEFAULT '[]'
+            "auto_responses"	TEXT DEFAULT '{}'
         )"""
         )
 
