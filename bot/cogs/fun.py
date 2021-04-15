@@ -217,7 +217,11 @@ class Fun(commands.Cog):
                     name="Sparta Impersonate Command",
                     reason="Impersonation Command",
                 )
-                Data.create_new_webhook_data(ctx.channel, webhook.url)
+                Data.c.execute(
+                    "UPDATE webhooks SET webhook_url = :new_url WHERE channel_id = :ch_id",
+                    {"new_url": webhook.url, "ch_id": ctx.channel.id},
+                )
+                Data.conn.commit()
 
         else:
             webhook: discord.Webhook = await ctx.channel.create_webhook(

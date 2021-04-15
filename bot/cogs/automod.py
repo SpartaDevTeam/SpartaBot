@@ -117,8 +117,12 @@ class AutoMod(commands.Cog):
             return
 
         def spam_check(msg):
-            return (msg.author == message.author) and len(msg.mentions) and (
-                (datetime.datetime.utcnow() - msg.created_at).seconds < 20
+            return (
+                (msg.author == message.author)
+                and len(msg.mentions)
+                and (
+                    (datetime.datetime.utcnow() - msg.created_at).seconds < 20
+                )
             )
 
         Data.check_guild_entry(message.guild)
