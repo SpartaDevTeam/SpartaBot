@@ -90,7 +90,7 @@ async def on_command_error(ctx: commands.Context, exception):
 
     elif isinstance(exception, commands.CommandInvokeError):
         await ctx.send(
-            "An error occured while running that command:\n", exception
+            f"An error occured while running that command:\n{exception}"
         )
 
     else:
