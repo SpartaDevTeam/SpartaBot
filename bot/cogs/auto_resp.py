@@ -26,7 +26,7 @@ class AutoResponse(commands.Cog):
             response = auto_resps[activation]
             response = response.replace("[member]", str(message.author))
 
-            if content.lower() == activation:
+            if content == activation:
                 await channel.send(
                     response, allowed_mentions=discord.AllowedMentions.none()
                 )
