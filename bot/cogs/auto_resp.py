@@ -14,6 +14,9 @@ class AutoResponse(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+
         Data.c.execute(
             "SELECT auto_responses FROM guilds WHERE id = :guild_id",
             {"guild_id": message.guild.id},
