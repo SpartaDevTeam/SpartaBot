@@ -44,6 +44,7 @@ class AutoResponse(commands.Cog):
             await ctx.send("Please provide all the fields.")
             return
 
+        Data.check_guild_entry(ctx.guild)
         activation = options_split[0].strip()
         response = options_split[1].strip()
 
