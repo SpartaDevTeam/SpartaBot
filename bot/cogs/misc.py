@@ -201,7 +201,7 @@ class Miscellaneous(commands.Cog):
 
         if already_afk:
             Data.c.execute(
-                """"UPDATE afks SET afk_reason = :new_reason
+                """UPDATE afks SET afk_reason = :new_reason
                 WHERE user_id = :user_id""",
                 {"new_reason": reason, "user_id": ctx.author.id},
             )
