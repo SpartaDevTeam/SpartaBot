@@ -27,7 +27,7 @@ class AutoResponse(commands.Cog):
             response = response.replace("[member]", str(message.author))
 
             if content.startswith(activation):
-                await channel.send(response)
+                await channel.send(response, allowed_mentions=discord.AllowedMentions.none())
 
     @commands.command(
         name="addautoresponse",
@@ -162,6 +162,26 @@ class AutoResponse(commands.Cog):
 
             except asyncio.TimeoutError:
                 await ctx.send("No response received, aborting!")
+
+    @commands.command(name="viewautoresponses", aliases=["viewauto"], help="See all the auto responses in your server")
+    @commands.has_guild_permissions(administrator=True)
+    async def view_auto_responses(self, ctx: commands.Context):
+        Data.check_guild_entry(ctx.guild)
+
+        Data.c.execute("SELECT auto_responses FROM guilds WHERE id = :guild_id", {"guild_id": ctx.guild.id})
+        auto_resps = json.loads(Data.c.fetchone()[0])
+
+        if len(auto_resps) > 0:
+            auto_resps_embed = discord.Embed(title=f"Auto Responses in {ctx.guild}", color=self.theme_color)
+
+            for activation in auto_resps:
+                response = auto_resps[activation]
+                auto_resps_embed.add_field(name=activation, value=response, inline=False)
+
+            await ctx.send(embed=auto_resps_embed)
+
+        else:
+            await ctx.send("This server does not have any auto responses")
 
 
 def setup(bot):
