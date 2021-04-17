@@ -12,15 +12,30 @@ class AutoResponse(commands.Cog):
         self.description = "Commands to setup Sparta Bot to automatically reply to certain phrases"
         self.theme_color = discord.Color.purple()
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        Data.c.execute(
+            "SELECT auto_responses FROM guilds WHERE id = :guild_id",
+            {"guild_id": message.guild.id},
+        )
+        auto_resps = json.loads(Data.c.fetchone()[0])
+        content: str = message.content
+        channel: discord.TextChannel = message.channel
+
+        for activation in auto_resps:
+            response = auto_resps[activation]
+            response = response.replace("[member]", str(message.author))
+
+            if content.startswith(activation):
+                await channel.send(response)
+
     @commands.command(
         name="addautoresponse",
         aliases=["addauto"],
         help="Add an auto response phrase. Example: addautoresponse this is the activation, this is the response",
     )
     @commands.has_guild_permissions(administrator=True)
-    async def add_auto_response_phrase(
-        self, ctx: commands.Context, *, options: str
-    ):
+    async def add_auto_response(self, ctx: commands.Context, *, options: str):
         options_split = options.split(",", maxsplit=1)
 
         if len(options_split) < 2:
@@ -34,7 +49,6 @@ class AutoResponse(commands.Cog):
             "SELECT auto_responses FROM guilds WHERE id = :guild_id",
             {"guild_id": ctx.guild.id},
         )
-
         current_auto_resps = json.loads(Data.c.fetchone()[0])
 
         if activation in current_auto_resps:
@@ -48,6 +62,7 @@ class AutoResponse(commands.Cog):
             await ctx.send(
                 "An auto response with this activation already exists and will be overwritten by the new one. Do you want to continue? (Yes to continue, anything else to abort)"
             )
+
             try:
                 confirmation: discord.Message = await self.bot.wait_for(
                     "message", check=check_msg, timeout=30
@@ -77,6 +92,76 @@ class AutoResponse(commands.Cog):
         await ctx.send(
             f"New auto response added with\n\nActivation Phrase:```{activation}```\nResponse:```{response}```"
         )
+
+    @commands.command(
+        name="removeautoresponse",
+        aliases=["removeauto"],
+        help="Remove an auto response phrase",
+    )
+    @commands.has_guild_permissions(administrator=True)
+    async def remove_auto_response(
+        self, ctx: commands.Context, *, activation: str = None
+    ):
+        Data.check_guild_entry(ctx.guild)
+
+        if activation:
+            Data.c.execute(
+                "SELECT auto_responses FROM guilds WHERE id = :guild_id",
+                {"guild_id": ctx.guild.id},
+            )
+            current_auto_resps = json.loads(Data.c.fetchone()[0])
+
+            if activation not in current_auto_resps:
+                await ctx.send(
+                    "An auto response with this activation phrase does not exist"
+                )
+                return
+
+            del current_auto_resps[activation]
+
+            Data.c.execute(
+                "UPDATE guilds SET auto_responses = :new_responses WHERE id = :guild_id",
+                {
+                    "new_responses": json.dumps(current_auto_resps),
+                    "guild_id": ctx.guild.id,
+                },
+            )
+            Data.conn.commit()
+            await ctx.send(
+                f"Auto response with activation:```{activation}```has been removed"
+            )
+
+        else:
+
+            def check_msg(message: discord.Message):
+                return (
+                    message.author == ctx.author
+                    and message.channel == ctx.channel
+                )
+
+            await ctx.send(
+                "You are about to delete all auto responses in this server. Do you want to continue? (Yes to continue, anything else to abort)"
+            )
+
+            try:
+                confirmation: discord.Message = await self.bot.wait_for(
+                    "message", check=check_msg, timeout=30
+                )
+
+                if confirmation.content.lower() == "yes":
+                    Data.c.execute(
+                        "UPDATE guilds SET auto_responses = '{}' WHERE id = :guild_id",
+                        {"guild_id": ctx.guild.id},
+                    )
+                    Data.conn.commit()
+                    await ctx.send(
+                        "All auto responses in this server have been deleted"
+                    )
+                else:
+                    await ctx.send("Aborting!")
+
+            except asyncio.TimeoutError:
+                await ctx.send("No response received, aborting!")
 
 
 def setup(bot):

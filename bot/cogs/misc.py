@@ -155,6 +155,12 @@ class Miscellaneous(commands.Cog):
     )
     async def remind(self, ctx: commands.Context, *, options: str):
         args = options.split(",")
+        if len(args) < 2:
+            await ctx.send(
+                "Please separate the time and reminder message with a comma (,)"
+            )
+            return
+
         remind_time_string = args[0]
         reminder_msg = args[1].strip()
 

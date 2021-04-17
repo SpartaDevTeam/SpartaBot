@@ -92,6 +92,7 @@ async def on_command_error(ctx: commands.Context, exception):
         await ctx.send(
             f"An error occured while running that command:\n{exception}"
         )
+        raise exception
 
     else:
         raise exception
