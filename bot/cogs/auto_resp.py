@@ -27,7 +27,11 @@ class AutoResponse(commands.Cog):
 
         for activation in auto_resps:
             response = auto_resps[activation]
+
+            # Auto Response Variables
             response = response.replace("[member]", str(message.author))
+            response = response.replace("[nick]", message.author.display_name)
+            response = response.replace("[name]", message.author.name)
 
             if content == activation:
                 await channel.send(
@@ -37,7 +41,7 @@ class AutoResponse(commands.Cog):
     @commands.command(
         name="addautoresponse",
         aliases=["addauto", "aar"],
-        help="Add an auto response phrase. Example: addautoresponse this is the activation, this is the response",
+        help="Add an auto response phrase.\n\nExample: addautoresponse activation, response\n\nVariables you can use: [member], [nick], [name]",
     )
     @commands.has_guild_permissions(administrator=True)
     async def add_auto_response(self, ctx: commands.Context, *, options: str):

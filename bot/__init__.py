@@ -2,7 +2,7 @@ import os
 
 import discord
 from discord.ext import commands, ipc
-from pretty_help import Navigation, PrettyHelp
+from pretty_help import PrettyHelp, PrettyMenu
 
 from bot.data import Data
 
@@ -57,7 +57,7 @@ bot = MyBot(
     ),
     intents=intents,
     case_insensitive=True,
-    help_command=PrettyHelp(navigation=Navigation(), color=THEME),
+    help_command=PrettyHelp(color=THEME),
 )
 
 
