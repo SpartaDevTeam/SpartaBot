@@ -33,7 +33,7 @@ class AutoResponse(commands.Cog):
 
     @commands.command(
         name="addautoresponse",
-        aliases=["addauto"],
+        aliases=["addauto", "aar"],
         help="Add an auto response phrase. Example: addautoresponse this is the activation, this is the response",
     )
     @commands.has_guild_permissions(administrator=True)
@@ -98,7 +98,7 @@ class AutoResponse(commands.Cog):
 
     @commands.command(
         name="removeautoresponse",
-        aliases=["removeauto"],
+        aliases=["removeauto", "rar"],
         help="Remove an auto response phrase",
     )
     @commands.has_guild_permissions(administrator=True)
@@ -168,10 +168,9 @@ class AutoResponse(commands.Cog):
 
     @commands.command(
         name="viewautoresponses",
-        aliases=["viewauto"],
+        aliases=["viewauto", "var"],
         help="See all the auto responses in your server",
     )
-    @commands.has_guild_permissions(administrator=True)
     async def view_auto_responses(self, ctx: commands.Context):
         Data.check_guild_entry(ctx.guild)
 
