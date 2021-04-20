@@ -56,7 +56,7 @@ class Data:
             "guild_id"	INTEGER,
             "channel_id"    INTEGER,
             "message_id"	INTEGER,
-            "emoji_id"	INTEGER,
+            "emoji"	TEXT,
             "role_id"	INTEGER
         )"""
         )
@@ -166,13 +166,18 @@ class Data:
     def create_new_reaction_role_entry(
         cls, guild, channel, message, emoji, role
     ):
+        if isinstance(emoji, str):
+            em = emoji
+        else:
+            em = emoji.id
+
         cls.c.execute(
-            "INSERT INTO reaction_roles VALUES (:guild_id, :channel_id, :message_id, :emoji_id, :role_id)",
+            "INSERT INTO reaction_roles VALUES (:guild_id, :channel_id, :message_id, :emoji, :role_id)",
             {
                 "guild_id": guild.id,
                 "channel_id": channel.id,
                 "message_id": message.id,
-                "emoji_id": emoji.id,
+                "emoji": em,
                 "role_id": role.id,
             },
         )

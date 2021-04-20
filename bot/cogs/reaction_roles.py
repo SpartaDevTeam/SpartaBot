@@ -1,4 +1,5 @@
 import asyncio
+import emoji
 import discord
 from discord.ext import commands
 
@@ -52,7 +53,7 @@ class ReactionRoles(commands.Cog):
         member: discord.Member = await guild.fetch_member(payload.user_id)
 
         Data.c.execute(
-            "SELECT channel_id, message_id, emoji_id, role_id FROM reaction_roles WHERE guild_id = :guild_id",
+            "SELECT channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
             {"guild_id": guild.id},
         )
         react_roles = Data.c.fetchall()
@@ -62,13 +63,20 @@ class ReactionRoles(commands.Cog):
                 rr[0]
             )
             rr_message: discord.Message = await rr_channel.fetch_message(rr[1])
-            rr_emoji: discord.Emoji = await guild.fetch_emoji(rr[2])
-            rr_role: discord.Role = guild.get_role(rr[3])
+
+            try:
+                rr_emoji: discord.Emoji = await guild.fetch_emoji(int(rr[2]))
+            except ValueError:
+                rr_emoji: discord.PartialEmoji = discord.PartialEmoji(
+                    name=emoji.emojize(rr[2])
+                )
+
+            rr_role: discord.Role = guild.get_role(int(rr[3]))
 
             if (
                 channel == rr_channel
                 and message == rr_message
-                and payload.emoji == rr_emoji
+                and payload.emoji.name == rr_emoji.name
             ):
                 await member.add_roles(rr_role, reason="Sparta Reaction Role")
                 await member.send(
@@ -89,7 +97,7 @@ class ReactionRoles(commands.Cog):
         member: discord.Member = await guild.fetch_member(payload.user_id)
 
         Data.c.execute(
-            "SELECT channel_id, message_id, emoji_id, role_id FROM reaction_roles WHERE guild_id = :guild_id",
+            "SELECT channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
             {"guild_id": guild.id},
         )
         react_roles = Data.c.fetchall()
@@ -99,13 +107,20 @@ class ReactionRoles(commands.Cog):
                 rr[0]
             )
             rr_message: discord.Message = await rr_channel.fetch_message(rr[1])
-            rr_emoji: discord.Emoji = await guild.fetch_emoji(rr[2])
+
+            try:
+                rr_emoji: discord.Emoji = await guild.fetch_emoji(int(rr[2]))
+            except ValueError:
+                rr_emoji: discord.PartialEmoji = discord.PartialEmoji(
+                    name=emoji.emojize(rr[2])
+                )
+
             rr_role: discord.Role = guild.get_role(rr[3])
 
             if (
                 channel == rr_channel
                 and message == rr_message
-                and payload.emoji == rr_emoji
+                and payload.emoji.name == rr_emoji.name
             ):
                 await member.remove_roles(
                     rr_role, reason="Sparta Reaction Role"
@@ -179,8 +194,14 @@ class ReactionRoles(commands.Cog):
                     rr_role = role_mentions[0]
 
         await rr_message.add_reaction(rr_emoji)
+
+        if isinstance(rr_emoji, str):
+            em = emoji.demojize(rr_emoji)
+        else:
+            em = rr_emoji
+
         Data.create_new_reaction_role_entry(
-            guild, rr_channel, rr_message, rr_emoji, rr_role
+            guild, rr_channel, rr_message, em, rr_role
         )
         await ctx.send(
             f"Reaction Role for {rr_role.mention} has been created with {rr_emoji} at {rr_channel.mention}",

@@ -6,3 +6,4 @@ humanize
 jishaku
 requests
 pytest
+emoji
