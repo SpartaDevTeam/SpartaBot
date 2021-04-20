@@ -38,14 +38,53 @@ class ReactionRoles(commands.Cog):
         )
         return response
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(
+        self, payload: discord.RawReactionActionEvent
+    ):
+        guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
+        channel: discord.TextChannel = await self.bot.fetch_channel(
+            payload.channel_id
+        )
+        message: discord.Message = await channel.fetch_message(
+            payload.message_id
+        )
+
+        Data.c.execute(
+            "SELECT channel_id, message_id, emoji_id, role_id FROM reaction_roles WHERE guild_id = :guild_id",
+            {"guild_id": guild.id},
+        )
+        react_roles = Data.c.fetchall()
+
+        for rr in react_roles:
+            rr_channel: discord.TextChannel = await self.bot.fetch_channel(
+                rr[0]
+            )
+            rr_message: discord.Message = await rr_channel.fetch_message(rr[1])
+            rr_emoji: discord.Emoji = await guild.fetch_emoji(rr[2])
+            rr_role: discord.Role = guild.get_role(rr[3])
+
+            if (
+                channel == rr_channel
+                and message == rr_message
+                and payload.emoji == rr_emoji
+            ):
+                await payload.member.add_roles(
+                    rr_role, reason="Sparta Reaction Role"
+                )
+                await payload.member.send(
+                    f"You have been given the **{rr_role}** role in **{guild}**"
+                )
+
     @commands.command(
         name="addreactionrole",
-        aliases=["arr", "reactionrole"],
+        aliases=["addrr", "reactionrole"],
         help="Add a reaction role",
     )
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
     async def add_reaction_role(self, ctx: commands.Context):
+        # TODO: add extra type checks
         guild: discord.Guild = ctx.guild
 
         rr_channel = None

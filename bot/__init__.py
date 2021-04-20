@@ -11,6 +11,7 @@ THEME = discord.Color.purple()
 
 intents = discord.Intents.default()
 intents.members = True
+intents.reactions = True
 
 
 class MyBot(commands.Bot):
