@@ -51,6 +51,16 @@ class Data:
         )"""
         )
 
+        cls.c.execute(
+            """CREATE TABLE IF NOT EXISTS "reaction_roles" (
+            "guild_id"	INTEGER,
+            "channel_id"    INTEGER,
+            "message_id"	INTEGER,
+            "emoji_id"	INTEGER,
+            "role_id"	INTEGER
+        )"""
+        )
+
         cls.conn.commit()
 
     # Guild Data
