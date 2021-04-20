@@ -151,7 +151,9 @@ class Settings(commands.Cog):
     )
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(administrator=True)
-    async def set_auto_role(self, ctx: commands.Context, role: discord.Role):
+    async def set_auto_role(
+        self, ctx: commands.Context, *, role: discord.Role
+    ):
         Data.check_guild_entry(ctx.guild)
 
         Data.c.execute(
@@ -160,7 +162,10 @@ class Settings(commands.Cog):
         )
         Data.conn.commit()
 
-        await ctx.send(f"The auto role has been set to **{role}**")
+        await ctx.send(
+            f"The auto role has been set to **{role.mention}**",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     @commands.command(
         name="serverinfo",

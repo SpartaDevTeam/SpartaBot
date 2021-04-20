@@ -160,3 +160,21 @@ class Data:
         )
         cls.conn.commit()
         print(f"Deleted reminder with ID {reminder_id}")
+
+    # Reaction Roles Data
+    @classmethod
+    def create_new_reaction_role_entry(
+        cls, guild, channel, message, emoji, role
+    ):
+        cls.c.execute(
+            "INSERT INTO reaction_roles VALUES (:guild_id, :channel_id, :message_id, :emoji_id, :role_id)",
+            {
+                "guild_id": guild.id,
+                "channel_id": channel.id,
+                "message_id": message.id,
+                "emoji_id": emoji.id,
+                "role_id": role.id,
+            },
+        )
+        cls.conn.commit()
+        print(f"Created reaction role in {guild} with emoji {emoji}")
