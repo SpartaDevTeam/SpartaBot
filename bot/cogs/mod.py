@@ -1,10 +1,13 @@
+import asyncio
 import json
 import random
 
 import discord
+import humanize
 from discord.ext import commands
 
 from bot.data import Data
+from bot.utils import str_time_to_timedelta
 
 
 class Moderation(commands.Cog):
@@ -201,11 +204,18 @@ class Moderation(commands.Cog):
             )
 
     @commands.command(
-        name="mute", help="Prevent someone from sending messages"
+        name="mute",
+        help="Prevent someone from sending messages.\nFor temp mute, specify a time in days, hours, minutes, or seconds. Example: mute @member 5h",
     )
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
-    async def mute(self, ctx: commands.Context, member: discord.Member):
+    async def mute(
+        self,
+        ctx: commands.Context,
+        member: discord.Member,
+        *,
+        time: str = None,
+    ):
         if ctx.author.top_role <= member.top_role:
             await ctx.send(
                 f"You cannot use the command on this person because their top role is higher than or equal to yours."
@@ -214,7 +224,25 @@ class Moderation(commands.Cog):
 
         mute_role = await self.get_guild_mute_role(ctx.guild)
         await member.add_roles(mute_role)
-        await ctx.send(f"**{member}** can no longer speak")
+
+        if time:
+            unmute_time = str_time_to_timedelta(time)
+            humanized_time_str = humanize.precisedelta(
+                unmute_time, format="%0"
+            )
+
+            await ctx.send(
+                f"**{member}** has been muted for {humanized_time_str}"
+            )
+            await asyncio.sleep(unmute_time.total_seconds())
+
+            if mute_role in member.roles:
+                await member.remove_roles(mute_role)
+                await ctx.send(
+                    f"**{member}** has been unmuted after {humanized_time_str}"
+                )
+        else:
+            await ctx.send(f"**{member}** can no longer speak")
 
     @commands.command(
         name="unmute", help="Return the ability to talk to someone"

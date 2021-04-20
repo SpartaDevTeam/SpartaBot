@@ -72,10 +72,10 @@ class Fun(commands.Cog):
         split = poll.split("|")
         description = split.pop(0)
 
-        if length < 5:
+        if length < 10:
             await ctx.send("The poll must last at least 5 seconds.")
             return
-        if length > 120:
+        if length > 300:
             await ctx.send("The poll must last less than 120 seconds.")
             return
         if len(split) > 9:
