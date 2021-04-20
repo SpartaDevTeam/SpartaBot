@@ -124,58 +124,81 @@ class ReactionRoles(commands.Cog):
         # TODO: add extra type checks
         guild: discord.Guild = ctx.guild
 
-        rr_channel = None
-        while not rr_channel:
-            channel_msg = await self.msg_prompt(
-                ctx,
-                "Please mention the channel where you want to setup a reaction role",
-            )
-            channel_mentions = channel_msg.channel_mentions
+        try:
+            rr_channel = None
+            while not rr_channel:
+                channel_msg = await self.msg_prompt(
+                    ctx,
+                    "Please mention the channel where you want to setup a reaction role",
+                )
+                channel_mentions = channel_msg.channel_mentions
 
-            if channel_mentions:
-                rr_channel = channel_mentions[0]
+                if channel_mentions:
+                    rr_channel = channel_mentions[0]
 
-        rr_message = None
-        while not rr_message:
-            message_msg = await self.msg_prompt(
-                ctx,
-                "Please send the ID of the message where you want to setup a reaction role",
-            )
-            try:
-                message = await rr_channel.fetch_message(
-                    int(message_msg.content)
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
+
+        try:
+            rr_message = None
+            while not rr_message:
+                message_msg = await self.msg_prompt(
+                    ctx,
+                    "Please send the ID of the message where you want to setup a reaction role",
+                )
+                try:
+                    message = await rr_channel.fetch_message(
+                        int(message_msg.content)
+                    )
+
+                    if message:
+                        rr_message = message
+                except ValueError:
+                    continue
+
+                except discord.NotFound:
+                    await ctx.send(f"Could not fetch message with that ID")
+
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
+
+        try:
+            rr_emoji = None
+            while not rr_emoji:
+                emoji_react = await self.react_prompt(
+                    ctx,
+                    "Please react to this message with the emoji you want to use for the reaction role",
+                )
+                rr_emoji = emoji_react.emoji
+
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
+
+        try:
+            rr_role = None
+            while not rr_role:
+                role_msg = await self.msg_prompt(
+                    ctx,
+                    "Please mention or send the ID of the role you want to give to members",
                 )
 
-                if message:
-                    rr_message = message
-            except ValueError:
-                continue
+                try:
+                    role_id = int(role_msg.content)
+                    role = guild.get_role(role_id)
+                    if role:
+                        rr_role = role
 
-        rr_emoji = None
-        while not rr_emoji:
-            emoji_react = await self.react_prompt(
-                ctx,
-                "Please react to this message with the emoji you want to use for the reaction role",
-            )
-            rr_emoji = emoji_react.emoji
+                except ValueError:
+                    role_mentions = role_msg.role_mentions
+                    if role_mentions:
+                        rr_role = role_mentions[0]
 
-        rr_role = None
-        while not rr_role:
-            role_msg = await self.msg_prompt(
-                ctx,
-                "Please mention or send the ID of the role you want to give to members",
-            )
-
-            try:
-                role_id = int(role_msg.content)
-                role = guild.get_role(role_id)
-                if role:
-                    rr_role = role
-
-            except ValueError:
-                role_mentions = role_msg.role_mentions
-                if role_mentions:
-                    rr_role = role_mentions[0]
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
 
         await rr_message.add_reaction(rr_emoji)
 
