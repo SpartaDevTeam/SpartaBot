@@ -44,12 +44,6 @@ class ReactionRoles(commands.Cog):
         self, payload: discord.RawReactionActionEvent
     ):
         guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
-        channel: discord.TextChannel = await self.bot.fetch_channel(
-            payload.channel_id
-        )
-        message: discord.Message = await channel.fetch_message(
-            payload.message_id
-        )
         member: discord.Member = await guild.fetch_member(payload.user_id)
 
         Data.c.execute(
@@ -59,10 +53,8 @@ class ReactionRoles(commands.Cog):
         react_roles = Data.c.fetchall()
 
         for rr in react_roles:
-            rr_channel: discord.TextChannel = await self.bot.fetch_channel(
-                rr[0]
-            )
-            rr_message: discord.Message = await rr_channel.fetch_message(rr[1])
+            rr_channel_id = rr[0]
+            rr_message_id = rr[1]
 
             try:
                 rr_emoji: discord.Emoji = await guild.fetch_emoji(int(rr[2]))
@@ -74,8 +66,8 @@ class ReactionRoles(commands.Cog):
             rr_role: discord.Role = guild.get_role(int(rr[3]))
 
             if (
-                channel == rr_channel
-                and message == rr_message
+                payload.channel_id == rr_channel_id
+                and payload.message_id == rr_message_id
                 and payload.emoji.name == rr_emoji.name
             ):
                 await member.add_roles(rr_role, reason="Sparta Reaction Role")
@@ -88,12 +80,6 @@ class ReactionRoles(commands.Cog):
         self, payload: discord.RawReactionActionEvent
     ):
         guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
-        channel: discord.TextChannel = await self.bot.fetch_channel(
-            payload.channel_id
-        )
-        message: discord.Message = await channel.fetch_message(
-            payload.message_id
-        )
         member: discord.Member = await guild.fetch_member(payload.user_id)
 
         Data.c.execute(
@@ -103,10 +89,8 @@ class ReactionRoles(commands.Cog):
         react_roles = Data.c.fetchall()
 
         for rr in react_roles:
-            rr_channel: discord.TextChannel = await self.bot.fetch_channel(
-                rr[0]
-            )
-            rr_message: discord.Message = await rr_channel.fetch_message(rr[1])
+            rr_channel_id = rr[0]
+            rr_message_id = rr[1]
 
             try:
                 rr_emoji: discord.Emoji = await guild.fetch_emoji(int(rr[2]))
@@ -115,11 +99,11 @@ class ReactionRoles(commands.Cog):
                     name=emoji.emojize(rr[2])
                 )
 
-            rr_role: discord.Role = guild.get_role(rr[3])
+            rr_role: discord.Role = guild.get_role(int(rr[3]))
 
             if (
-                channel == rr_channel
-                and message == rr_message
+                payload.channel_id == rr_channel_id
+                and payload.message_id == rr_message_id
                 and payload.emoji.name == rr_emoji.name
             ):
                 await member.remove_roles(
