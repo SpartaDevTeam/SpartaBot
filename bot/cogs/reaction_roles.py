@@ -207,7 +207,7 @@ class ReactionRoles(commands.Cog):
             em = rr_emoji
 
         Data.c.execute(
-            "SELECT * FROM reaction_roles WHERE guild_id = :guild_id AND channel_id = :channel_id AND message_id = :message_id AND role_id = :role_id",
+            "SELECT emoji FROM reaction_roles WHERE guild_id = :guild_id AND channel_id = :channel_id AND message_id = :message_id AND role_id = :role_id",
             {
                 "guild_id": guild.id,
                 "channel_id": rr_channel.id,
@@ -218,8 +218,13 @@ class ReactionRoles(commands.Cog):
         rr_entry = Data.c.fetchone()
 
         if rr_entry:
+            try:
+                em = await guild.fetch_emoji(int(rr_entry[0]))
+            except ValueError:
+                em = discord.PartialEmoji(name=emoji.emojize(rr_entry[0]))
+
             await ctx.send(
-                "A reaction role with this configuration already exists"
+                f"A reaction role with this configuration already exists as {emoji}"
             )
         else:
             Data.create_new_reaction_role_entry(
