@@ -121,7 +121,6 @@ class ReactionRoles(commands.Cog):
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
     async def add_reaction_role(self, ctx: commands.Context):
-        # TODO: add extra type checks
         guild: discord.Guild = ctx.guild
 
         try:
@@ -214,6 +213,49 @@ class ReactionRoles(commands.Cog):
             f"Reaction Role for {rr_role.mention} has been created with {rr_emoji} at {rr_channel.mention}",
             allowed_mentions=discord.AllowedMentions.none(),
         )
+
+    @commands.command(
+        name="viewreactionroles",
+        aliases=["vrr", "viewrr"],
+        help="See the reaction roles setup in your server",
+    )
+    async def view_reaction_roles(self, ctx: commands.Context):
+        Data.c.execute(
+            "SELECT channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
+            {"guild_id": ctx.guild.id},
+        )
+        reaction_roles = Data.c.fetchall()
+        guild: discord.Guild = ctx.guild
+
+        if reaction_roles:
+            rr_embed = discord.Embed(title=f"{ctx.guild} Reaction Roles")
+
+            with ctx.typing():
+                for rr in reaction_roles:
+                    rr_channel: discord.TextChannel = guild.get_channel(rr[0])
+                    rr_msg_id = rr[1]
+
+                    try:
+                        rr_emoji: discord.Emoji = await guild.fetch_emoji(
+                            int(rr[2])
+                        )
+                    except ValueError:
+                        rr_emoji: str = emoji.emojize(rr[2])
+
+                    rr_role: discord.Role = guild.get_role(rr[3])
+
+                    rr_embed.add_field(
+                        name=rr_emoji,
+                        value=f"Channel: {rr_channel.mention}\nMessage ID: {rr_msg_id}\nRole: {rr_role.mention}",
+                        inline=False,
+                    )
+
+            await ctx.send(embed=rr_embed)
+
+        else:
+            await ctx.send(
+                "You don't have any Reaction Roles setup in this server"
+            )
 
 
 def setup(bot):
