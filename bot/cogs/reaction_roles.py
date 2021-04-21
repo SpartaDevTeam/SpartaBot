@@ -118,7 +118,7 @@ class ReactionRoles(commands.Cog):
         aliases=["addrr", "reactionrole"],
         help="Add a reaction role",
     )
-    @commands.bot_has_guild_permissions(manage_roles=True)
+    @commands.bot_has_guild_permissions(manage_roles=True, add_reactions=True)
     @commands.has_guild_permissions(manage_roles=True)
     async def add_reaction_role(self, ctx: commands.Context):
         guild: discord.Guild = ctx.guild
@@ -206,13 +206,130 @@ class ReactionRoles(commands.Cog):
         else:
             em = rr_emoji
 
-        Data.create_new_reaction_role_entry(
-            guild, rr_channel, rr_message, em, rr_role
+        Data.c.execute(
+            "SELECT * FROM reaction_roles WHERE guild_id = :guild_id AND channel_id = :channel_id AND message_id = :message_id AND role_id = :role_id",
+            {
+                "guild_id": guild.id,
+                "channel_id": rr_channel.id,
+                "message_id": rr_message.id,
+                "role_id": rr_role.id,
+            },
         )
-        await ctx.send(
-            f"Reaction Role for {rr_role.mention} has been created with {rr_emoji} at {rr_channel.mention}",
-            allowed_mentions=discord.AllowedMentions.none(),
+        rr_entry = Data.c.fetchone()
+
+        if rr_entry:
+            await ctx.send(
+                "A reaction role with this configuration already exists"
+            )
+        else:
+            Data.create_new_reaction_role_entry(
+                guild, rr_channel, rr_message, em, rr_role
+            )
+            await ctx.send(
+                f"Reaction Role for {rr_role.mention} has been created with {rr_emoji} at {rr_channel.mention}",
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+
+    @commands.command(
+        name="removereactionrole",
+        aliases=["rrr", "removerr"],
+        help="Remove a reaction role",
+    )
+    @commands.bot_has_guild_permissions(manage_roles=True, add_reactions=True)
+    @commands.has_guild_permissions(manage_roles=True)
+    async def remove_reaction_role(self, ctx: commands.Context):
+        guild: discord.Guild = ctx.guild
+
+        try:
+            rr_channel = None
+            while not rr_channel:
+                channel_msg = await self.msg_prompt(
+                    ctx,
+                    "Please mention the channel where you want to remove a reaction role",
+                )
+                channel_mentions = channel_msg.channel_mentions
+
+                if channel_mentions:
+                    rr_channel = channel_mentions[0]
+
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
+
+        try:
+            rr_message = None
+            while not rr_message:
+                message_msg = await self.msg_prompt(
+                    ctx,
+                    "Please send the ID of the message where you want to remove a reaction role",
+                )
+                try:
+                    message = await rr_channel.fetch_message(
+                        int(message_msg.content)
+                    )
+
+                    if message:
+                        rr_message = message
+                except ValueError:
+                    continue
+
+                except discord.NotFound:
+                    await ctx.send(f"Could not fetch message with that ID")
+
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
+
+        try:
+            rr_role = None
+            while not rr_role:
+                role_msg = await self.msg_prompt(
+                    ctx,
+                    "Please mention or send the ID of the role for the reaction role you want to remove",
+                )
+
+                try:
+                    role_id = int(role_msg.content)
+                    role = guild.get_role(role_id)
+                    if role:
+                        rr_role = role
+
+                except ValueError:
+                    role_mentions = role_msg.role_mentions
+                    if role_mentions:
+                        rr_role = role_mentions[0]
+
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
+
+        Data.c.execute(
+            "SELECT emoji FROM reaction_roles WHERE guild_id = :guild_id AND channel_id = :channel_id AND message_id = :message_id AND role_id = :role_id",
+            {
+                "guild_id": guild.id,
+                "channel_id": rr_channel.id,
+                "message_id": rr_message.id,
+                "role_id": rr_role.id,
+            },
         )
+        rr_entry = Data.c.fetchone()
+
+        if rr_entry:
+            Data.delete_reaction_role_entry(
+                guild, rr_channel, rr_message, rr_role
+            )
+
+            try:
+                em = await guild.fetch_emoji(int(rr_entry[0]))
+            except ValueError:
+                em = discord.PartialEmoji(name=emoji.emojize(rr_entry[0]))
+
+            await rr_message.clear_reaction(em)
+            await ctx.send("This reaction role has been removed")
+        else:
+            await ctx.send(
+                "A reaction role with this configuration does not exist"
+            )
 
     @commands.command(
         name="viewreactionroles",
@@ -254,7 +371,7 @@ class ReactionRoles(commands.Cog):
 
         else:
             await ctx.send(
-                "You don't have any Reaction Roles setup in this server"
+                "You don't have any reaction roles setup in this server"
             )
 
 
