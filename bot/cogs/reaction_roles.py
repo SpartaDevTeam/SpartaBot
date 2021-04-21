@@ -350,7 +350,9 @@ class ReactionRoles(commands.Cog):
         guild: discord.Guild = ctx.guild
 
         if reaction_roles:
-            rr_embed = discord.Embed(title=f"{ctx.guild} Reaction Roles")
+            rr_embed = discord.Embed(
+                title=f"{ctx.guild} Reaction Roles", color=self.theme_color
+            )
 
             with ctx.typing():
                 for rr in reaction_roles:
