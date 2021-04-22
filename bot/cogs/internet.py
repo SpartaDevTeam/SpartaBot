@@ -1,7 +1,8 @@
 import os
+import urllib.request
+import re
 import urbanpython
 import discord
-from datetime import datetime
 from discord.ext import commands
 
 
@@ -13,6 +14,8 @@ class InternetStuff(commands.Cog):
             "Commands to surf the interwebs without leaving Discord"
         )
         self.urban = urbanpython.Urban(os.environ["SPARTA_URBAN_API_KEY"])
+        self.yt_search_url = "https://www.youtube.com/results?search_query="
+        self.yt_video_url = "https://www.youtube.com/watch?v="
 
     @commands.command(
         name="urban", help="Find word definitions on Urban Dictionary"
@@ -49,6 +52,16 @@ class InternetStuff(commands.Cog):
             )
         else:
             await ctx.send(embed=urban_embed)
+
+    @commands.command(
+        name="youtube", aliases=["yt"], help="Search YouTube for videos"
+    )
+    async def youtube(self, ctx: commands.Context, *, query: str):
+        formatted_query = "+".join(query.split())
+        html = urllib.request.urlopen(self.yt_search_url + formatted_query)
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        first_result = self.yt_video_url + video_ids[0]
+        await ctx.send(first_result)
 
 
 def setup(bot):
