@@ -18,14 +18,15 @@ class InternetStuff(commands.Cog):
         name="urban", help="Find word definitions on Urban Dictionary"
     )
     async def urban_dictionary(self, ctx: commands.Context, *, query: str):
-        try:
-            result = self.urban.search(query)
-        except IndexError:
-            await ctx.send(
-                f"No definition found for term: {query}",
-                allowed_mentions=discord.AllowedMentions.none(),
-            )
-            return
+        with ctx.typing():
+            try:
+                result = self.urban.search(query)
+            except IndexError:
+                await ctx.send(
+                    f"No definition found for term: {query}",
+                    allowed_mentions=discord.AllowedMentions.none(),
+                )
+                return
 
         body = f"**Definition:**\n{result.definition}\n\n**Example:\n**{result.example}"
         written_on = result.written_on[:10]
