@@ -224,7 +224,7 @@ class ReactionRoles(commands.Cog):
                 em = discord.PartialEmoji(name=emoji.emojize(rr_entry[0]))
 
             await ctx.send(
-                f"A reaction role with this configuration already exists as {emoji}"
+                f"A reaction role with this configuration already exists as {em}"
             )
         else:
             Data.create_new_reaction_role_entry(
