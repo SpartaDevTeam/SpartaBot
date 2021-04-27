@@ -41,7 +41,7 @@ class InternetStuff(commands.Cog):
             url=result.permalink,
         )
         urban_embed.set_footer(
-            text=f"Written by {result.author} on {written_on}"
+            text=f"Written by {result.author} on {written_on}\n👍 {result.thumbs_up} | 👎 {result.thumbs_down}"
         )
 
         if len(urban_embed.description) > 2048:
