@@ -81,7 +81,7 @@ class Fun(commands.Cog):
             return
         if length > upper_limit:
             await ctx.send(
-                "The poll must last less than {upper_limit} seconds."
+                f"The poll must last less than {upper_limit} seconds."
             )
             return
         if len(split) > 9:
