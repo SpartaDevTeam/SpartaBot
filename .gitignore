@@ -205,3 +205,6 @@ fabric.properties
 # The whole damn stupid folder
 .idea/
 
+# Stupid fricking macos junk
+.DS_Store
+

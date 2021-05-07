@@ -1,10 +1,13 @@
 import os
+from dotenv import load_dotenv
 
 import discord
 from discord.ext import commands, ipc
 from pretty_help import PrettyHelp, PrettyMenu
 
 from bot.data import Data
+
+load_dotenv()
 
 TOKEN = os.environ["SPARTA_TOKEN"]
 THEME = discord.Color.purple()
