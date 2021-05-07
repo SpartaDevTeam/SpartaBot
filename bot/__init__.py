@@ -40,7 +40,7 @@ class MyBot(commands.Bot):
 
 def get_prefix(client, message):
     if not message.guild:
-        return "sb!"
+        return "s!"
 
     Data.check_guild_entry(message.guild)
 
