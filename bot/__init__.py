@@ -70,8 +70,8 @@ async def on_command_error(ctx: commands.Context, exception):
     if isinstance(exception, commands.errors.MissingRequiredArgument):
         prefix = get_prefix(bot, ctx.message)
         await ctx.send(
-            f"`{exception.param.name}` is a required input. Try using "
-            f"`{prefix}help {ctx.invoked_with}` for more information."
+            f"`{exception.param.name}` is a required input, try using "
+            f"`{prefix}help {ctx.invoked_with}` for more information"
         )
 
     elif isinstance(exception, commands.MissingPermissions):
@@ -84,7 +84,7 @@ async def on_command_error(ctx: commands.Context, exception):
             await ctx.send(missing_perm.title())
 
     elif isinstance(exception, commands.NotOwner):
-        await ctx.send("You must be the bot owner to use this command.")
+        await ctx.send("You must be the bot owner to use this command")
 
     elif isinstance(exception, commands.CommandNotFound):
         pass
@@ -94,9 +94,14 @@ async def on_command_error(ctx: commands.Context, exception):
 
     elif isinstance(exception, commands.CommandInvokeError):
         await ctx.send(
-            f"An error occured while running that command:\n{exception}"
+            f"An error occured while running that command:\n```{exception}```"
         )
         raise exception
+
+    elif isinstance(exception, commands.NSFWChannelRequired):
+        await ctx.send(
+            "Please enable NSFW on this channel to use this command"
+        )
 
     else:
         raise exception

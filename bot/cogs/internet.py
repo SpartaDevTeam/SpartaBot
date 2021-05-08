@@ -20,6 +20,7 @@ class InternetStuff(commands.Cog):
     @commands.command(
         name="urban", help="Find word definitions on Urban Dictionary"
     )
+    @commands.is_nsfw()
     async def urban_dictionary(self, ctx: commands.Context, *, query: str):
         with ctx.typing():
             try:
