@@ -72,8 +72,9 @@ bot = MyBot(
 
 @bot.event
 async def on_command_error(ctx: commands.Context, exception):
+    prefix = get_prefix(bot, ctx.message)
+    
     if isinstance(exception, commands.MissingRequiredArgument):
-        prefix = get_prefix(bot, ctx.message)
         await ctx.send(
             f"`{exception.param.name}` is a required input, try using "
             f"`{prefix}help {ctx.invoked_with}` for more information"
@@ -106,7 +107,7 @@ async def on_command_error(ctx: commands.Context, exception):
 
     elif isinstance(exception, DBLVoteRequired):
         await ctx.send(
-            "Please vote for me on Top.gg to use this command. Try using `s!vote` for voting links."
+            f"Please vote for me on Top.gg to use this command. Try using `{prefix}!vote` for voting links."
         )
 
     elif isinstance(exception, commands.CheckFailure):
