@@ -2,10 +2,12 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 
+from bot import MyBot
+
 
 class Status(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.theme_color = discord.Color.purple()
         self.status_msgs = [
             (discord.ActivityType.watching, "[guild_count] servers"),

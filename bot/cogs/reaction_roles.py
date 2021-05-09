@@ -3,12 +3,14 @@ import emoji
 import discord
 from discord.ext import commands
 
+from bot import MyBot
 from bot.data import Data
+from bot.utils import dbl_vote_required
 
 
 class ReactionRoles(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.theme_color = discord.Color.purple()
         self.description = "Commands to setup reaction roles for members of your server to give themselves roles"
 
@@ -120,6 +122,7 @@ class ReactionRoles(commands.Cog):
     )
     @commands.bot_has_guild_permissions(manage_roles=True, add_reactions=True)
     @commands.has_guild_permissions(manage_roles=True)
+    @dbl_vote_required()
     async def add_reaction_role(self, ctx: commands.Context):
         guild: discord.Guild = ctx.guild
 

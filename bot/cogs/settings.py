@@ -4,12 +4,13 @@ from typing import Union
 from discord.ext import commands
 from discord import utils
 
+from bot import MyBot
 from bot.data import Data
 
 
 class Settings(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.description = (
             "Commands to change Sparta settings for the current server"
         )

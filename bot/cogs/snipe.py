@@ -1,10 +1,12 @@
 import discord
 from discord.ext import commands
 
+from bot import MyBot
+
 
 class Snipe(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.description = (
             "Commands to snipe out messages that people try to hide"
         )

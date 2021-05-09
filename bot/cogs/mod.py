@@ -6,13 +6,14 @@ import discord
 import humanize
 from discord.ext import commands
 
+from bot import MyBot
 from bot.data import Data
 from bot.utils import str_time_to_timedelta
 
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.description = (
             "Commands to uphold the peace and integrity of the server"
         )

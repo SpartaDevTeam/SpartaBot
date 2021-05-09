@@ -5,10 +5,12 @@ import urbanpython
 import discord
 from discord.ext import commands
 
+from bot import MyBot
+
 
 class InternetStuff(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.theme_color = discord.Color.purple()
         self.description = (
             "Commands to surf the interwebs without leaving Discord"

@@ -1,13 +1,13 @@
 import discord
 from discord.ext import commands
 
-from bot import get_prefix
+from bot import get_prefix, MyBot
 from bot.data import Data
 
 
 class AFK(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.theme_color = discord.Color.purple()
 
     @commands.Cog.listener()

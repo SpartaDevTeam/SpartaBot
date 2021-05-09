@@ -2,10 +2,12 @@ import os
 from dotenv import load_dotenv
 
 import discord
+import topgg
 from discord.ext import commands, ipc
-from pretty_help import PrettyHelp, PrettyMenu
+from pretty_help import PrettyHelp
 
 from bot.data import Data
+from bot.errors import DBLVoteRequired
 
 load_dotenv()
 
@@ -25,6 +27,9 @@ class MyBot(commands.Bot):
             host="0.0.0.0",
             port=6000,
             secret_key=os.environ["SPARTA_SECRET_KEY"],
+        )
+        self.topgg_client = topgg.DBLClient(
+            bot=self, token=os.environ["SPARTA_DBL_TOKEN"], autopost=True
         )
 
     async def on_ready(self):
@@ -67,7 +72,7 @@ bot = MyBot(
 
 @bot.event
 async def on_command_error(ctx: commands.Context, exception):
-    if isinstance(exception, commands.errors.MissingRequiredArgument):
+    if isinstance(exception, commands.MissingRequiredArgument):
         prefix = get_prefix(bot, ctx.message)
         await ctx.send(
             f"`{exception.param.name}` is a required input, try using "
@@ -75,21 +80,17 @@ async def on_command_error(ctx: commands.Context, exception):
         )
 
     elif isinstance(exception, commands.MissingPermissions):
-        await ctx.send(
-            "You don't have permission to run this command. "
-            "You need the following permissions:"
-        )
+        msg = "You don't have permission to run this command. You need the following permissions:"
 
         for missing_perm in exception.missing_perms:
-            await ctx.send(missing_perm.title())
+            msg += f"\n{missing_perm.title()}"
+
+        await ctx.send(msg)
 
     elif isinstance(exception, commands.NotOwner):
         await ctx.send("You must be the bot owner to use this command")
 
     elif isinstance(exception, commands.CommandNotFound):
-        pass
-
-    elif isinstance(exception, commands.CheckFailure):
         pass
 
     elif isinstance(exception, commands.CommandInvokeError):
@@ -102,6 +103,14 @@ async def on_command_error(ctx: commands.Context, exception):
         await ctx.send(
             "Please enable NSFW on this channel to use this command"
         )
+
+    elif isinstance(exception, DBLVoteRequired):
+        await ctx.send(
+            "Please vote for me on Top.gg to use this command. Try using `s!vote` for voting links."
+        )
+
+    elif isinstance(exception, commands.CheckFailure):
+        pass
 
     else:
         raise exception
@@ -152,7 +161,4 @@ def main():
     finally:
         print("Exiting...")
         Data.conn.close()
-
-
-if __name__ == "__main__":
-    main()
+        bot.topgg_client.close()

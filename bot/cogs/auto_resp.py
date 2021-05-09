@@ -3,12 +3,14 @@ import json
 import discord
 from discord.ext import commands
 
+from bot import MyBot
 from bot.data import Data
+from bot.utils import dbl_vote_required
 
 
 class AutoResponse(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.description = "Commands to setup Sparta Bot to automatically reply to certain phrases"
         self.theme_color = discord.Color.purple()
 
@@ -43,6 +45,7 @@ class AutoResponse(commands.Cog):
         aliases=["addauto", "aar"],
         help="Add an auto response phrase.\n\nExample: addautoresponse activation, response\n\nVariables you can use: [member], [nick], [name]",
     )
+    @dbl_vote_required()
     @commands.has_guild_permissions(administrator=True)
     async def add_auto_response(self, ctx: commands.Context, *, options: str):
         options_split = options.split(",", maxsplit=1)

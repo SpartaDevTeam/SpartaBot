@@ -5,12 +5,13 @@ from re import search
 import discord
 from discord.ext import commands
 
+from bot import MyBot
 from bot.data import Data
 
 
 class AutoMod(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: MyBot = bot
         self.description = "Commands to setup Auto-Mod in Sparta"
         self.theme_color = discord.Color.purple()
         self.url_regex = (
