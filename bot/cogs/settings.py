@@ -90,7 +90,7 @@ class Settings(commands.Cog):
     @commands.command(
         name="setwelcomechannel",
         aliases=["wchannel"],
-        help="Change the channel where welcome messages are sent",
+        help="Change the channel where welcome messages are sent. Leave the channel field empty to disable welcome messages.",
     )
     @commands.has_guild_permissions(administrator=True)
     async def set_welcome_channel(
@@ -119,7 +119,7 @@ class Settings(commands.Cog):
     @commands.command(
         name="setleavechannel",
         aliases=["lchannel"],
-        help="Change the channel where leave messages are sent",
+        help="Change the channel where leave messages are sent. Leave the channel field empty to disable leave messages.",
     )
     @commands.has_guild_permissions(administrator=True)
     async def set_leave_channel(

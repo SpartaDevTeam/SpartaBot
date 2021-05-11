@@ -275,7 +275,10 @@ class Moderation(commands.Cog):
             )
             return
 
-        await member.send(f"You have been banned from **{ctx.guild.name}**")
+        if not member.bot:
+            await member.send(
+                f"You have been banned from **{ctx.guild.name}**"
+            )
         await ctx.guild.ban(member, reason=reason, delete_message_days=0)
         await ctx.send(f"**{member}** has been banned from this server")
 
@@ -327,7 +330,10 @@ class Moderation(commands.Cog):
             )
             return
 
-        await member.send(f"You have been kicked from **{ctx.guild.name}**")
+        if not member.bot:
+            await member.send(
+                f"You have been kicked from **{ctx.guild.name}**"
+            )
         await ctx.guild.kick(member, reason=reason)
         await ctx.send(f"**{member}** has been kicked from this server")
 

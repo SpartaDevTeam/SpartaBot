@@ -73,7 +73,7 @@ bot = MyBot(
 @bot.event
 async def on_command_error(ctx: commands.Context, exception):
     prefix = get_prefix(bot, ctx.message)
-    
+
     if isinstance(exception, commands.MissingRequiredArgument):
         await ctx.send(
             f"`{exception.param.name}` is a required input, try using "
