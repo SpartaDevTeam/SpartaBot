@@ -26,7 +26,7 @@ class Status(commands.Cog):
     def cog_unload(self):
         self.status_task.cancel()
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=120)
     async def status_task(self):
         activity = self.status_msgs[self.status_index]
         activ_type = activity[0]
