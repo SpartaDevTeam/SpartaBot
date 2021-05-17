@@ -27,7 +27,7 @@ class ServerLogs(commands.Cog):
         ).send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_guild_leave(self, guild):
+    async def on_guild_remove(self, guild):
         embed = discord.Embed(
             title="I Have Left A Guild!",
             description=f"{guild.name}",
