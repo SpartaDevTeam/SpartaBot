@@ -16,6 +16,7 @@ class ServerLogs(commands.Cog):
             title="I Have Joined A New Guild!",
             description=f"[{guild.name}]({inv})",
             timestamp=datetime.datetime.now(),
+            color=self.theme_color,
         )
         embed.add_field(
             name=f"This Guild Has {guild.member_count} Members!",
@@ -31,6 +32,7 @@ class ServerLogs(commands.Cog):
             title="I Have Left A Guild!",
             description=f"{guild.name}",
             timestamp=datetime.datetime.now(),
+            color=self.theme_color,
         )
         embed.add_field(
             name=f";-; We Are Now At {len(self.bot.guilds)} Guilds!"
