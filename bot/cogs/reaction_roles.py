@@ -265,24 +265,16 @@ class ReactionRoles(commands.Cog):
             return
 
         try:
-            rr_message = None
-            while not rr_message:
+            rr_message_id = None
+            while not rr_message_id:
                 message_msg = await self.msg_prompt(
                     ctx,
                     "Please send the ID of the message where you want to remove a reaction role",
                 )
                 try:
-                    message = await rr_channel.fetch_message(
-                        int(message_msg.content)
-                    )
-
-                    if message:
-                        rr_message = message
+                    rr_message_id = int(message_msg.content)
                 except ValueError:
                     continue
-
-                except discord.NotFound:
-                    await ctx.send(f"Could not fetch message with that ID")
 
         except asyncio.TimeoutError:
             await ctx.send("No response received, aborting!")
@@ -316,7 +308,7 @@ class ReactionRoles(commands.Cog):
             {
                 "guild_id": guild.id,
                 "channel_id": rr_channel.id,
-                "message_id": rr_message.id,
+                "message_id": rr_message_id,
                 "role_id": rr_role.id,
             },
         )
@@ -324,15 +316,21 @@ class ReactionRoles(commands.Cog):
 
         if rr_entry:
             Data.delete_reaction_role_entry(
-                guild, rr_channel, rr_message, rr_role
+                guild, rr_channel, rr_message_id, rr_role
             )
 
             try:
-                em = await guild.fetch_emoji(int(rr_entry[0]))
-            except ValueError:
-                em = discord.PartialEmoji(name=emoji.emojize(rr_entry[0]))
+                rr_message = await rr_channel.fetch_message(rr_message_id)
 
-            await rr_message.clear_reaction(em)
+                try:
+                    em = await guild.fetch_emoji(int(rr_entry[0]))
+                except ValueError:
+                    em = discord.PartialEmoji(name=emoji.emojize(rr_entry[0]))
+
+                await rr_message.clear_reaction(em)
+            except discord.NotFound:
+                pass
+
             await ctx.send("This reaction role has been removed")
         else:
             await ctx.send(

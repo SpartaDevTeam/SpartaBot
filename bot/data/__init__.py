@@ -185,13 +185,13 @@ class Data:
         print(f"Created reaction role in {guild} for role {role}")
 
     @classmethod
-    def delete_reaction_role_entry(cls, guild, channel, message, role):
+    def delete_reaction_role_entry(cls, guild, channel, message_id, role):
         cls.c.execute(
             "DELETE FROM reaction_roles WHERE guild_id = :guild_id AND channel_id = :channel_id AND message_id = :message_id AND role_id = :role_id",
             {
                 "guild_id": guild.id,
                 "channel_id": channel.id,
-                "message_id": message.id,
+                "message_id": message_id,
                 "role_id": role.id,
             },
         )
