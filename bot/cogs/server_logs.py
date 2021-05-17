@@ -35,7 +35,7 @@ class ServerLogs(commands.Cog):
             color=self.theme_color,
         )
         embed.add_field(
-            name=f";-; We Are Now At {len(self.bot.guilds)} Guilds!"
+            name=f"We Are Now At {len(self.bot.guilds)} Guilds!", value="T-T"
         )
         await self.bot.get_guild(733224197827854377).get_channel(
             843726111360024586
