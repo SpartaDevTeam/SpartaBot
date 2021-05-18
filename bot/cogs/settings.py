@@ -3,7 +3,6 @@ import discord
 from typing import Union
 from discord.ext import commands
 from discord import utils
-import datetime
 
 from bot import MyBot
 from bot.data import Data
@@ -187,26 +186,21 @@ class Settings(commands.Cog):
         si_embed.set_thumbnail(url=guild.icon_url)
 
         si_embed.add_field(
-            name="Human Members", value=str(human_count), inline=True
+            name="Human Members", value=str(human_count), inline=False
         )
         si_embed.add_field(
-            name="Bot Members", value=str(bot_count), inline=True
+            name="Bot Members", value=str(bot_count), inline=False
         )
         si_embed.add_field(
-            name="Total Members", value=str(guild.member_count), inline=True
+            name="Total Members", value=str(guild.member_count), inline=False
         )
         si_embed.add_field(
-            name="Role Count", value=str(len(guild.roles)), inline=True
+            name="Role Count", value=str(len(guild.roles)), inline=False
         )
         si_embed.add_field(
             name="Server Owner", value=str(guild.owner), inline=False
         )
-        si_embed.add_field(
-            name = "Guild's verification level: ", value = str(ctx.guild.verification_level), inline=False
-        )
         si_embed.add_field(name="Server ID", value=guild.id, inline=False)
-        si_embed.add_field(
-            name = "Guild created at: ", value = str(ctx.guild.created_at.strftime("%a, %d %B %Y, %I:%M %p UTC")))
         si_embed.add_field(
             name="Server Region", value=str(guild.region).title(), inline=False
         )

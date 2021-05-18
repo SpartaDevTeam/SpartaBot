@@ -64,7 +64,7 @@ class Miscellaneous(commands.Cog):
         await self.load_pending_reminders()
 
     @commands.command(name="info", help="Display bot information")
-    async def stats(self, ctx: commands.Context):
+    async def info(self, ctx: commands.Context):
         ping = int(self.bot.latency * 1000)
         guild_count = str(len(self.bot.guilds))
         total_member_count = 0
@@ -90,16 +90,6 @@ class Miscellaneous(commands.Cog):
         )
 
         await ctx.send(embed=info_embed)
-
-    @commands.command()
-    async def uptime(self, ctx):
-        current_time = datetime.datetime.utcnow()
-        uptime = (current_time - self.launched_at)
-        em = discord.Embed(title = "My Uptime", color = ctx.author.color)
-        em.add_field(name = "Uptime", value = f"I have been online for **{humanize.naturaldelta(uptime)}**")
-        em.set_author(name = ctx.author.name, icon_url = ctx.author.avatar_url)
-        em.set_footer(text = "Requested by {}".format(ctx.author.name), icon_url = ctx.author.avatar_url)
-        await ctx.send(embed = em)
 
     @commands.command(name="invite", help="Invite Sparta to your server")
     async def invite(self, ctx: commands.Context):
