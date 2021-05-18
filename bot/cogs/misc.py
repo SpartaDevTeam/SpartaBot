@@ -1,8 +1,8 @@
 import asyncio
-from datetime import datetime
 import uuid
 import discord
 import humanize
+from datetime import datetime
 from discord.ext import commands
 
 from bot import MyBot
@@ -15,6 +15,7 @@ class Miscellaneous(commands.Cog):
         self.bot: MyBot = bot
         self.description = "Some commands to do general tasks"
         self.theme_color = discord.Color.purple()
+        self.launched_at = datetime.now()
 
     async def load_pending_reminders(self):
         print("Loading pending reminders...")
@@ -210,6 +211,15 @@ class Miscellaneous(commands.Cog):
         await ctx.send(
             f"You have been AFK'd for the following reason:\n*{reason}*"
         )
+
+    @commands.command(
+        name="uptime", help="Check how long the bot has been up for"
+    )
+    async def uptime(self, ctx: commands.Context):
+        now = datetime.now()
+        uptime = self.launched_at - now
+        humanized_time = humanize.naturaldelta(uptime)
+        await ctx.send(f"I have been online for {humanized_time}")
 
 
 def setup(bot):
