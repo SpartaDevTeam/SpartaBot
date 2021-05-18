@@ -123,6 +123,7 @@ async def on_message(message: discord.Message):
         bot.user in message.mentions
         and message.author != bot.user
         and not message.reference
+        and not message.author.bot
     ):
         guild_prefix = get_prefix(bot, message)
         await message.channel.send(
