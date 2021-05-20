@@ -1,4 +1,5 @@
 import os
+import asyncio
 from dotenv import load_dotenv
 
 import discord
@@ -58,6 +59,14 @@ def get_prefix(client, message):
     return prefix
 
 
+help_cmd = PrettyHelp(
+    color=THEME,
+    ending_note=(
+        "Type s!help command to get more info on a command.\n"
+        "You can also type s!help category for more info on a category.\n"
+        "This menu only shows commands which you have permission to use."
+    )
+)
 bot = MyBot(
     command_prefix=get_prefix,
     description=(
@@ -66,7 +75,7 @@ bot = MyBot(
     ),
     intents=intents,
     case_insensitive=True,
-    help_command=PrettyHelp(color=THEME),
+    help_command=help_cmd,
 )
 
 
@@ -148,10 +157,10 @@ def add_cogs():
 
 
 def main():
-    Data.create_tables()
-    add_cogs()
-
     try:
+        Data.create_tables()
+        add_cogs()
+
         from bot import ipc_routes
 
         bot.ipc.start()
@@ -161,6 +170,7 @@ def main():
     except SystemExit:
         pass
     finally:
-        print("Exiting...")
-        Data.conn.close()
         bot.topgg_client.close()
+        Data.conn.close()
+        print("Exiting...")
+
