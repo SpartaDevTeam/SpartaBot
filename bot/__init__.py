@@ -59,14 +59,7 @@ def get_prefix(client, message):
     return prefix
 
 
-help_cmd = PrettyHelp(
-    color=THEME,
-    ending_note=(
-        "Type s!help command to get more info on a command.\n"
-        "You can also type s!help category for more info on a category.\n"
-        "This menu only shows commands which you have permission to use."
-    )
-)
+help_cmd = PrettyHelp(color=THEME, verify_checks=False)
 bot = MyBot(
     command_prefix=get_prefix,
     description=(
@@ -173,4 +166,3 @@ def main():
         bot.topgg_client.close()
         Data.conn.close()
         print("Exiting...")
-
