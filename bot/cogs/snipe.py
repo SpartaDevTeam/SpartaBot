@@ -21,10 +21,11 @@ class Snipe(commands.Cog):
         ch_id = message.channel.id
 
         if not message.author.bot:
-            if ch_id not in self.deleted_msgs:
-                self.deleted_msgs[ch_id] = []
+            if message.content:
+                if ch_id not in self.deleted_msgs:
+                    self.deleted_msgs[ch_id] = []
 
-            self.deleted_msgs[ch_id].append(message)
+                self.deleted_msgs[ch_id].append(message)
 
             if len(self.deleted_msgs[ch_id]) > self.snipe_limit:
                 self.deleted_msgs[ch_id].pop(0)
@@ -36,10 +37,11 @@ class Snipe(commands.Cog):
         ch_id = before.channel.id
 
         if not before.author.bot:
-            if ch_id not in self.edited_msgs:
-                self.edited_msgs[ch_id] = []
+            if before.content and after.content:
+                if ch_id not in self.edited_msgs:
+                    self.edited_msgs[ch_id] = []
 
-            self.edited_msgs[ch_id].append((before, after))
+                self.edited_msgs[ch_id].append((before, after))
 
             if len(self.edited_msgs[ch_id]) > self.snipe_limit:
                 self.edited_msgs[ch_id].pop(0)
@@ -54,17 +56,21 @@ class Snipe(commands.Cog):
             await ctx.send(f"Maximum snipe limit is {self.snipe_limit}")
             return
 
-        msgs = self.deleted_msgs[ctx.channel.id][::-1][:limit]
-        snipe_embed = discord.Embed(
-            title="Message Snipe", color=self.theme_color
-        )
-
-        for msg in msgs:
-            snipe_embed.add_field(
-                name=str(msg.author), value=msg.content, inline=False
+        try:
+            msgs = self.deleted_msgs[ctx.channel.id][::-1][:limit]
+            snipe_embed = discord.Embed(
+                title="Message Snipe", color=self.theme_color
             )
 
-        await ctx.send(embed=snipe_embed)
+            for msg in msgs:
+                snipe_embed.add_field(
+                    name=str(msg.author), value=msg.content, inline=False
+                )
+
+            await ctx.send(embed=snipe_embed)
+
+        except KeyError:
+            await ctx.send("There's nothing to snipe here...")
 
     @commands.command(
         name="editsnipe",
@@ -76,19 +82,23 @@ class Snipe(commands.Cog):
             await ctx.send(f"Maximum snipe limit is {self.snipe_limit}")
             return
 
-        msgs = self.edited_msgs[ctx.channel.id][::-1][:limit]
-        editsnipe_embed = discord.Embed(
-            title="Edit Snipe", color=self.theme_color
-        )
-
-        for msg in msgs:
-            editsnipe_embed.add_field(
-                name=str(msg[0].author),
-                value=f"{msg[0].content} **-->** {msg[1].content}",
-                inline=False,
+        try:
+            msgs = self.edited_msgs[ctx.channel.id][::-1][:limit]
+            editsnipe_embed = discord.Embed(
+                title="Edit Snipe", color=self.theme_color
             )
 
-        await ctx.send(embed=editsnipe_embed)
+            for msg in msgs:
+                editsnipe_embed.add_field(
+                    name=str(msg[0].author),
+                    value=f"{msg[0].content} **-->** {msg[1].content}",
+                    inline=False,
+                )
+
+            await ctx.send(embed=editsnipe_embed)
+
+        except KeyError:
+            await ctx.send("There's nothing to snipe here...")
 
 
 def setup(bot):
