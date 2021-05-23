@@ -59,7 +59,9 @@ def get_prefix(client, message):
     return prefix
 
 
-help_cmd = PrettyHelp(color=THEME, verify_checks=False)
+help_cmd = PrettyHelp(
+    color=THEME, verify_checks=False, command_attrs={"hidden": True}
+)
 bot = MyBot(
     command_prefix=get_prefix,
     description=(
