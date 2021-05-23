@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import discord
 import topgg
 from discord.ext import commands, ipc
-from pretty_help import PrettyHelp
+from discord.ext.prettyhelp import PrettyHelp
 
 from bot.data import Data
 from bot.errors import DBLVoteRequired

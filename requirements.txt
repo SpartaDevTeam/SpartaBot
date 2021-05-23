@@ -1,7 +1,7 @@
 python-dotenv
 discord.py
 discord-ext-ipc
-discord-pretty-help
+discord-ext-prettyhelp
 pyfiglet
 humanize
 jishaku
