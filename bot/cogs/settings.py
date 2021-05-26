@@ -37,7 +37,7 @@ class Settings(commands.Cog):
         name="setwelcomemessage",
         aliases=["wmsg"],
         brief="Change the welcome message of the current server",
-        help="Change the welcome message of the current server. Use [mention] to mention the new member and [member] to display their username.",
+        help="Change the welcome message of the current server. Variables you can use: [mention], [member], [server]",
     )
     @commands.has_guild_permissions(administrator=True)
     async def set_welcome_message(
@@ -64,7 +64,7 @@ class Settings(commands.Cog):
         name="setleavemessage",
         aliases=["lmsg"],
         brief="Change the leave message of the current server",
-        help="Change the leave message of the current server. Use [mention] to mention the new member and [member] to display their username.",
+        help="Change the leave message of the current server. Variables you can use: [member], [server]",
     )
     @commands.has_guild_permissions(administrator=True)
     async def set_leave_message(

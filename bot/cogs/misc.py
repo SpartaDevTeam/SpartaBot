@@ -54,10 +54,13 @@ class Miscellaneous(commands.Cog):
     ):
         await asyncio.sleep(seconds)
         rem_start_time_str = humanize.naturaltime(reminder_start_time)
-        await user.send(
-            f"You asked me to remind you {rem_start_time_str} about:"
-            f"\n*{reminder_msg}*"
-        )
+        try:
+            await user.send(
+                f"You asked me to remind you {rem_start_time_str} about:"
+                f"\n*{reminder_msg}*"
+            )
+        except discord.Forbidden:
+            pass
         Data.delete_reminder_entry(reminder_id)
 
     @commands.Cog.listener()

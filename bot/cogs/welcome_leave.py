@@ -77,6 +77,7 @@ class WelcomeLeave(commands.Cog):
         # Replace placeholders with actual information
         welcome_message = welcome_message.replace("[mention]", member.mention)
         welcome_message = welcome_message.replace("[member]", str(member))
+        welcome_message = welcome_message.replace("[server]", str(guild))
 
         await welcome_channel.send(welcome_message)
 
@@ -115,8 +116,8 @@ class WelcomeLeave(commands.Cog):
             leave_message = self.default_leave_msg(guild)
 
         # Replace placeholders with actual information
-        leave_message = leave_message.replace("[mention]", member.mention)
         leave_message = leave_message.replace("[member]", str(member))
+        leave_message = leave_message.replace("[server]", str(guild))
 
         await leave_channel.send(leave_message)
 
