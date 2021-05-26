@@ -208,3 +208,5 @@ fabric.properties
 # Stupid fricking macos junk
 .DS_Store
 
+# Bot cache
+bot/cache/

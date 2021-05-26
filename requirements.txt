@@ -10,3 +10,4 @@ pytest
 emoji
 urbanpython
 topggpy
+pillow

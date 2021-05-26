@@ -1,5 +1,7 @@
+import os
 import discord
 from discord.ext import commands
+from PIL import Image, ImageOps, ImageDraw
 
 from bot import MyBot
 from bot.data import Data
@@ -15,6 +17,12 @@ class WelcomeLeave(commands.Cog):
         self.default_leave_msg = lambda guild: (
             "Goodbye [member], " f"thanks for staying at {guild.name}!"
         )
+        self.assets_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "assets")
+        self.cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "cache")
+
+        # Make sure that cache dir exists
+        if "cache" not in os.listdir(os.path.dirname(self.cache_dir)):
+            os.mkdir(self.cache_dir)
 
     async def find_welcome_channel(
         self, guild: discord.Guild
@@ -79,7 +87,32 @@ class WelcomeLeave(commands.Cog):
         welcome_message = welcome_message.replace("[member]", str(member))
         welcome_message = welcome_message.replace("[server]", str(guild))
 
-        await welcome_channel.send(welcome_message)
+        # Get user's avatar
+        avatar_path = os.path.join(self.cache_dir, f"pfp.jpg")
+        await member.avatar_url.save(avatar_path)
+
+        # Prepare welcome image
+        im = Image.open(avatar_path)
+        im = im.convert("RGB")
+        im = im.resize((1024, 1024))
+        bigsize = (im.size[0] * 3, im.size[1] * 3)
+        mask = Image.new("L", bigsize, 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0) + bigsize, fill=255)
+        mask = mask.resize(im.size, Image.ANTIALIAS)
+        im.putalpha(mask)
+        im.save(os.path.join(self.cache_dir, "lol.png"))
+
+        # output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
+        # output.putalpha(mask)
+        # output.save(os.path.join(self.cache_dir, 'circle_pfp.png'))
+
+        w_img_path = os.path.join(self.cache_dir, "welcome.jpg")
+        w_img = Image.open(os.path.join(self.assets_dir, "welcome_image.jpg"))
+        w_img.paste(im, (240, 568), im)
+        w_img.save(w_img_path)
+
+        await welcome_channel.send(welcome_message, file=discord.File(w_img_path))
 
         # Give auto role to new member if they are not a bot
         if not member.bot and auto_role:
