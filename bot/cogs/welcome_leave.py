@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 
 from bot import MyBot
 from bot.data import Data
@@ -11,14 +11,17 @@ class WelcomeLeave(commands.Cog):
     def __init__(self, bot):
         self.bot: MyBot = bot
         self.theme_color = discord.Color.purple()
+        self.assets_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "assets")
+        self.cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "cache")
+
         self.default_welcome_msg = (
             lambda guild: f"Hello [mention], welcome to {guild.name}!"
         )
         self.default_leave_msg = lambda guild: (
             "Goodbye [member], " f"thanks for staying at {guild.name}!"
         )
-        self.assets_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "assets")
-        self.cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "cache")
+        self.asset = lambda asset_name: os.path.join(self.assets_dir, asset_name)
+        self.center_to_corner = lambda center_pos, size: (center_pos[0] - size[0] / 2, center_pos[1] - size[1] / 2)
 
         # Make sure that cache dir exists
         if "cache" not in os.listdir(os.path.dirname(self.cache_dir)):
@@ -91,7 +94,14 @@ class WelcomeLeave(commands.Cog):
         avatar_path = os.path.join(self.cache_dir, f"pfp.jpg")
         await member.avatar_url.save(avatar_path)
 
-        # Prepare welcome image
+        # Welcome image variables
+        avatar_pos = (240, 376)
+        username_center_pos = (752, 1700)
+        welcome_msg = "Welcome To"
+        welcome_msg_center_pos = (2575, 930)
+        server_center_pos = (2575, 1230)
+
+        # Prepare circle avatar
         im = Image.open(avatar_path)
         im = im.convert("RGB")
         im = im.resize((1024, 1024))
@@ -107,9 +117,30 @@ class WelcomeLeave(commands.Cog):
         # output.putalpha(mask)
         # output.save(os.path.join(self.cache_dir, 'circle_pfp.png'))
 
+        # Prepare welcome image
         w_img_path = os.path.join(self.cache_dir, "welcome.jpg")
-        w_img = Image.open(os.path.join(self.assets_dir, "welcome_image.jpg"))
-        w_img.paste(im, (240, 568), im)
+        w_img = Image.open(self.asset("welcome_image.jpg"))
+        w_img.paste(im, avatar_pos, im)
+        w_img_draw = ImageDraw.Draw(w_img)
+        username_font = ImageFont.truetype(self.asset("montserrat_extrabold.otf"), 160)
+        welcome_font = ImageFont.truetype(self.asset("earthorbiterxtrabold.ttf"), 260)
+
+        # Add username to image
+        username_size = username_font.getsize(str(member))
+        username_corner_pos = self.center_to_corner(username_center_pos, username_size)
+        w_img_draw.text(username_corner_pos, str(member), fill=(255, 255, 255), font=username_font)
+
+        # Add welcome message to image
+        welcome_msg_size = welcome_font.getsize(welcome_msg)
+        welcome_msg_corner_pos = self.center_to_corner(welcome_msg_center_pos, welcome_msg_size)
+        w_img_draw.text(welcome_msg_corner_pos, welcome_msg, fill=(255, 255, 255), font=welcome_font)
+
+        # Add server name to image
+        server_size = welcome_font.getsize(guild.name)
+        server_corner_pos = self.center_to_corner(server_center_pos, server_size)
+        w_img_draw.text(server_corner_pos, guild.name, fill=(255, 255, 255), font=welcome_font)
+
+        # Save the image to cache
         w_img.save(w_img_path)
 
         await welcome_channel.send(welcome_message, file=discord.File(w_img_path))
