@@ -106,7 +106,7 @@ class WelcomeLeave(commands.Cog):
         await member.avatar_url.save(avatar_path)
 
         # Welcome image variables
-        avatar_center_pos = (1920, 900)
+        avatar_center_pos = (1920, 867)
         username_center_pos = (1920, 150)
         welcome_msg = "Welcome To"
         welcome_msg_center_pos = (1920, 1600)
