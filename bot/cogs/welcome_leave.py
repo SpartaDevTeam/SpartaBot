@@ -109,8 +109,8 @@ class WelcomeLeave(commands.Cog):
         avatar_center_pos = (1920, 900)
         username_center_pos = (1920, 150)
         welcome_msg = "Welcome To"
-        welcome_msg_center_pos = (1920, 1650)
-        server_center_pos = (1920, 1950)
+        welcome_msg_center_pos = (1920, 1600)
+        server_center_pos = (1920, 1900)
 
         # Prepare circle avatar
         im = Image.open(avatar_path)
@@ -138,8 +138,22 @@ class WelcomeLeave(commands.Cog):
             self.asset("montserrat_extrabold.otf"), 165
         )
         welcome_font = ImageFont.truetype(
-            self.asset("earthorbiterxtrabold.ttf"), 285
+            self.asset("earthorbiterxtrabold.ttf"), 250
         )
+        server_font_size = 285
+
+        # Make sure that server name doesnt overflow
+        while True:
+            server_font = ImageFont.truetype(
+                self.asset("earthorbiterxtrabold.ttf"), server_font_size
+            )
+            server_bbox_size = server_font.getsize(guild.name)
+
+            # Check whether text overflows
+            if server_bbox_size[0] >= w_img.size[0]:
+                server_font_size -= 5
+            else:
+                break
 
         # Add username to image
         username_size = username_font.getsize(str(member))
@@ -166,7 +180,7 @@ class WelcomeLeave(commands.Cog):
         )
 
         # Add server name to image
-        server_size = welcome_font.getsize(guild.name)
+        server_size = server_font.getsize(guild.name)
         server_corner_pos = self.center_to_corner(
             server_center_pos, server_size
         )
@@ -174,7 +188,7 @@ class WelcomeLeave(commands.Cog):
             server_corner_pos,
             guild.name,
             fill=(255, 255, 255),
-            font=welcome_font,
+            font=server_font,
         )
 
         # Save the image to cache
