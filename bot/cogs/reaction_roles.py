@@ -48,6 +48,9 @@ class ReactionRoles(commands.Cog):
         guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
         member: discord.Member = await guild.fetch_member(payload.user_id)
 
+        if member == self.bot.user:
+            return
+
         Data.c.execute(
             "SELECT channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
             {"guild_id": guild.id},
@@ -83,6 +86,9 @@ class ReactionRoles(commands.Cog):
     ):
         guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
         member: discord.Member = await guild.fetch_member(payload.user_id)
+
+        if member == self.bot.user:
+            return
 
         Data.c.execute(
             "SELECT channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
