@@ -179,6 +179,5 @@ def main():
     except SystemExit:
         pass
     finally:
-        bot.topgg_client.close()
         Data.conn.close()
         print("Exiting...")
