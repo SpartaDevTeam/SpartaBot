@@ -16,7 +16,7 @@ class Miscellaneous(commands.Cog):
         self.description = "Some commands to do general tasks"
         self.theme_color = discord.Color.purple()
         self.launched_at = datetime.now()
-        self.suggestion_channel = 745284251460698162
+        self.suggestion_channel = 848474796856836117
 
     async def load_pending_reminders(self):
         print("Loading pending reminders...")
