@@ -92,6 +92,14 @@ async def on_command_error(ctx: commands.Context, exception):
 
         await ctx.send(msg)
 
+    elif isinstance(exception, commands.BotMissingPermissions):
+        msg = "I don't have permission to run this command. I will need the following permissions:"
+
+        for missing_perm in exception.missing_perms:
+            msg += f"\n{missing_perm.title()}"
+
+        await ctx.send(msg)
+
     elif isinstance(exception, commands.NotOwner):
         await ctx.send("You must be the bot owner to use this command")
 
