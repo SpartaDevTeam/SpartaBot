@@ -10,7 +10,6 @@ class ServerLogs(commands.Cog):
         self.bot: MyBot = bot
         self.description = "Shows when the bot joins or leaves a guild"
         self.theme_color = discord.Color.purple()
-        self.support_server = 733224197827854377
         self.logs_channel = 843726111360024586
 
     @commands.Cog.listener()
@@ -25,9 +24,7 @@ class ServerLogs(commands.Cog):
             name=f"This Guild Has {guild.member_count} Members!",
             value=f"Yay Another Server! We Are Now At {len(self.bot.guilds)} Guilds!",
         )
-        await self.bot.get_guild(self.support_server).get_channel(
-            self.logs_channel
-        ).send(embed=embed)
+        await self.bot.get_channel(self.logs_channel).send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
@@ -40,9 +37,7 @@ class ServerLogs(commands.Cog):
         embed.add_field(
             name=f"We Are Now At {len(self.bot.guilds)} Guilds!", value="T-T"
         )
-        await self.bot.get_guild(self.support_server).get_channel(
-            self.logs_channel
-        ).send(embed=embed)
+        await self.bot.get_channel(self.logs_channel).send(embed=embed)
 
 
 def setup(bot):
