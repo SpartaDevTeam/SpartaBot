@@ -57,10 +57,18 @@ class Snipe(commands.Cog):
             return
 
         try:
-            msgs = self.deleted_msgs[ctx.channel.id][::-1][:limit]
+            msgs: list[discord.Message] = self.deleted_msgs[ctx.channel.id][
+                limit::-1
+            ]
             snipe_embed = discord.Embed(
                 title="Message Snipe", color=self.theme_color
             )
+
+            if msgs:
+                top_author: discord.Member = ctx.guild.get_member(
+                    msgs[0].author.id
+                )
+                snipe_embed.set_thumbnail(url=str(top_author.avatar_url))
 
             for msg in msgs:
                 snipe_embed.add_field(
@@ -83,10 +91,16 @@ class Snipe(commands.Cog):
             return
 
         try:
-            msgs = self.edited_msgs[ctx.channel.id][::-1][:limit]
+            msgs = self.edited_msgs[ctx.channel.id][limit::-1]
             editsnipe_embed = discord.Embed(
                 title="Edit Snipe", color=self.theme_color
             )
+
+            if msgs:
+                top_author: discord.Member = ctx.guild.get_member(
+                    msgs[0][0].author.id
+                )
+                editsnipe_embed.set_thumbnail(url=str(top_author.avatar_url))
 
             for msg in msgs:
                 editsnipe_embed.add_field(

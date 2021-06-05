@@ -226,18 +226,26 @@ class Miscellaneous(commands.Cog):
         await ctx.send(f"I have been online for {humanized_time}")
 
     @commands.command(
-        name="suggest", aliases=["suggestion"], help="Suggestion a new feature or change to the Devs"
+        name="suggest",
+        aliases=["suggestion"],
+        help="Suggestion a new feature or change to the Devs",
     )
     @commands.cooldown(1, 30)
     async def suggest(self, ctx: commands.Context, *, suggestion: str):
         def check(message: discord.Message):
-            return ctx.author == message.author and ctx.channel == message.channel
+            return (
+                ctx.author == message.author and ctx.channel == message.channel
+            )
 
         anonymous = None
         try:
             while anonymous is None:
-                await ctx.send("Do you want to include your username with the suggestion, so we can contact you if needed?")
-                anony_confirm: discord.Message = await self.bot.wait_for("message", check=check, timeout=30)
+                await ctx.send(
+                    "Do you want to include your username with the suggestion, so we can contact you if needed?"
+                )
+                anony_confirm: discord.Message = await self.bot.wait_for(
+                    "message", check=check, timeout=30
+                )
 
                 if anony_confirm.content.lower() in ["yes", "y"]:
                     anonymous = False
@@ -245,19 +253,31 @@ class Miscellaneous(commands.Cog):
                     anonymous = True
 
         except asyncio.TimeoutError:
-            await ctx.send("No response received, falling back to anonymous suggestion")
+            await ctx.send(
+                "No response received, falling back to anonymous suggestion"
+            )
 
         if anonymous:
-            suggestion_msg = f"Anonymous user has given a suggestion:\n{suggestion}"
+            suggestion_msg = (
+                f"Anonymous user has given a suggestion:\n{suggestion}"
+            )
         else:
-            suggestion_msg = f"**{ctx.author}** has given a suggestion:\n{suggestion}"
+            suggestion_msg = (
+                f"**{ctx.author}** has given a suggestion:\n{suggestion}"
+            )
 
-        await self.bot.get_channel(self.suggestion_channel).send(suggestion_msg, allowed_mentions=discord.AllowedMentions.none())
+        await self.bot.get_channel(self.suggestion_channel).send(
+            suggestion_msg, allowed_mentions=discord.AllowedMentions.none()
+        )
 
         if anonymous:
-            await ctx.send(f"Thank you {ctx.author.mention}, your anonymous suggestion has been recorded.")
+            await ctx.send(
+                f"Thank you {ctx.author.mention}, your anonymous suggestion has been recorded."
+            )
         else:
-            await ctx.send(f"Thank you {ctx.author.mention}, your suggestion has been recorded.")
+            await ctx.send(
+                f"Thank you {ctx.author.mention}, your suggestion has been recorded."
+            )
 
 
 def setup(bot):

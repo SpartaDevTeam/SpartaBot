@@ -104,7 +104,9 @@ async def on_command_error(ctx: commands.Context, exception):
 
     elif isinstance(exception, commands.CommandOnCooldown):
         try_after = humanize.precisedelta(exception.retry_after)
-        await ctx.send(f"This commands is on cooldown, try again after {try_after}...")
+        await ctx.send(
+            f"This commands is on cooldown, try again after {try_after}..."
+        )
 
     elif isinstance(exception, commands.NotOwner):
         await ctx.send("You must be the bot owner to use this command")
