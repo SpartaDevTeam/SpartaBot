@@ -57,9 +57,7 @@ class Snipe(commands.Cog):
             return
 
         try:
-            msgs: list[discord.Message] = self.deleted_msgs[ctx.channel.id][
-                limit::-1
-            ]
+            msgs: list[discord.Message] = self.deleted_msgs[ctx.channel.id][::-1][:limit]
             snipe_embed = discord.Embed(
                 title="Message Snipe", color=self.theme_color
             )
@@ -91,7 +89,7 @@ class Snipe(commands.Cog):
             return
 
         try:
-            msgs = self.edited_msgs[ctx.channel.id][limit::-1]
+            msgs = self.edited_msgs[ctx.channel.id][::-1][:limit]
             editsnipe_embed = discord.Embed(
                 title="Edit Snipe", color=self.theme_color
             )
