@@ -346,7 +346,7 @@ class ReactionRoles(commands.Cog):
     @commands.command(
         name="viewreactionroles",
         aliases=["vrr", "viewrr"],
-        help="See the reaction roles setup in your server",
+        help="See the reaction roles setup in your server. If you've deleted any channel, emoji, or role that was used in an RR, this command will cleanup their entries from your server.",
     )
     async def view_reaction_roles(self, ctx: commands.Context):
         Data.c.execute(
@@ -363,9 +363,20 @@ class ReactionRoles(commands.Cog):
 
             with ctx.typing():
                 for rr in reaction_roles:
-                    rr_channel: discord.TextChannel = guild.get_channel(rr[0])
+                    # Get channel
+                    try:
+                        rr_channel: discord.TextChannel = guild.get_channel(
+                            rr[0]
+                        )
+                    except discord.NotFound:
+                        Data.delete_reaction_role_entry(
+                            guild.id, rr[0], rr[1], rr[3]
+                        )
+                        continue
+
                     rr_msg_id = rr[1]
 
+                    # Get emoji
                     try:
                         rr_emoji: discord.Emoji = await guild.fetch_emoji(
                             int(rr[2])
@@ -373,7 +384,20 @@ class ReactionRoles(commands.Cog):
                     except ValueError:
                         rr_emoji: str = emoji.emojize(rr[2])
 
-                    rr_role: discord.Role = guild.get_role(rr[3])
+                    except discord.NotFound:
+                        Data.delete_reaction_role_entry(
+                            guild.id, rr[0], rr[1], rr[3]
+                        )
+                        continue
+
+                    # Get role
+                    try:
+                        rr_role: discord.Role = guild.get_role(rr[3])
+                    except discord.NotFound:
+                        Data.delete_reaction_role_entry(
+                            guild.id, rr[0], rr[1], rr[3]
+                        )
+                        continue
 
                     rr_embed.add_field(
                         name=rr_emoji,
