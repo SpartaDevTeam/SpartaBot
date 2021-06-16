@@ -365,8 +365,8 @@ class ReactionRoles(commands.Cog):
                 for rr in reaction_roles:
                     # Get channel
                     try:
-                        rr_channel: discord.TextChannel = guild.get_channel(
-                            rr[0]
+                        rr_channel: discord.TextChannel = (
+                            await guild.fetch_channel(rr[0])
                         )
                     except discord.NotFound:
                         Data.delete_reaction_role_entry(
@@ -392,7 +392,7 @@ class ReactionRoles(commands.Cog):
 
                     # Get role
                     try:
-                        rr_role: discord.Role = guild.get_role(rr[3])
+                        rr_role: discord.Role = await guild.fetch_role(rr[3])
                     except discord.NotFound:
                         Data.delete_reaction_role_entry(
                             guild.id, rr[0], rr[1], rr[3]
