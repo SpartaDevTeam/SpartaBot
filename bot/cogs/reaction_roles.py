@@ -364,11 +364,8 @@ class ReactionRoles(commands.Cog):
             with ctx.typing():
                 for rr in reaction_roles:
                     # Get channel
-                    try:
-                        rr_channel: discord.TextChannel = (
-                            await guild.fetch_channel(rr[0])
-                        )
-                    except discord.NotFound:
+                    rr_channel: discord.TextChannel = guild.get_channel(rr[0])
+                    if not rr_channel:
                         Data.delete_reaction_role_entry(
                             guild.id, rr[0], rr[1], rr[3]
                         )
@@ -391,9 +388,8 @@ class ReactionRoles(commands.Cog):
                         continue
 
                     # Get role
-                    try:
-                        rr_role: discord.Role = await guild.fetch_role(rr[3])
-                    except discord.NotFound:
+                    rr_role: discord.Role = guild.get_role(rr[3])
+                    if not rr_role:
                         Data.delete_reaction_role_entry(
                             guild.id, rr[0], rr[1], rr[3]
                         )
