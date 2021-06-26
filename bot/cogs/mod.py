@@ -1,6 +1,7 @@
 import asyncio
 import json
 import random
+from typing import Union
 
 import discord
 import humanize
@@ -146,7 +147,9 @@ class Moderation(commands.Cog):
             if member:
                 guild_member = member
             else:
-                guild_member = ctx.guild.get_member(infrac["member"])
+                guild_member = await self.bot.fetch_user(infrac["member"])
+                if not guild_member:
+                    guild_member = f"User ID: {infrac['member']}"
 
             reason = infrac["reason"]
             infractions_embed.add_field(
@@ -164,13 +167,11 @@ class Moderation(commands.Cog):
     )
     @commands.has_guild_permissions(administrator=True)
     async def clear_infractions(
-        self, ctx: commands.Context, member: discord.Member = None
+        self, ctx: commands.Context, member: Union[discord.Member, int] = None
     ):
-        if ctx.author.top_role <= member.top_role:
-            await ctx.send(
-                f"You cannot use the command on this person because their top role is higher than or equal to yours."
-            )
-            return
+        if isinstance(member, int):
+            member = ctx.guild.get_member(member)
+
         Data.check_guild_entry(ctx.guild)
 
         if member is None:
@@ -183,6 +184,12 @@ class Moderation(commands.Cog):
             await ctx.send("Cleared all infractions in this server...")
 
         else:
+            if ctx.author.top_role <= member.top_role:
+                await ctx.send(
+                    "You cannot use the command on this person because their top role is higher than or equal to yours."
+                )
+                return
+
             Data.c.execute(
                 "SELECT infractions FROM guilds WHERE id = :guild_id",
                 {"guild_id": ctx.guild.id},
