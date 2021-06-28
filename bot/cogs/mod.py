@@ -292,7 +292,7 @@ class Moderation(commands.Cog):
     @commands.command(name="unban", help="Unban a person from the server")
     @commands.bot_has_guild_permissions(ban_members=True)
     @commands.has_guild_permissions(ban_members=True)
-    async def unban(self, ctx: commands.Context, username: str):
+    async def unban(self, ctx: commands.Context, *, username: str):
         if username[-5] != "#":
             await ctx.send(
                 "Please give a username in this format: *username#0000*"
