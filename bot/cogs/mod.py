@@ -425,6 +425,31 @@ class Moderation(commands.Cog):
         else:
             ch = ctx.channel
 
+        def confirmation_check(message: discord.Message):
+            return (
+                message.author == ctx.author
+                and message.channel.id == ctx.channel.id
+            )
+
+        # Confirmation
+        await ctx.send(
+            f"Are you sure you want to nuke `{ch}`? This action cannot be undone."
+        )
+
+        # Receive confirmation response
+        try:
+            confirmation_msg: discord.Message = await self.bot.wait_for(
+                "message", check=confirmation_check, timeout=30
+            )
+
+            if confirmation_msg.content.lower() != "yes":
+                await ctx.send("Aborting channel nuke!")
+                return
+
+        except asyncio.TimeoutError:
+            await ctx.send("No response received, aborting!")
+            return
+
         reason = f"Channel Nuke by {ctx.author}"
         ch_pos = ch.position
         new_ch = await ch.clone(reason=reason)
