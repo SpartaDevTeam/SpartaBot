@@ -58,7 +58,7 @@ class Miscellaneous(commands.Cog):
         try:
             await user.send(
                 f"You asked me to remind you {rem_start_time_str} about:"
-                f"\n*{reminder_msg}*"
+                f"\n`{reminder_msg}`"
             )
         except discord.Forbidden:
             pass
