@@ -173,7 +173,7 @@ class Miscellaneous(commands.Cog):
         time_to_end = humanize.precisedelta(remind_time, format="%0")
 
         await ctx.send(
-            f"I will remind you in {time_to_end} about:\n*{reminder_msg}*"
+            f"I will remind you in {time_to_end} about:\n`{reminder_msg}`"
         )
 
         reminder_id = uuid.uuid4()
