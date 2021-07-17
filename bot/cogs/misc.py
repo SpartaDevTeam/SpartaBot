@@ -16,6 +16,7 @@ class Miscellaneous(commands.Cog):
         self.description = "Some commands to do general tasks"
         self.theme_color = discord.Color.purple()
         self.launched_at = datetime.now()
+        self.reminders_loaded = False
         self.suggestion_channel = 848474796856836117
 
     async def load_pending_reminders(self):
@@ -43,6 +44,7 @@ class Miscellaneous(commands.Cog):
                 )
             )
 
+        self.reminders_loaded = True
         print(f"Loaded {len(reminders)} pending reminders!")
 
     async def reminder(
@@ -158,6 +160,14 @@ class Miscellaneous(commands.Cog):
         ),
     )
     async def remind(self, ctx: commands.Context, *, options: str):
+        # Wait till bot finishes loading all reminders
+        # Prevents duplicate reminders
+        if not self.reminders_loaded:
+            await ctx.send(
+                "The bot is starting up. Please try again in a few minutes."
+            )
+            return
+
         args = options.split(",")
         if len(args) < 2:
             await ctx.send(
