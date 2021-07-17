@@ -58,7 +58,8 @@ class Miscellaneous(commands.Cog):
         try:
             await user.send(
                 f"You asked me to remind you {rem_start_time_str} about:"
-                f"\n`{reminder_msg}`"
+                f"\n*{reminder_msg}*",
+                allowed_mentions=discord.AllowedMentions.none(),
             )
         except discord.Forbidden:
             pass
@@ -173,7 +174,8 @@ class Miscellaneous(commands.Cog):
         time_to_end = humanize.precisedelta(remind_time, format="%0")
 
         await ctx.send(
-            f"I will remind you in {time_to_end} about:\n`{reminder_msg}`"
+            f"I will remind you in {time_to_end} about:\n*{reminder_msg}*",
+            allowed_mentions=discord.AllowedMentions.none(),
         )
 
         reminder_id = uuid.uuid4()
