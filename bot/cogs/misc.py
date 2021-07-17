@@ -215,7 +215,8 @@ class Miscellaneous(commands.Cog):
 
         Data.conn.commit()
         await ctx.send(
-            f"You have been AFK'd for the following reason:\n*{reason}*"
+            f"You have been AFK'd for the following reason:\n*{reason}*",
+            allowed_mentions=discord.AllowedMentions.none(),
         )
 
     @commands.command(

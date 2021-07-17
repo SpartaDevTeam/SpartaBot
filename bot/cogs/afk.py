@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.mentions import AllowedMentions
 
 from bot import get_prefix, MyBot
 from bot.data import Data
@@ -26,7 +27,8 @@ class AFK(commands.Cog):
                 guild_prefix
             ):
                 await message.channel.send(
-                    f"{message.author.mention}, you have been un-AFK'd"
+                    f"{message.author.mention}, you have been un-AFK'd",
+                    allowed_mentions=discord.AllowedMentions.none(),
                 )
                 Data.delete_afk_data(message.author)
                 continue
@@ -35,7 +37,8 @@ class AFK(commands.Cog):
             if user in message.mentions:
                 afk_reason = afk[1]
                 await message.channel.send(
-                    f"{message.author.mention}, {user} is currently AFK because:\n*{afk_reason}*"
+                    f"{message.author.mention}, {user} is currently AFK because:\n*{afk_reason}*",
+                    allowed_mentions=discord.AllowedMentions.none(),
                 )
 
 
