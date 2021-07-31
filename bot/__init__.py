@@ -58,7 +58,7 @@ def get_prefix(client: commands.Bot, message: discord.Message):
     )
     prefix = Data.c.fetchone()[0]
 
-    return commands.when_mentioned_or(*prefix)(client, message)
+    return commands.when_mentioned_or(prefix)(client, message)
 
 
 help_cmd = PrettyHelp(
