@@ -46,7 +46,7 @@ class MyBot(commands.Bot):
         print("Endpoint", endpoint, "threw error:", error)
 
 
-def get_prefix(client, message):
+def get_prefix(client: commands.Bot, message: discord.Message):
     if not message.guild:
         return "s!"
 
@@ -58,7 +58,7 @@ def get_prefix(client, message):
     )
     prefix = Data.c.fetchone()[0]
 
-    return prefix
+    return commands.when_mentioned_or(*prefix)(client, message)
 
 
 help_cmd = PrettyHelp(
@@ -140,16 +140,28 @@ async def on_command_error(ctx: commands.Context, exception):
 @bot.event
 async def on_message(message: discord.Message):
     if (
-        bot.user in message.mentions
+        message.content == f"<@!{bot.user.id}>"
         and message.author != bot.user
         and not message.reference
         and not message.author.bot
     ):
-        guild_prefix = get_prefix(bot, message)
-        await message.channel.send(
-            f"{message.author.mention}, my prefix in this server "
-            f"is `{guild_prefix}`"
-        )
+        prefixes = get_prefix(bot, message)
+        prefixes.remove(f"{bot.user.mention} ")
+        prefixes.remove(f"<@!{bot.user.id}> ")
+
+        prefix_count = len(prefixes)
+        prefixes_string = ", ".join(prefixes)
+
+        if prefix_count == 1:
+            await message.channel.send(
+                f"{message.author.mention}, my prefix in this server "
+                f"is `{prefixes_string}`"
+            )
+        else:
+            await message.channel.send(
+                f"{message.author.mention}, my prefixes in this server "
+                f"are `{prefixes_string}`"
+            )
 
     await bot.process_commands(message)
 
