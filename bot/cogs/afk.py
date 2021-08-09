@@ -1,4 +1,5 @@
 import discord
+from discord import guild
 from discord.ext import commands
 from discord.mentions import AllowedMentions
 
@@ -20,7 +21,11 @@ class AFK(commands.Cog):
         afks = Data.c.fetchall()
 
         for afk in afks:
-            guild_prefix = get_prefix(self.bot, message)
+            guild_prefixes = get_prefix(self.bot, message)
+            guild_prefixes.remove(f"{self.bot.user.mention} ")
+            guild_prefixes.remove(f"<@!{self.bot.user.id}> ")
+            guild_prefix = guild_prefixes[0]
+
             if int(
                 afk[0]
             ) == message.author.id and not message.content.startswith(
