@@ -127,7 +127,7 @@ async def on_command_error(ctx: commands.Context, exception):
 
     elif isinstance(exception, DBLVoteRequired):
         await ctx.send(
-            f"Please vote for me on Top.gg to use this command. Try using `{prefix}vote` for voting links."
+            f"Please vote for me on Top.gg to use this command. Try using `{prefix[2]}vote` for voting links."
         )
 
     elif isinstance(exception, commands.CheckFailure):
