@@ -83,7 +83,7 @@ async def on_command_error(ctx: commands.Context, exception):
     if isinstance(exception, commands.MissingRequiredArgument):
         await ctx.send(
             f"`{exception.param.name}` is a required input, try using "
-            f"`{prefix}help {ctx.invoked_with}` for more information"
+            f"`{prefix[2]}help {ctx.invoked_with}` for more information"
         )
 
     elif isinstance(exception, commands.MissingPermissions):
