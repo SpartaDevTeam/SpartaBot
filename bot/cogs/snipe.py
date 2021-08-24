@@ -65,10 +65,12 @@ class Snipe(commands.Cog):
             )
 
             if msgs:
-                top_author: discord.Member = ctx.guild.get_member(
+                top_author: discord.Member = await self.bot.fetch_user(
                     msgs[0].author.id
                 )
-                snipe_embed.set_thumbnail(url=str(top_author.avatar_url))
+
+                if top_author:
+                    snipe_embed.set_thumbnail(url=str(top_author.avatar_url))
 
             for msg in msgs:
                 snipe_embed.add_field(
@@ -97,10 +99,14 @@ class Snipe(commands.Cog):
             )
 
             if msgs:
-                top_author: discord.Member = ctx.guild.get_member(
+                top_author: discord.Member = await self.bot.fetch_user(
                     msgs[0][0].author.id
                 )
-                editsnipe_embed.set_thumbnail(url=str(top_author.avatar_url))
+
+                if top_author:
+                    editsnipe_embed.set_thumbnail(
+                        url=str(top_author.avatar_url)
+                    )
 
             for msg in msgs:
                 editsnipe_embed.add_field(
