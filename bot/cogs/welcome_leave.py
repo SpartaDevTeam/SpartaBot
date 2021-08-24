@@ -132,7 +132,22 @@ class WelcomeLeave(commands.Cog):
         w_img_path = os.path.join(self.cache_dir, "welcome.jpg")
         w_img = Image.open(self.asset("welcome_image.jpg"))
         avatar_corner_pos = self.center_to_corner(avatar_center_pos, im.size)
-        w_img.paste(im, avatar_corner_pos, im)
+
+        # If error occurs during paste function try again
+        error_count = 0
+        while True:
+            if error_count > 5:
+                # just don't send a welcome message if paste shits itself
+                # multiple times in a row
+                return
+
+            try:
+                w_img.paste(im, avatar_corner_pos, im)
+                break
+            except MemoryError:
+                error_count += 1
+                continue
+
         w_img_draw = ImageDraw.Draw(w_img)
         username_font = ImageFont.truetype(
             self.asset("montserrat_extrabold.otf"), 165
