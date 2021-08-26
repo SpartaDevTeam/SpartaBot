@@ -317,6 +317,25 @@ class Settings(commands.Cog):
             await ctx.send("Failed to add emoji.")
             raise e
 
+    @commands.command(name="setclearcap", aliases=["clearcap", "cc"])
+    @commands.has_guild_permissions(administrator=True)
+    async def set_clear_cap(self, ctx: commands.Context, limit: int = None):
+        Data.check_guild_entry(ctx.guild)
+        Data.c.execute(
+            "UPDATE guilds SET clear_cap = :limit WHERE id = :guild_id",
+            {
+                "limit": limit,
+                "guild_id": ctx.guild.id,
+            },
+        )
+
+        if limit:
+            await ctx.send(
+                f"Clear command limit has been set to **{limit} messages** at a time."
+            )
+        else:
+            await ctx.send("Clear command limit has been removed.")
+
 
 def setup(bot):
     bot.add_cog(Settings(bot))

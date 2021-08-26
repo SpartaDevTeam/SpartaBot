@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from typing import Union
 
 
 class Data:
@@ -110,7 +111,7 @@ class Data:
         print(f"Created webhook entry for channel with ID {channel.id}")
 
     @classmethod
-    def webhook_entry_exists(cls, channel) -> str or bool:
+    def webhook_entry_exists(cls, channel) -> Union[str, bool]:
         cls.c.execute(
             "SELECT webhook_url FROM webhooks WHERE channel_id = :channel_id",
             {"channel_id": channel.id},

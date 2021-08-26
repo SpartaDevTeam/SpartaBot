@@ -409,6 +409,20 @@ class Moderation(commands.Cog):
         else:
             ch = ctx.channel
 
+        # Fetch clear cap
+        Data.c.execute(
+            "SELECT clear_cap FROM guilds WHERE id = :guild_id",
+            {"guild_id": ctx.guild.id},
+        )
+        limit = Data.c.fetchone()[0]
+
+        if limit and message_count > limit:
+            exceeds_by = message_count - limit
+            await ctx.send(
+                f"Message clear count exceeds this server's limit by {exceeds_by}"
+            )
+            return
+
         await ch.purge(limit=message_count + 1)
         await ctx.send(f"Cleared {message_count} message(s)", delete_after=3)
 
