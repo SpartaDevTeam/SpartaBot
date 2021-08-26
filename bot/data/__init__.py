@@ -12,53 +12,67 @@ class Data:
     @classmethod
     def create_tables(cls):
         cls.c.execute(
-            """CREATE TABLE IF NOT EXISTS "guilds" (
-            "id"	INTEGER,
-            "infractions"	TEXT DEFAULT '[]',
-            "mute_role"	INTEGER DEFAULT NULL,
-            "activated_automod"	TEXT DEFAULT '[]',
-            "welcome_message"	TEXT DEFAULT NULL,
-            "leave_message"	TEXT DEFAULT NULL,
-            "welcome_channel"	TEXT DEFAULT NULL,
-            "leave_channel"	TEXT DEFAULT NULL,
-            "auto_role"	TEXT DEFAULT NULL,
-            "prefix"	TEXT DEFAULT 's!',
-            "auto_responses"	TEXT DEFAULT '{}'
-        )"""
+            """
+            CREATE TABLE IF NOT EXISTS "guilds" (
+                "id"	INTEGER NOT NULL UNIQUE,
+                "infractions"	TEXT DEFAULT '[]',
+                "mute_role"	INTEGER DEFAULT NULL,
+                "activated_automod"	TEXT DEFAULT '[]',
+                "welcome_message"	TEXT DEFAULT NULL,
+                "leave_message"	TEXT DEFAULT NULL,
+                "welcome_channel"	TEXT DEFAULT NULL,
+                "leave_channel"	TEXT DEFAULT NULL,
+                "auto_role"	TEXT DEFAULT NULL,
+                "prefix"	TEXT DEFAULT 's!',
+                "auto_responses"	TEXT DEFAULT '{}',
+                "clear_cap"	INTEGER DEFAULT null,
+                PRIMARY KEY("id")
+            )
+            """
         )
 
         cls.c.execute(
-            """CREATE TABLE IF NOT EXISTS "webhooks" (
-            "channel_id"	INTEGER,
-            "webhook_url"	TEXT
-        )"""
+            """
+            CREATE TABLE IF NOT EXISTS "webhooks" (
+                "channel_id"	INTEGER NOT NULL,
+                "webhook_url"	TEXT
+            )
+            """
         )
 
         cls.c.execute(
-            """CREATE TABLE IF NOT EXISTS "afks" (
-            "user_id"	INTEGER,
-            "afk_reason"	TEXT
-        )"""
+            """
+            CREATE TABLE IF NOT EXISTS "afks" (
+                "user_id"	INTEGER NOT NULL UNIQUE,
+                "afk_reason"	TEXT NOT NULL,
+                PRIMARY KEY("user_id")
+            )
+            """
         )
 
         cls.c.execute(
-            """CREATE TABLE IF NOT EXISTS "reminders" (
-            "id"	TEXT,
-            "user_id"	INTEGER,
-            "reminder_msg"	TEXT,
-            "start_time"	DATETIME,
-            "due"	DATETIME
-        )"""
+            """
+            CREATE TABLE IF NOT EXISTS "reminders" (
+                "id"	TEXT NOT NULL UNIQUE,
+                "user_id"	INTEGER,
+                "reminder_msg"	TEXT,
+                "start_time"	DATETIME,
+                "due"	DATETIME,
+                PRIMARY KEY("id")
+            )
+            """
         )
 
         cls.c.execute(
-            """CREATE TABLE IF NOT EXISTS "reaction_roles" (
-            "guild_id"	INTEGER,
-            "channel_id"    INTEGER,
-            "message_id"	INTEGER,
-            "emoji"	TEXT,
-            "role_id"	INTEGER
-        )"""
+            """
+            CREATE TABLE IF NOT EXISTS "reaction_roles" (
+                "guild_id"	INTEGER NOT NULL,
+                "channel_id"	INTEGER,
+                "message_id"	INTEGER,
+                "emoji"	TEXT,
+                "role_id"	INTEGER
+            )
+            """
         )
 
         cls.conn.commit()
