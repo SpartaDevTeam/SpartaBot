@@ -26,7 +26,7 @@ class Data:
                 "auto_role"	TEXT DEFAULT NULL,
                 "prefix"	TEXT DEFAULT 's!',
                 "auto_responses"	TEXT DEFAULT '{}',
-                "clear_cap"	INTEGER DEFAULT null,
+                "clear_cap"	INTEGER DEFAULT NULL,
                 PRIMARY KEY("id")
             )
             """
@@ -83,7 +83,7 @@ class Data:
     def create_new_guild_data(cls, guild):
         cls.c.execute(
             """INSERT INTO guilds VALUES
-            (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 's!', '{}')
+            (:guild_id, '[]', NULL, '[]', NULL, NULL, NULL, NULL, NULL, 's!', '{}', NULL)
             """,
             {"guild_id": guild.id},
         )
