@@ -1,5 +1,5 @@
 python-dotenv
-discord.py
+py-cord
 discord-ext-ipc
 discord-ext-prettyhelp
 pyfiglet
