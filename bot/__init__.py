@@ -48,7 +48,7 @@ class MyBot(commands.Bot):
 
 def get_prefix(client: commands.Bot, message: discord.Message):
     if not message.guild:
-        return "s!"
+        return commands.when_mentioned_or("s!")(client, message)
 
     Data.check_guild_entry(message.guild)
 
