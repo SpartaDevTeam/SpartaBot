@@ -1,7 +1,6 @@
 import asyncio
 import uuid
 import discord
-import humanize
 from datetime import datetime
 from discord.ext import commands
 
@@ -15,7 +14,7 @@ class Miscellaneous(commands.Cog):
         self.bot: MyBot = bot
         self.description = "Some commands to do general tasks"
         self.theme_color = discord.Color.purple()
-        self.launched_at = datetime.now()
+        self.launched_at = int(datetime.now().timestamp())
         self.reminders_loaded = False
         self.suggestion_channel = 848474796856836117
 
@@ -56,7 +55,7 @@ class Miscellaneous(commands.Cog):
         reminder_start_time: datetime,
     ):
         await asyncio.sleep(seconds)
-        rem_start_time_str = humanize.naturaltime(reminder_start_time)
+        rem_start_time_str = f"<t:{int(reminder_start_time.timestamp())}:R>"
         try:
             await user.send(
                 f"You asked me to remind you {rem_start_time_str} about:"
@@ -180,11 +179,10 @@ class Miscellaneous(commands.Cog):
 
         now = datetime.now()
         remind_time = str_time_to_timedelta(remind_time_string)
-
-        time_to_end = humanize.precisedelta(remind_time, format="%0")
+        time_to_end = f"<t:{int((now + remind_time).timestamp())}:R>"
 
         await ctx.send(
-            f"I will remind you in {time_to_end} about:\n*{reminder_msg}*",
+            f"Reminder set for {time_to_end} about:\n*{reminder_msg}*",
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
@@ -233,10 +231,8 @@ class Miscellaneous(commands.Cog):
         name="uptime", help="Check how long the bot has been up for"
     )
     async def uptime(self, ctx: commands.Context):
-        now = datetime.now()
-        uptime = self.launched_at - now
-        humanized_time = humanize.precisedelta(uptime)
-        await ctx.send(f"I have been online for {humanized_time}")
+        humanized_time = f"<t:{self.launched_at}:R>"
+        await ctx.send(f"I was last restarted {humanized_time}")
 
     @commands.command(
         name="suggest",

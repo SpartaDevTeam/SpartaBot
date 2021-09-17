@@ -3,7 +3,6 @@ py-cord
 discord-ext-ipc
 discord-ext-prettyhelp
 pyfiglet
-humanize
 jishaku
 requests
 pytest

@@ -1,10 +1,10 @@
 import asyncio
 import json
+import time
 import random
 from typing import Union
 
 import discord
-import humanize
 from discord.ext import commands
 
 from bot import MyBot
@@ -222,7 +222,7 @@ class Moderation(commands.Cog):
         ctx: commands.Context,
         member: discord.Member,
         *,
-        time: str = None,
+        unmute_time: str = None,
     ):
         if ctx.author.top_role <= member.top_role:
             await ctx.send(
@@ -233,22 +233,25 @@ class Moderation(commands.Cog):
         mute_role = await self.get_guild_mute_role(ctx.guild)
         await member.add_roles(mute_role)
 
-        if time:
-            unmute_time = str_time_to_timedelta(time)
-            humanized_time_str = humanize.precisedelta(
-                unmute_time, format="%0"
+        if unmute_time:
+            now_epoch = time.time()
+            unmute_timedelta = str_time_to_timedelta(unmute_time)
+            humanized_time_str = (
+                f"<t:{int(now_epoch + unmute_timedelta.total_seconds())}:R>"
             )
 
-            await ctx.send(
-                f"**{member}** has been muted for {humanized_time_str}"
+            mute_msg: discord.Message = await ctx.send(
+                f"**{member}** will be unmuted {humanized_time_str}"
             )
-            await asyncio.sleep(unmute_time.total_seconds())
+            await asyncio.sleep(unmute_timedelta.total_seconds())
+
+            unmute_str = f"**{member}** was unmuted {humanized_time_str}"
+            await mute_msg.edit(content=unmute_str)
 
             if mute_role in member.roles:
                 await member.remove_roles(mute_role)
-                await ctx.send(
-                    f"**{member}** has been unmuted after {humanized_time_str}"
-                )
+                await ctx.send(unmute_str)
+
         else:
             await ctx.send(f"**{member}** can no longer speak")
 
