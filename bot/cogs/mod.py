@@ -87,7 +87,7 @@ class Moderation(commands.Cog):
     ):
         if ctx.author.top_role <= member.top_role:
             await ctx.send(
-                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+                "You cannot use the command on this person because their top role is higher than or equal to yours."
             )
             return
 
@@ -226,7 +226,7 @@ class Moderation(commands.Cog):
     ):
         if ctx.author.top_role <= member.top_role:
             await ctx.send(
-                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+                "You cannot use the command on this person because their top role is higher than or equal to yours."
             )
             return
 
@@ -263,7 +263,7 @@ class Moderation(commands.Cog):
     async def unmute(self, ctx: commands.Context, member: discord.Member):
         if ctx.author.top_role <= member.top_role:
             await ctx.send(
-                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+                "You cannot use the command on this person because their top role is higher than or equal to yours."
             )
             return
 
@@ -281,7 +281,7 @@ class Moderation(commands.Cog):
     ):
         if ctx.author.top_role <= member.top_role:
             await ctx.send(
-                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+                "You cannot use the command on this person because their top role is higher than or equal to yours."
             )
             return
 
@@ -336,7 +336,7 @@ class Moderation(commands.Cog):
     ):
         if ctx.author.top_role <= member.top_role:
             await ctx.send(
-                f"You cannot use the command on this person because their top role is higher than or equal to yours."
+                "You cannot use the command on this person because their top role is higher than or equal to yours."
             )
             return
 

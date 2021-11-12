@@ -10,3 +10,4 @@ emoji
 urbanpython
 topggpy
 pillow
+flake8

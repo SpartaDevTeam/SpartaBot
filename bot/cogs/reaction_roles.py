@@ -166,7 +166,7 @@ class ReactionRoles(commands.Cog):
                     continue
 
                 except discord.NotFound:
-                    await ctx.send(f"Could not fetch message with that ID")
+                    await ctx.send("Could not fetch message with that ID")
 
         except asyncio.TimeoutError:
             await ctx.send("No response received, aborting!")

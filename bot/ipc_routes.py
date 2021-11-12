@@ -1,5 +1,4 @@
 from bot import bot
-from bot.data import Data
 
 
 @bot.ipc.route()

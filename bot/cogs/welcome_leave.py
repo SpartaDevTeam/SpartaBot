@@ -102,7 +102,7 @@ class WelcomeLeave(commands.Cog):
         welcome_message = welcome_message.replace("[server]", str(guild))
 
         # Get user's avatar
-        avatar_path = os.path.join(self.cache_dir, f"pfp.jpg")
+        avatar_path = os.path.join(self.cache_dir, "pfp.jpg")
         await member.avatar_url.save(avatar_path)
 
         # Welcome image variables

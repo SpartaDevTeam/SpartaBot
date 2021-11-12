@@ -1,5 +1,4 @@
 import os
-import asyncio
 import time
 
 from dotenv import load_dotenv
@@ -184,8 +183,6 @@ def main():
     try:
         Data.create_tables()
         add_cogs()
-
-        from bot import ipc_routes
 
         bot.ipc.start()
         bot.run(TOKEN)

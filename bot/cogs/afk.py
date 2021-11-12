@@ -1,8 +1,6 @@
 import asyncio
 import discord
-from discord import guild
 from discord.ext import commands
-from discord.mentions import AllowedMentions
 
 from bot import get_prefix, MyBot
 from bot.data import Data
