@@ -66,23 +66,30 @@ class Fun(commands.Cog):
         }
 
     @commands.command(name="poll", brief="Makes a poll!")
-    async def make_poll(self, ctx, length: int, *, poll: str):
-        """Usage: poll time description | option 1 | option 2
+    async def make_poll(
+        self, ctx: commands.Context, length: float, *, poll: str
+    ):
+        """
+        Usage: poll time description | option 1 | option 2
+        The time must be in minutes
         Example: poll 30 Cats or Dogs? | Dogs | Cats
         """
+
         split = poll.split("|")
         description = split.pop(0)
-        lower_limit = 10
-        upper_limit = 300
+
+        # Limits are in minutes
+        lower_limit = 1
+        upper_limit = 4320  # 72 hours
 
         if length < lower_limit:
             await ctx.send(
-                f"The poll must last at least {lower_limit} seconds."
+                f"The poll must last at least {lower_limit} minute."
             )
             return
         if length > upper_limit:
             await ctx.send(
-                f"The poll must last less than {upper_limit} seconds."
+                f"The poll must last less than {upper_limit} minutes."
             )
             return
         if len(split) > 9:
@@ -103,7 +110,8 @@ class Fun(commands.Cog):
         for i in range(len(options)):
             await m.add_reaction(self.emoji_numbers[i + 1])
 
-        await asyncio.sleep(length)
+        wait_time_seconds = length * 60
+        await asyncio.sleep(wait_time_seconds)
 
         m = await ctx.channel.fetch_message(m.id)
 

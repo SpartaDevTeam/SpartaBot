@@ -11,3 +11,4 @@ urbanpython
 topggpy
 pillow
 flake8
+black
