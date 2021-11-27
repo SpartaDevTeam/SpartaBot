@@ -224,7 +224,14 @@ class Moderation(commands.Cog):
         *,
         unmute_time: str = None,
     ):
-        if ctx.author.top_role <= member.top_role:
+        if member.id == ctx.bot.user.id:
+            await ctx.send(f"**{member}** can no longer- Wait a minute...")
+            return
+
+        if (
+            ctx.guild.owner_id != ctx.author.id
+            and ctx.author.top_role <= member.top_role
+        ):
             await ctx.send(
                 "You cannot use the command on this person because their top role is higher than or equal to yours."
             )
