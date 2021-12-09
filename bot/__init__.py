@@ -174,7 +174,7 @@ def add_cogs():
     for filename in os.listdir(cogs_dir):
         if filename.endswith(".py") and filename != "__init__.py":
             bot.load_extension(f"bot.cogs.{filename[:-3]}")
-            print(f"Loaded {filename[:-3]} cog!")
+            print(f"Loaded {filename[:-3]} prefix cog!")
 
     # Slash Command Cogs
     slash_cogs_dir = os.path.join(
@@ -183,7 +183,7 @@ def add_cogs():
     for filename in os.listdir(slash_cogs_dir):
         if filename.endswith(".py") and filename != "__init__.py":
             bot.load_extension(f"bot.cogs.{filename[:-3]}")
-            print(f"Loaded {filename[:-3]} cog!")
+            print(f"Loaded {filename[:-3]} slash cog!")
 
     # Extensions
     bot.load_extension("jishaku")
