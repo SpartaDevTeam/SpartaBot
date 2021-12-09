@@ -167,10 +167,20 @@ async def on_message(message: discord.Message):
 
 
 def add_cogs():
+    # Prefix Command Cogs
     cogs_dir = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "cogs"
     )
     for filename in os.listdir(cogs_dir):
+        if filename.endswith(".py") and filename != "__init__.py":
+            bot.load_extension(f"bot.cogs.{filename[:-3]}")
+            print(f"Loaded {filename[:-3]} cog!")
+
+    # Slash Command Cogs
+    slash_cogs_dir = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "slash_cogs"
+    )
+    for filename in os.listdir(slash_cogs_dir):
         if filename.endswith(".py") and filename != "__init__.py":
             bot.load_extension(f"bot.cogs.{filename[:-3]}")
             print(f"Loaded {filename[:-3]} cog!")
