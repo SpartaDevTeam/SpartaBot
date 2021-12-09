@@ -1,5 +1,5 @@
 python-dotenv
-py-cord
+git+https://github.com/Pycord-Development/pycord.git  # Pycord 2.0.0a
 discord-ext-ipc
 discord-ext-prettyhelp
 pyfiglet

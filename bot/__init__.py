@@ -1,11 +1,12 @@
 import os
+import sys
 import time
 
 from dotenv import load_dotenv
 
 import discord
 import topgg
-from discord.ext import commands, ipc
+from discord.ext import commands
 from discord.ext.prettyhelp import PrettyHelp
 
 from bot.data import Data
@@ -15,6 +16,11 @@ load_dotenv()
 
 TOKEN = os.environ["SPARTA_TOKEN"]
 THEME = discord.Color.purple()
+TESTING_GUILDS = (
+    list(map(int, os.environ["TESTING_GUILDS"].split(",")))
+    if "--debug" in sys.argv
+    else None
+)
 
 intents = discord.Intents.default()
 intents.members = True
@@ -24,12 +30,6 @@ intents.reactions = True
 class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ipc = ipc.Server(
-            self,
-            host="0.0.0.0",
-            port=6000,
-            secret_key=os.environ["SPARTA_SECRET_KEY"],
-        )
         self.topgg_client = topgg.DBLClient(
             bot=self, token=os.environ["SPARTA_DBL_TOKEN"], autopost=True
         )
@@ -37,12 +37,6 @@ class MyBot(commands.Bot):
     async def on_ready(self):
         guild_count = len(self.guilds)
         print(f"Bot logged into {guild_count} guilds...")
-
-    async def on_ipc_ready(self):
-        print("IPC Server is ready!")
-
-    async def on_ipc_error(self, endpoint, error):
-        print("Endpoint", endpoint, "threw error:", error)
 
 
 def get_prefix(client: commands.Bot, message: discord.Message):
@@ -182,7 +176,7 @@ def add_cogs():
     )
     for filename in os.listdir(slash_cogs_dir):
         if filename.endswith(".py") and filename != "__init__.py":
-            bot.load_extension(f"bot.cogs.{filename[:-3]}")
+            bot.load_extension(f"bot.slash_cogs.{filename[:-3]}")
             print(f"Loaded {filename[:-3]} slash cog!")
 
     # Extensions
@@ -193,8 +187,6 @@ def main():
     try:
         Data.create_tables()
         add_cogs()
-
-        bot.ipc.start()
         bot.run(TOKEN)
     except KeyboardInterrupt:
         pass

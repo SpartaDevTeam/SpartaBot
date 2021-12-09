@@ -100,14 +100,8 @@ class Miscellaneous(commands.Cog):
 
     @commands.command(name="invite", help="Invite Sparta to your server")
     async def invite(self, ctx: commands.Context):
-        invite_url = (
-            "https://discord.com/oauth2/authorize?client_id="
-            "731763013417435247&scope=bot&permissions=403176703"
-        )
-        beta_invite_url = (
-            "https://discord.com/api/oauth2/authorize?"
-            "client_id=775798822844629013&permissions=8&scope=bot"
-        )
+        invite_url = "https://discord.com/api/oauth2/authorize?client_id=731763013417435247&permissions=8&scope=bot%20applications.commands"
+        beta_invite_url = "https://discord.com/api/oauth2/authorize?client_id=775798822844629013&permissions=8&scope=applications.commands%20bot"
 
         invite_embed = discord.Embed(
             title="Sparta Invite", color=self.theme_color, url=invite_url
