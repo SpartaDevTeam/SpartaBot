@@ -183,7 +183,7 @@ class Settings(commands.Cog):
         si_embed = discord.Embed(
             title=f"{guild.name} Information", color=self.theme_color
         )
-        si_embed.set_thumbnail(url=guild.icon_url)
+        si_embed.set_thumbnail(url=guild.icon.url)
 
         si_embed.add_field(
             name="Human Members", value=str(human_count), inline=False
