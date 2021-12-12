@@ -15,7 +15,7 @@ class InternetStuff(commands.Cog):
         self.description = (
             "Commands to surf the interwebs without leaving Discord"
         )
-        self.urban = urbanpython.Urban(os.environ["SPARTA_URBAN_API_KEY"])
+        self.urban = urbanpython.Urban(os.environ["URBAN_API_KEY"])
         self.yt_search_url = "https://www.youtube.com/results?search_query="
         self.yt_video_url = "https://www.youtube.com/watch?v="
 

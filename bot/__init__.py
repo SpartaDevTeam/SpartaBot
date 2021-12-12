@@ -14,7 +14,7 @@ from bot.errors import DBLVoteRequired
 
 load_dotenv()
 
-TOKEN = os.environ["SPARTA_TOKEN"]
+TOKEN = os.environ["TOKEN"]
 THEME = discord.Color.purple()
 TESTING_GUILDS = (
     list(map(int, os.environ["TESTING_GUILDS"].split(",")))
@@ -31,7 +31,7 @@ class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.topgg_client = topgg.DBLClient(
-            bot=self, token=os.environ["SPARTA_DBL_TOKEN"], autopost=True
+            bot=self, token=os.environ["DBL_TOKEN"], autopost=True
         )
 
     async def on_ready(self):
