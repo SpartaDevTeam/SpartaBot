@@ -82,7 +82,7 @@ class Miscellaneous(commands.Cog):
         info_embed = discord.Embed(
             title="Sparta Bot Information", color=self.theme_color
         )
-        info_embed.set_thumbnail(url=self.bot.user.avatar_url)
+        info_embed.set_thumbnail(url=self.bot.user.avatar.url)
 
         info_embed.add_field(
             name="Latency/Ping", value=f"{ping}ms", inline=False

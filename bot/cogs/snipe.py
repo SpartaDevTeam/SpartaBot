@@ -70,7 +70,7 @@ class Snipe(commands.Cog):
                 )
 
                 if top_author:
-                    snipe_embed.set_thumbnail(url=str(top_author.avatar_url))
+                    snipe_embed.set_thumbnail(url=str(top_author.avatar.url))
 
             for msg in msgs:
                 snipe_embed.add_field(
@@ -105,7 +105,7 @@ class Snipe(commands.Cog):
 
                 if top_author:
                     editsnipe_embed.set_thumbnail(
-                        url=str(top_author.avatar_url)
+                        url=str(top_author.avatar.url)
                     )
 
             for msg in msgs:

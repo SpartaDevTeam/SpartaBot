@@ -104,7 +104,7 @@ class Fun(commands.Cog):
             title=description,
             description=("".join(options)),
             color=self.theme_color,
-        ).set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+        ).set_author(name=str(ctx.author), icon_url=ctx.author.avatar.url)
         m: discord.Message = await ctx.send(embed=embed)
 
         for i in range(len(options)):
@@ -159,7 +159,7 @@ class Fun(commands.Cog):
             m = ctx.author
 
         av_embed = discord.Embed(title=f"{m}'s Avatar", color=self.theme_color)
-        av_embed.set_image(url=m.avatar_url)
+        av_embed.set_image(url=m.avatar.url)
         await ctx.send(embed=av_embed)
 
     @commands.command(
@@ -249,7 +249,7 @@ class Fun(commands.Cog):
         await webhook.send(
             message,
             username=member.display_name,
-            avatar_url=member.avatar_url,
+            avatar_url=member.avatar.url,
             allowed_mentions=discord.AllowedMentions.none(),
         )
 

@@ -227,7 +227,7 @@ class Settings(commands.Cog):
         mi_embed = discord.Embed(
             title=f"{m} Information", color=self.theme_color
         )
-        mi_embed.set_thumbnail(url=m.avatar_url)
+        mi_embed.set_thumbnail(url=m.avatar.url)
 
         mi_embed.add_field(name="Member ID", value=m.id, inline=False)
         mi_embed.add_field(
