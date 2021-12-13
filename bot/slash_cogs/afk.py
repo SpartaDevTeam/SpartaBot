@@ -7,7 +7,6 @@ from bot.data import Data
 class SlashAFK(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.theme_color = discord.Color.purple()
 
     async def process_afk(self, message: discord.Message):
         Data.c.execute("SELECT * FROM afks")

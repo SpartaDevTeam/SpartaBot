@@ -6,7 +6,7 @@ import discord
 from discord.errors import HTTPException
 from discord.ext import commands
 
-from bot import TESTING_GUILDS
+from bot import TESTING_GUILDS, THEME
 from bot.data import Data
 from bot.utils import str_time_to_timedelta
 from bot.views.confirm import ConfirmView
@@ -16,9 +16,6 @@ class SlashModeration(commands.Cog):
     """
     Commands to uphold the peace and integrity of the server
     """
-
-    def __init__(self):
-        self.theme_color = discord.Color.purple()
 
     async def create_mute_role(
         self, ctx: discord.ApplicationContext
@@ -154,9 +151,7 @@ class SlashModeration(commands.Cog):
             ]
             embed_title = f"Infractions by {member} in {ctx.guild.name}"
 
-        infractions_embed = discord.Embed(
-            title=embed_title, color=self.theme_color
-        )
+        infractions_embed = discord.Embed(title=embed_title, color=THEME)
 
         if infracs:
             for infrac in infracs:
@@ -537,9 +532,7 @@ class SlashModeration(commands.Cog):
                 await channel.delete(reason=reason)
                 await new_ch.edit(reason=reason, position=ch_pos)
 
-                nuke_embed = discord.Embed(
-                    title=reason, color=self.theme_color
-                )
+                nuke_embed = discord.Embed(title=reason, color=THEME)
                 nuke_embed.set_image(url=random.choice(nuke_gifs))
 
                 await new_ch.send(embed=nuke_embed)

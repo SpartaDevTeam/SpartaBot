@@ -1,6 +1,6 @@
 import re
+import discord
 from datetime import timedelta
-
 from discord.ext import commands
 
 from bot import MyBot
@@ -45,10 +45,17 @@ def str_time_to_timedelta(
 
 
 def dbl_vote_required():
-    async def predicate(ctx: commands.Context):
+    async def predicate(ctx: commands.Context | discord.ApplicationContext):
         bot: MyBot = ctx.bot
+
         if await bot.topgg_client.get_user_vote(ctx.author.id):
             return True
-        raise DBLVoteRequired()
+
+        if isinstance(ctx, discord.ApplicationContext):
+            await ctx.respond(
+                "Please vote for the me on Top.gg to use this command. Use `/vote` for more info."
+            )
+        else:
+            raise DBLVoteRequired()
 
     return commands.check(predicate)

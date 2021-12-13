@@ -13,7 +13,7 @@ class ConfirmView(discord.ui.View):
     ):
         self.do_action = True
         self.stop()
-        await interaction.message.delete()
+        await interaction.message.edit(content="Confirming...", view=None)
 
     @discord.ui.button(label="Cancel", style=ButtonStyle.grey)
     async def cancel(
@@ -21,4 +21,4 @@ class ConfirmView(discord.ui.View):
     ):
         self.do_action = False
         self.stop()
-        await interaction.message.delete()
+        await interaction.message.edit(content="Cancelling...", view=None)
