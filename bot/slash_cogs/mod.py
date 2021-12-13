@@ -194,15 +194,21 @@ class SlashModeration(commands.Cog):
         Data.check_guild_entry(ctx.guild)
 
         if member is None:
-            Data.c.execute(
-                "UPDATE guilds SET infractions = '[]' WHERE id = :guild_id",
-                {"guild_id": ctx.guild.id},
+            confirm_view = ConfirmView()
+            await ctx.respond(
+                "You are about to clear everyone's infractions in this server. Do you want to continue?",
+                view=confirm_view,
             )
-            Data.conn.commit()
+            await confirm_view.wait()
 
-            # TODO: ask for confirmation
+            if confirm_view.do_action:
+                Data.c.execute(
+                    "UPDATE guilds SET infractions = '[]' WHERE id = :guild_id",
+                    {"guild_id": ctx.guild.id},
+                )
+                Data.conn.commit()
 
-            await ctx.respond("Cleared all infractions in this server")
+                await ctx.respond("Cleared all infractions in this server")
 
         else:
             if (
