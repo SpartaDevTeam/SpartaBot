@@ -9,7 +9,7 @@ from discord.ext import commands
 from bot import TESTING_GUILDS, THEME
 from bot.data import Data
 from bot.utils import str_time_to_timedelta
-from bot.views.confirm import ConfirmView
+from bot.views import ConfirmView
 
 
 class SlashModeration(commands.Cog):
@@ -194,7 +194,7 @@ class SlashModeration(commands.Cog):
         Data.check_guild_entry(ctx.guild)
 
         if member is None:
-            confirm_view = ConfirmView()
+            confirm_view = ConfirmView(ctx.author.id)
             await ctx.respond(
                 "You are about to clear everyone's infractions in this server. Do you want to continue?",
                 view=confirm_view,
@@ -522,7 +522,7 @@ class SlashModeration(commands.Cog):
             "https://media1.tenor.com/images/403968cd056f0d0bfb5cce75e131b4d4/tenor.gif",
             "https://media1.tenor.com/images/1daf50232c9eda10459560e8c1e532ea/tenor.gif",
         ]
-        confirm_view = ConfirmView()
+        confirm_view = ConfirmView(ctx.author.id)
         await ctx.respond(
             f"Are you sure you want to nuke {channel.mention}? This action cannot be undone.",
             view=confirm_view,

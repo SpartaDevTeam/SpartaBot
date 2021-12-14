@@ -171,6 +171,7 @@ def add_cogs():
             print(f"Loaded {filename[:-3]} prefix cog!")
 
     # Slash Command Cogs
+    # TODO: Remove "Slash" from cog names
     slash_cogs_dir = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "slash_cogs"
     )
