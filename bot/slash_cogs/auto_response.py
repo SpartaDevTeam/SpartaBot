@@ -5,7 +5,7 @@ from discord.ext import commands
 from bot import TESTING_GUILDS, THEME
 from bot.data import Data
 from bot.utils import dbl_vote_required
-from bot.views.confirm import ConfirmView
+from bot.views import ConfirmView
 
 
 class SlashAutoResponse(commands.Cog):
@@ -57,7 +57,7 @@ class SlashAutoResponse(commands.Cog):
         current_auto_resps = json.loads(Data.c.fetchone()[0])
 
         if activation in current_auto_resps:
-            confirm_view = ConfirmView()
+            confirm_view = ConfirmView(ctx.author.id)
             await ctx.respond(
                 "An auto response with this activation already exists and will be overwritten by the new one. Do you want to continue?",
                 view=confirm_view,
@@ -124,7 +124,7 @@ class SlashAutoResponse(commands.Cog):
             )
 
         else:
-            confirm_view = ConfirmView()
+            confirm_view = ConfirmView(ctx.author.id)
             await ctx.respond(
                 "You are about to delete all auto responses in this server. Do you want to continue?",
                 view=confirm_view,
