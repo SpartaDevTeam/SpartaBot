@@ -1,7 +1,11 @@
+import random
+import string
+import pyfiglet
 import discord
 from discord.ext import commands
 
 from bot import THEME, TESTING_GUILDS
+from bot.data import Data
 from bot.views import PollView
 
 
@@ -44,18 +48,6 @@ class SlashFun(commands.Cog):
         "#": ":hash:",
         "?": ":question:",
         "*": ":asterisk:",
-    }
-
-    emoji_numbers = {
-        1: "1️⃣",
-        2: "2️⃣",
-        3: "3️⃣",
-        4: "4️⃣",
-        5: "5️⃣",
-        6: "6️⃣",
-        7: "7️⃣",
-        8: "8️⃣",
-        9: "9️⃣",
     }
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
@@ -133,6 +125,146 @@ class SlashFun(commands.Cog):
         await interaction.edit_original_message(
             embed=poll_over_embed, view=None
         )
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def coinflip(self, ctx: discord.ApplicationContext):
+        """
+        Flip a coin
+        """
+
+        result = random.choice(["heads", "tails"])
+        await ctx.respond(
+            f"The coin has been flipped and resulted in **{result}**"
+        )
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def roll(self, ctx: discord.ApplicationContext, dice_count: int = 1):
+        """
+        Roll a dice
+        """
+
+        number = random.randint(dice_count, dice_count * 6)
+
+        if dice_count > 1:
+            await ctx.respond(
+                f"You rolled **{dice_count} dice** and got a **{number}**"
+            )
+        else:
+            await ctx.respond(f"You rolled a **{number}**")
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def avatar(
+        self, ctx: discord.ApplicationContext, member: discord.Member = None
+    ):
+        """
+        Get somebody's Discord avatar
+        """
+
+        if not member:
+            member = ctx.author
+
+        av_embed = discord.Embed(title=f"{member}'s Avatar", color=THEME)
+        av_embed.set_image(url=member.avatar.url)
+        await ctx.respond(embed=av_embed)
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def choose(self, ctx: commands.Context, options: str):
+        """
+        Let Sparta choose the best option for you. Separate the choices with a comma (,).
+        """
+
+        items = list(map(lambda x: x.strip(), options.split(",")))
+        choice = random.choice(items)
+        await ctx.respond(
+            f"I choose {choice}",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+
+    @commands.slash_command(name="8ball", guild_ids=TESTING_GUILDS)
+    async def eight_ball(self, ctx: discord.ApplicationContext, question: str):
+        """
+        Call upon the powers of the all knowing magic 8Ball
+        """
+
+        group = random.choice(self.eight_ball_responses)
+        response = random.choice(group)
+        await ctx.respond(response)
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def emojify(self, ctx: discord.ApplicationContext, sentence: str):
+        """
+        Turn a sentence into emojis
+        """
+
+        emojified_sentence = ""
+        sentence = sentence.lower()
+
+        for char in sentence:
+            char_lower = char.lower()
+
+            if char_lower in string.ascii_lowercase:
+                emojified_sentence += f":regional_indicator_{char}:"
+            elif char_lower in self.emojify_symbols:
+                emojified_sentence += self.emojify_symbols[char_lower]
+            elif char_lower == " ":
+                emojified_sentence += "  "
+            else:
+                emojified_sentence += char
+
+        await ctx.respond(emojified_sentence)
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def ascii(self, ctx: discord.ApplicationContext, sentence: str):
+        """
+        Turn a sentence into cool ASCII art
+        """
+
+        ascii_text = pyfiglet.figlet_format(sentence)
+        await ctx.respond(f"```{ascii_text}```")
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def impersonate(
+        self,
+        ctx: discord.ApplicationContext,
+        member: discord.Member,
+        message: str,
+    ):
+        """
+        Pretend to be another member of your server
+        """
+
+        webhook_url = Data.webhook_entry_exists(ctx.channel)
+
+        if webhook_url:
+            webhook = discord.utils.get(
+                await ctx.channel.webhooks(), url=webhook_url
+            )
+
+            if not webhook:
+                webhook: discord.Webhook = await ctx.channel.create_webhook(
+                    name="Sparta Impersonate Command",
+                    reason="Impersonation Command",
+                )
+                Data.c.execute(
+                    "UPDATE webhooks SET webhook_url = :new_url WHERE channel_id = :ch_id",
+                    {"new_url": webhook.url, "ch_id": ctx.channel.id},
+                )
+                Data.conn.commit()
+
+        else:
+            webhook: discord.Webhook = await ctx.channel.create_webhook(
+                name="Sparta Impersonate Command",
+                reason="Impersonation Command",
+            )
+            Data.create_new_webhook_data(ctx.channel, webhook.url)
+
+        await webhook.send(
+            message,
+            username=member.display_name,
+            avatar_url=member.avatar.url,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+        await ctx.respond("Amogus", ephemeral=True)
 
 
 def setup(bot):
