@@ -3,7 +3,7 @@ git+https://github.com/Pycord-Development/pycord.git  # Pycord 2.0.0a
 pycord-prettyhelp
 pyfiglet
 jishaku
-requests
+aiohttp
 pytest
 emoji
 urbanpython
