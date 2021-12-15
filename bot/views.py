@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord import ButtonStyle
 
@@ -78,4 +79,50 @@ class AutoModView(discord.ui.View):
             self.stop()
             await interaction.message.edit(
                 content="Options have been saved", view=None, embed=None
+            )
+
+
+class PollButton(discord.ui.Button):
+    def __init__(self, number: int):
+        self.number = number
+        super().__init__(label=number, style=ButtonStyle.primary)
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.user_vote(interaction.user, self.number)
+
+
+class PollView(discord.ui.View):
+    def __init__(self, options: list[str], poll_length: float):
+        self.options = options
+
+        self.votes: dict[str, int] = {}  # key: option, value: numbers of votes
+        self.voters: list[int] = []  # list of user ids
+
+        children = []
+        for number, option_name in enumerate(options):
+            self.votes[option_name] = 0
+            button = PollButton(number + 1)
+            children.append(button)
+
+        length_seconds = poll_length * 60
+        super().__init__(*children, timeout=length_seconds)
+        asyncio.create_task(self.stop_poll(length_seconds))
+
+    async def stop_poll(self, time: int):
+        await asyncio.sleep(time)
+        self.stop()
+
+    def user_vote(self, user: discord.User, number: int):
+        if user.id not in self.voters:
+            option_name = self.options[number - 1]
+            self.votes[option_name] += 1
+
+            self.voters.append(user.id)
+            asyncio.create_task(
+                user.send(f"You have voted for {option_name}!")
+            )
+
+        else:
+            asyncio.create_task(
+                user.send("You cannot vote in the same poll twice!")
             )
