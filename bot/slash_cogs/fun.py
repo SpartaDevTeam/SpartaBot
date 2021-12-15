@@ -71,7 +71,7 @@ class SlashFun(commands.Cog):
         """
 
         length_lower_limit = 1  # 1 minute
-        length_upper_limit = 4320  # 72 hours
+        length_upper_limit = 7200  # 5 days
         option_limit = 10
 
         # Convert options in string format to list
