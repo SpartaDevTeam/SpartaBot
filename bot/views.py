@@ -99,9 +99,9 @@ class PollView(discord.ui.View):
         self.voters: list[int] = []  # list of user ids
 
         children = []
-        for number, option_name in enumerate(options):
+        for number, option_name in enumerate(options, start=1):
             self.votes[option_name] = 0
-            button = PollButton(number + 1)
+            button = PollButton(number)
             children.append(button)
 
         length_seconds = poll_length * 60

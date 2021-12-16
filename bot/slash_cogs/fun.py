@@ -1,3 +1,4 @@
+import time
 import random
 import string
 import pyfiglet
@@ -87,16 +88,20 @@ class SlashFun(commands.Cog):
             )
             return
 
+        end_time = round(time.time() + length * 60)
         poll_embed = discord.Embed(
-            title=question, color=THEME, description="**Options:**\n"
+            title=question,
+            color=THEME,
+            description=f"Ends <t:{end_time}:R>",
         )
         poll_embed.set_author(
             name=str(ctx.author), icon_url=ctx.author.avatar.url
         )
-        # TODO: add an "Ends in..." message in the embed
 
-        for i, option in enumerate(options):
-            poll_embed.description += f"{i+1}) {option}\n"
+        options_str = "\n".join(
+            [f"{i}) {option}" for i, option in enumerate(options, start=1)]
+        )
+        poll_embed.add_field(name="Options", value=options_str, inline=False)
 
         poll_view = PollView(options, length)
         interaction = await ctx.respond(embed=poll_embed, view=poll_view)
@@ -107,20 +112,30 @@ class SlashFun(commands.Cog):
         )
 
         poll_over_embed = discord.Embed(
-            title="Poll Over", color=THEME, description="**Results:**\n"
+            title="Poll Ended",
+            color=THEME,
         )
         poll_over_embed.set_author(
             name=str(ctx.author), icon_url=ctx.author.avatar.url
         )
         poll_over_embed.add_field(
+            name="Question", value=question, inline=False
+        )
+
+        results_str = "\n".join(
+            [
+                f"{i}) {option} - {vote_count} votes"
+                for i, (option, vote_count) in enumerate(sorted_votes, start=1)
+            ]
+        )
+        poll_over_embed.add_field(
+            name="Results", value=results_str, inline=False
+        )
+
+        poll_over_embed.add_field(
             name="Total Votes", value=len(poll_view.voters)
         )
         poll_over_embed.add_field(name="Top Voted", value=sorted_votes[0][0])
-
-        for i, (option, vote_count) in enumerate(sorted_votes):
-            poll_over_embed.description += (
-                f"{i+1}) {option} - {vote_count} votes\n"
-            )
 
         await interaction.edit_original_message(
             embed=poll_over_embed, view=None
