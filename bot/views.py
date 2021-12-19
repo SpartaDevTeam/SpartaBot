@@ -105,7 +105,7 @@ class PollView(discord.ui.View):
             children.append(button)
 
         length_seconds = poll_length * 60
-        super().__init__(*children, timeout=length_seconds)
+        super().__init__(*children, timeout=None)
         asyncio.create_task(self.stop_poll(length_seconds))
 
     async def stop_poll(self, time: int):
