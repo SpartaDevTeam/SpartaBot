@@ -126,3 +126,29 @@ class PollView(discord.ui.View):
             asyncio.create_task(
                 user.send("You cannot vote in the same poll twice!")
             )
+
+
+class SuggestView(discord.ui.View):
+    anonymous: bool
+
+    def __init__(self, author_id: int):
+        super().__init__(timeout=5)
+        self.author_id = author_id
+
+    @discord.ui.button(label="Yes", style=ButtonStyle.primary)
+    async def yes(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
+        if self.author_id == interaction.user.id:
+            self.anonymous = False
+            self.stop()
+            await interaction.message.edit(content="Sending...", view=None)
+
+    @discord.ui.button(label="No", style=ButtonStyle.secondary)
+    async def no(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
+        if self.author_id == interaction.user.id:
+            self.anonymous = True
+            self.stop()
+            await interaction.message.edit(content="Sending...", view=None)
