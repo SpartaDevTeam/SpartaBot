@@ -137,7 +137,7 @@ class SlashFun(commands.Cog):
         )
         poll_over_embed.add_field(name="Top Voted", value=sorted_votes[0][0])
 
-        await interaction.message.edit(
+        await interaction.edit_original_message(
             embed=poll_over_embed, view=None
         )
 
