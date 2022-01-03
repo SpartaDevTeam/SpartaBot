@@ -141,7 +141,7 @@ async def on_application_command_error(
         for missing_perm in exception.missing_permissions:
             msg += f"\n{missing_perm.title()}"
 
-        await ctx.respond(msg)
+        await ctx.respond(msg, ephemeral=True)
 
     elif isinstance(exception, commands.BotMissingPermissions):
         msg = "I don't have permission to run this command. I will need the following permissions:"
@@ -149,13 +149,14 @@ async def on_application_command_error(
         for missing_perm in exception.missing_permissions:
             msg += f"\n{missing_perm.title()}"
 
-        await ctx.respond(msg)
+        await ctx.respond(msg, ephemeral=True)
 
     elif isinstance(exception, commands.CommandOnCooldown):
         now_epoch = time.time()
         try_after = f"<t:{int(now_epoch + exception.retry_after)}:R>"
         await ctx.respond(
-            f"This commands is on cooldown, try again {try_after}..."
+            f"This commands is on cooldown, try again {try_after}...",
+            ephemeral=True,
         )
 
     elif isinstance(exception, commands.NotOwner):
@@ -163,18 +164,21 @@ async def on_application_command_error(
 
     elif isinstance(exception, commands.CommandInvokeError):
         await ctx.respond(
-            f"An error occured while running that command:\n```{exception}```"
+            f"An error occured while running that command:\n```{exception}```",
+            ephemeral=True,
         )
         raise exception
 
     elif isinstance(exception, commands.NSFWChannelRequired):
         await ctx.respond(
-            "Please enable NSFW on this channel to use this command"
+            "Please enable NSFW on this channel to use this command",
+            ephemeral=True,
         )
 
     elif isinstance(exception, DBLVoteRequired):
         await ctx.respond(
-            "Please vote for me on Top.gg to use this command. Try using `/vote` for voting links."
+            "Please vote for me on Top.gg to use this command. Try using `/vote` for voting links.",
+            ephemeral=True,
         )
 
     else:

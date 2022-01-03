@@ -476,6 +476,8 @@ class SlashModeration(commands.Cog):
         Clear messages in a channel
         """
 
+        await ctx.defer(ephemeral=True)
+
         # Fetch clear cap
         Data.c.execute(
             "SELECT clear_cap FROM guilds WHERE id = :guild_id",
