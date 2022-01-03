@@ -90,7 +90,7 @@ async def on_command_error(ctx: commands.Context, exception):
     elif isinstance(exception, commands.BotMissingPermissions):
         msg = "I don't have permission to run this command. I will need the following permissions:"
 
-        for missing_perm in exception.missing_perms:
+        for missing_perm in exception.missing_permissions:
             msg += f"\n{missing_perm.title()}"
 
         await ctx.send(msg)
@@ -126,6 +126,56 @@ async def on_command_error(ctx: commands.Context, exception):
 
     elif isinstance(exception, commands.CheckFailure):
         pass
+
+    else:
+        raise exception
+
+
+@bot.event
+async def on_application_command_error(
+    ctx: discord.ApplicationContext, exception
+):
+    if isinstance(exception, commands.MissingPermissions):
+        msg = "You don't have permission to run this command. You need the following permissions:"
+
+        for missing_perm in exception.missing_permissions:
+            msg += f"\n{missing_perm.title()}"
+
+        await ctx.respond(msg)
+
+    elif isinstance(exception, commands.BotMissingPermissions):
+        msg = "I don't have permission to run this command. I will need the following permissions:"
+
+        for missing_perm in exception.missing_permissions:
+            msg += f"\n{missing_perm.title()}"
+
+        await ctx.respond(msg)
+
+    elif isinstance(exception, commands.CommandOnCooldown):
+        now_epoch = time.time()
+        try_after = f"<t:{int(now_epoch + exception.retry_after)}:R>"
+        await ctx.respond(
+            f"This commands is on cooldown, try again {try_after}..."
+        )
+
+    elif isinstance(exception, commands.NotOwner):
+        await ctx.respond("You must be the bot owner to use this command")
+
+    elif isinstance(exception, commands.CommandInvokeError):
+        await ctx.respond(
+            f"An error occured while running that command:\n```{exception}```"
+        )
+        raise exception
+
+    elif isinstance(exception, commands.NSFWChannelRequired):
+        await ctx.respond(
+            "Please enable NSFW on this channel to use this command"
+        )
+
+    elif isinstance(exception, DBLVoteRequired):
+        await ctx.respond(
+            "Please vote for me on Top.gg to use this command. Try using `/vote` for voting links."
+        )
 
     else:
         raise exception
