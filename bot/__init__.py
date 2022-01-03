@@ -82,7 +82,7 @@ async def on_command_error(ctx: commands.Context, exception):
     elif isinstance(exception, commands.MissingPermissions):
         msg = "You don't have permission to run this command. You need the following permissions:"
 
-        for missing_perm in exception.missing_perms:
+        for missing_perm in exception.missing_permissions:
             msg += f"\n{missing_perm.title()}"
 
         await ctx.send(msg)
