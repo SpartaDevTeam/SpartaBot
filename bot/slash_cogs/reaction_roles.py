@@ -100,7 +100,7 @@ class SlashReactionRoles(commands.Cog):
     @commands.slash_command(name="addreactionrole", guild_ids=TESTING_GUILDS)
     @commands.bot_has_guild_permissions(manage_roles=True, add_reactions=True)
     @commands.has_guild_permissions(manage_roles=True)
-    # @dbl_vote_required()
+    @dbl_vote_required()
     async def add_reaction_role(
         self,
         ctx: discord.ApplicationContext,
