@@ -104,7 +104,7 @@ class SlashFun(commands.Cog):
         poll_embed.add_field(name="Options", value=options_str, inline=False)
 
         poll_view = PollView(options, length)
-        interaction = await ctx.respond(embed=poll_embed, view=poll_view)
+        await ctx.respond(embed=poll_embed, view=poll_view)
         await poll_view.wait()
 
         sorted_votes = sorted(
@@ -137,7 +137,7 @@ class SlashFun(commands.Cog):
         )
         poll_over_embed.add_field(name="Top Voted", value=sorted_votes[0][0])
 
-        await interaction.followup.send(embed=poll_over_embed)
+        await ctx.followup.send(embed=poll_over_embed)
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def coinflip(self, ctx: discord.ApplicationContext):
