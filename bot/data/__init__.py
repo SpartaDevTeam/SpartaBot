@@ -184,9 +184,6 @@ class Data:
     def create_new_reaction_role_entry(
         cls, guild, channel, message, emoji, role
     ):
-        if not isinstance(emoji, str):
-            emoji = emoji.id
-
         rr_id = uuid.uuid4().hex
 
         cls.c.execute(

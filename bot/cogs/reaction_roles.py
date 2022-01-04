@@ -213,7 +213,7 @@ class ReactionRoles(commands.Cog):
         if isinstance(rr_emoji, str):
             em = emoji.demojize(rr_emoji)
         else:
-            em = rr_emoji
+            em = rr_emoji.id
 
         Data.c.execute(
             "SELECT emoji FROM reaction_roles WHERE guild_id = :guild_id AND channel_id = :channel_id AND message_id = :message_id AND role_id = :role_id",
