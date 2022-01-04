@@ -178,7 +178,7 @@ class SlashMiscellaneous(commands.Cog):
         # Wait till bot finishes loading all reminders
         # Prevents duplicate reminders
         if not self.reminders_loaded:
-            await ctx.send(
+            await ctx.respond(
                 "The bot is starting up. Please try again in a few minutes."
             )
             return
