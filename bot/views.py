@@ -1,4 +1,5 @@
 import asyncio
+from math import ceil
 import discord
 from discord import ButtonStyle
 
@@ -152,3 +153,116 @@ class SuggestView(discord.ui.View):
             self.anonymous = True
             self.stop()
             await interaction.message.edit(content="Sending...", view=None)
+
+
+class PaginatedSelectView(discord.ui.View):
+    """
+    Paginated select menu for more than 25 options.
+
+    Args:
+        author_id (int): ID of the user who issued the command which instances this view
+        options (list): List of selectable options.
+        values (list): List of values corresponding to the options.
+        descriptions (list, optional): List of descriptions corresponding to the options. Defaults to [].
+        emojis (list, optional): List of emojis corresponding to the options. Defaults to [].
+        max_values (int, optional): Maximum options that can be selected. Defaults to 1.
+    """
+
+    selected_values = []
+    current_page = 0
+
+    def __init__(
+        self,
+        author_id: int,
+        options: list,
+        values: list,
+        descriptions: list = [],
+        emojis: list = [],
+        max_values: int = 1,
+    ):
+        self.author_id = author_id
+        self.options = options
+        self.values = values
+        self.descriptions = descriptions
+        self.emojis = emojis
+        self.max_values = max_values
+
+        items = self.build_view()
+        super().__init__(*items)
+
+    def build_view(self) -> list[discord.ui.Item]:
+        items = []
+
+        limits = (self.current_page * 25, (self.current_page + 1) * 25)
+        options = self.options[limits[0] : limits[1]]
+        values = self.values[limits[0] : limits[1]]
+        descriptions = self.descriptions[limits[0] : limits[1]]
+        emojis = self.emojis[limits[0] : limits[1]]
+        zipped_options = zip(options, values, descriptions, emojis)
+
+        max_pages = ceil(len(self.options) / 25)
+        select_menu = discord.ui.Select(
+            placeholder=f"Page {self.current_page + 1} of {max_pages}",
+            max_values=min(len(options), self.max_values),
+            row=0,
+        )
+        select_menu.callback = self.select_menu_callback
+
+        for option, value, description, emoji in zipped_options:
+            select_menu.add_option(
+                label=option, value=value, description=description, emoji=emoji
+            )
+
+        items.append(select_menu)
+
+        if len(self.options) > 25:
+            prev_button = discord.ui.Button(emoji="⏪", row=1)
+            prev_button.callback = self.previous_page
+            prev_button.disabled = self.current_page <= 0
+            items.append(prev_button)
+
+            next_button = discord.ui.Button(emoji="⏩", row=1)
+            next_button.callback = self.next_page
+            next_button.disabled = (
+                self.current_page + 1 >= len(self.options) / 25
+            )
+            items.append(next_button)
+
+        delete_button = discord.ui.Button(
+            label="Delete", style=ButtonStyle.danger, row=2
+        )
+        delete_button.callback = self.delete
+        items.append(delete_button)
+
+        return items
+
+    async def next_page(self, interaction: discord.Interaction):
+        if (
+            interaction.user.id == self.author_id
+            and self.current_page + 1 < len(self.options) / 25
+        ):
+            self.current_page += 1
+            self.clear_items()
+
+            for item in self.build_view():
+                self.add_item(item)
+
+            await interaction.message.edit(view=self)
+
+    async def previous_page(self, interaction: discord.Interaction):
+        if interaction.user.id == self.author_id and self.current_page > 0:
+            self.current_page -= 1
+            self.clear_items()
+
+            for item in self.build_view():
+                self.add_item(item)
+
+            await interaction.message.edit(view=self)
+
+    async def select_menu_callback(self, interaction: discord.Interaction):
+        if interaction.user.id == self.author_id:
+            self.selected_values = interaction.data["values"]
+
+    async def delete(self, interaction: discord.Interaction):
+        if interaction.user.id == self.author_id:
+            self.stop()
