@@ -1,6 +1,7 @@
 import re
-import discord
+from typing import Any
 from datetime import timedelta
+import discord
 from discord.ext import commands
 
 from bot import MyBot
@@ -59,3 +60,18 @@ def dbl_vote_required():
             raise DBLVoteRequired()
 
     return commands.check(predicate)
+
+
+async def async_mirror(obj: Any):
+    """
+    Coroutine to return the passed object. Useful for returning a default
+    value when using `asyncio.gather`.
+
+    Args:
+        obj (Any): The object to be returned.
+
+    Returns:
+        Any: The object that was passed.
+    """
+
+    return obj

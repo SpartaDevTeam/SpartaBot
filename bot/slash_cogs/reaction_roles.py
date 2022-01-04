@@ -1,10 +1,12 @@
+import asyncio
 from emoji import emojize
 import discord
 from discord.ext import commands
 
 from bot import TESTING_GUILDS
 from bot.data import Data
-from bot.utils import dbl_vote_required
+from bot.utils import dbl_vote_required, async_mirror
+from bot.views import PaginatedSelectView
 
 
 class SlashReactionRoles(commands.Cog):
@@ -74,9 +76,9 @@ class SlashReactionRoles(commands.Cog):
     #         rr_channel_id = rr[0]
     #         rr_message_id = rr[1]
 
-    #         try:
+    #         if rr[2].isnumeric():
     #             rr_emoji: discord.Emoji = await guild.fetch_emoji(int(rr[2]))
-    #         except ValueError:
+    #         else:
     #             rr_emoji: discord.PartialEmoji = discord.PartialEmoji(
     #                 name=emojize(rr[2])
     #             )
@@ -98,7 +100,7 @@ class SlashReactionRoles(commands.Cog):
     @commands.slash_command(name="addreactionrole", guild_ids=TESTING_GUILDS)
     @commands.bot_has_guild_permissions(manage_roles=True, add_reactions=True)
     @commands.has_guild_permissions(manage_roles=True)
-    @dbl_vote_required()
+    # @dbl_vote_required()
     async def add_reaction_role(
         self,
         ctx: discord.ApplicationContext,
@@ -120,9 +122,9 @@ class SlashReactionRoles(commands.Cog):
                 await ctx.respond("Unable to read the given custom emoji")
                 return
 
-        try:
+        if message_id.isnumeric():
             message_id = int(message_id)
-        except ValueError:
+        else:
             await ctx.respond("Invalid message ID was provided")
             return
 
@@ -141,7 +143,7 @@ class SlashReactionRoles(commands.Cog):
 
         if rr_entry:
             await ctx.respond(
-                f"A reaction role with this configuration already exists with ID {rr_entry[0]}."
+                f"A reaction role with this configuration already exists with ID `{rr_entry[0]}`."
             )
 
         else:
@@ -170,11 +172,82 @@ class SlashReactionRoles(commands.Cog):
     )
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_guild_permissions(manage_roles=True)
-    @dbl_vote_required()
     async def remove_reaction_role(self, ctx: discord.ApplicationContext):
         """
         Remove a reaction role
         """
+
+        await ctx.defer()
+
+        Data.c.execute(
+            "SELECT id, channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
+            {"guild_id": ctx.guild_id},
+        )
+        reaction_roles = Data.c.fetchall()
+
+        channel_tasks = [
+            ctx.guild.fetch_channel(rr[1]) for rr in reaction_roles
+        ]
+        emoji_tasks = [
+            ctx.guild.fetch_emoji(rr[3])
+            if rr[3].isnumeric()
+            else async_mirror(rr[3])
+            for rr in reaction_roles
+        ]
+        total_tasks = []
+        total_tasks.extend(channel_tasks)
+        total_tasks.extend(emoji_tasks)
+
+        rr_channels: list[discord.TextChannel] = []
+        rr_emojis: list[discord.PartialEmoji] = []
+        guild_roles: list[discord.Role] = await ctx.guild.fetch_roles()
+
+        task_results = await asyncio.gather(*total_tasks)
+        for result in task_results:
+            if isinstance(result, discord.TextChannel):
+                rr_channels.append(result)
+            elif isinstance(result, discord.Emoji | str):
+                rr_emojis.append(result)
+
+        options = []
+        values = []
+        descriptions = []
+        emojis = []
+
+        for rr, channel, emoji in zip(reaction_roles, rr_channels, rr_emojis):
+            role = discord.utils.get(guild_roles, id=rr[4])
+
+            options.append(
+                f"#{channel.name}, Role: {role.name}, Msg ID: {rr[2]}"
+            )
+            values.append(rr[0])
+            descriptions.append(f"ID: {rr[0]}")
+            emojis.append(emoji)
+
+        select_view = PaginatedSelectView(
+            ctx.author.id,
+            options,
+            values,
+            descriptions,
+            emojis,
+            max_values=len(options),
+        )
+        interaction: discord.WebhookMessage = await ctx.respond(
+            "Select the reaction roles to be removed", view=select_view
+        )
+        timed_out = await select_view.wait()
+
+        if timed_out:
+            await ctx.delete()
+            return
+
+        for rr_id in select_view.selected_values:
+            Data.delete_reaction_role_entry(rr_id)
+
+        await interaction.edit(
+            content=f"Deleted {len(select_view.selected_values)} reaction role(s)!",
+            view=None,
+        )
 
 
 def setup(bot):
