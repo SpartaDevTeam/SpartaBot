@@ -232,7 +232,7 @@ class SlashReactionRoles(commands.Cog):
             emojis,
             max_values=len(options),
         )
-        interaction: discord.WebhookMessage = await ctx.respond(
+        msg = await ctx.respond(
             "Select the reaction roles to be removed", view=select_view
         )
         timed_out = await select_view.wait()
@@ -244,7 +244,7 @@ class SlashReactionRoles(commands.Cog):
         for rr_id in select_view.selected_values:
             Data.delete_reaction_role_entry(rr_id)
 
-        await interaction.edit(
+        await msg.edit(
             content=f"Deleted {len(select_view.selected_values)} reaction role(s)!",
             view=None,
         )
