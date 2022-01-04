@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import uuid
 from typing import Union
 
 
@@ -67,11 +68,13 @@ class Data:
         cls.c.execute(
             """
             CREATE TABLE IF NOT EXISTS "reaction_roles" (
+                "id"	TEXT NOT NULL UNIQUE,
                 "guild_id"	INTEGER NOT NULL,
                 "channel_id"	INTEGER,
                 "message_id"	INTEGER,
                 "emoji"	TEXT,
-                "role_id"	INTEGER
+                "role_id"	INTEGER,
+                PRIMARY KEY("id")
             )
             """
         )
@@ -181,36 +184,30 @@ class Data:
     def create_new_reaction_role_entry(
         cls, guild, channel, message, emoji, role
     ):
-        if isinstance(emoji, str):
-            em = emoji
-        else:
-            em = emoji.id
+        if not isinstance(emoji, str):
+            emoji = emoji.id
+
+        rr_id = uuid.uuid4().hex
 
         cls.c.execute(
-            "INSERT INTO reaction_roles VALUES (:guild_id, :channel_id, :message_id, :emoji, :role_id)",
+            "INSERT INTO reaction_roles VALUES (:id, :guild_id, :channel_id, :message_id, :emoji, :role_id)",
             {
+                "id": rr_id,
                 "guild_id": guild.id,
                 "channel_id": channel.id,
                 "message_id": message.id,
-                "emoji": em,
+                "emoji": emoji,
                 "role_id": role.id,
             },
         )
         cls.conn.commit()
-        print(f"Created reaction role in {guild} for role {role}")
+        print(f"Created reaction role with ID {rr_id}")
 
     @classmethod
-    def delete_reaction_role_entry(
-        cls, guild_id, channel_id, message_id, role_id
-    ):
+    def delete_reaction_role_entry(cls, rr_id: str):
         cls.c.execute(
-            "DELETE FROM reaction_roles WHERE guild_id = :guild_id AND channel_id = :channel_id AND message_id = :message_id AND role_id = :role_id",
-            {
-                "guild_id": guild_id,
-                "channel_id": channel_id,
-                "message_id": message_id,
-                "role_id": role_id,
-            },
+            "DELETE FROM reaction_roles WHERE id = :id",
+            {"id": rr_id},
         )
         cls.conn.commit()
-        print(f"Deleted reaction role in guild {guild_id} with role {role_id}")
+        print(f"Deleted reaction role with ID {rr_id}")
