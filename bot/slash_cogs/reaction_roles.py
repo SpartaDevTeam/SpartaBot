@@ -3,7 +3,7 @@ from emoji import emojize
 import discord
 from discord.ext import commands
 
-from bot import TESTING_GUILDS
+from bot import TESTING_GUILDS, THEME
 from bot.data import Data
 from bot.utils import dbl_vote_required, async_mirror
 from bot.views import PaginatedSelectView
@@ -248,6 +248,77 @@ class SlashReactionRoles(commands.Cog):
             content=f"Deleted {len(select_view.selected_values)} reaction role(s)!",
             view=None,
         )
+
+    @commands.slash_command(name="viewreactionroles", guild_ids=TESTING_GUILDS)
+    async def view_reaction_roles(self, ctx: discord.ApplicationContext):
+        """
+        See the reaction roles setup in your server.
+        """
+
+        await ctx.defer()
+        Data.c.execute(
+            "SELECT id, channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
+            {"guild_id": ctx.guild_id},
+        )
+        if not (reaction_roles := Data.c.fetchall()):
+            await ctx.respond(
+                "There aren't any reaction roles setup in this server"
+            )
+            return
+
+        guild_roles = await ctx.guild.fetch_roles()
+        rr_embed = discord.Embed(
+            title=f"{ctx.guild.name} Reaction Roles", color=THEME
+        )
+
+        for rr in reaction_roles:
+            rr_id = rr[0]
+
+            def delete_rr():
+                Data.delete_reaction_role_entry(rr_id)
+
+            try:
+                rr_channel: discord.TextChannel = (
+                    await ctx.guild.fetch_channel(rr[1])
+                )
+            except discord.NotFound:
+                delete_rr()
+                continue
+
+            try:
+                rr_message: discord.Message = await rr_channel.fetch_message(
+                    rr[2]
+                )
+            except discord.NotFound:
+                delete_rr()
+                continue
+
+            if rr[3].isnumeric():
+                try:
+                    rr_emoji: discord.Emoji = await ctx.guild.fetch_emoji(
+                        rr[3]
+                    )
+                except discord.NotFound:
+                    delete_rr()
+                    continue
+            else:
+                rr_emoji = discord.PartialEmoji(name=rr[3])
+
+            if not (rr_role := discord.utils.get(guild_roles, id=rr[4])):
+                delete_rr()
+                continue
+
+            str_list = [
+                f"Emoji: {rr_emoji}",
+                f"Role: {rr_role.mention}",
+                f"Channel: {rr_channel.mention}",
+                f"[Jump to Message]({rr_message.jump_url})",
+            ]
+            rr_embed.add_field(
+                name=f"ID: {rr_id}", value="\n".join(str_list), inline=False
+            )
+
+        await ctx.respond(embed=rr_embed)
 
 
 def setup(bot):
