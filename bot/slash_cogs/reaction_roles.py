@@ -302,7 +302,7 @@ class SlashReactionRoles(commands.Cog):
                     delete_rr()
                     continue
             else:
-                rr_emoji = discord.PartialEmoji(name=rr[3])
+                rr_emoji = emojize(rr[3])
 
             if not (rr_role := discord.utils.get(guild_roles, id=rr[4])):
                 delete_rr()
