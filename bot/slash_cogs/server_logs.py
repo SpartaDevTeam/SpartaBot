@@ -43,6 +43,7 @@ class SlashServerLogs(commands.Cog):
         await self.bot.get_channel(self.logs_channel).send(embed=embed)
 
 
-# TODO: Enable when removing prefix commands
-# def setup(bot):
-#     bot.add_cog(SlashServerLogs(bot))
+def setup(bot):
+    # TODO: Enable when removing prefix commands
+    #     bot.add_cog(SlashServerLogs(bot))
+    pass
