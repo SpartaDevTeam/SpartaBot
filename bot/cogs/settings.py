@@ -313,11 +313,10 @@ class Settings(commands.Cog):
                 else:
                     add = ""
                 emote_display = f"<{add}:{emote.name}:{emote.id}>"
-                await ctx.send(f"{emote_display} has been added as `{name}")
+                await ctx.send(f'{emote_display} has been added as "{name}"')
 
-        except Exception as e:
+        except discord.HTTPException:
             await ctx.send("Failed to add emoji.")
-            raise e
 
     @commands.command(name="setclearcap", aliases=["clearcap", "cc"])
     @commands.has_guild_permissions(administrator=True)
@@ -330,6 +329,7 @@ class Settings(commands.Cog):
                 "guild_id": ctx.guild.id,
             },
         )
+        Data.conn.commit()
 
         if limit:
             await ctx.send(
