@@ -1,6 +1,6 @@
-import requests
-import discord
 from typing import Union
+import aiohttp
+import discord
 from discord.ext import commands
 from discord import utils
 
@@ -289,10 +289,12 @@ class Settings(commands.Cog):
             )
 
         try:
-            response = requests.get(url)
+            async with aiohttp.request("GET", url) as resp:
+                image_data = await resp.read()
+
             if name:
                 await ctx.guild.create_custom_emoji(
-                    name=name, image=response.content
+                    name=name, image=image_data
                 )
                 emote = utils.get(ctx.guild.emojis, name=name)
                 if emote.animated:
@@ -303,7 +305,7 @@ class Settings(commands.Cog):
                 await ctx.send(f'{emote_display} added with the name "{name}"')
             else:
                 await ctx.guild.create_custom_emoji(
-                    name=emoji[1], image=response.content
+                    name=emoji[1], image=image_data
                 )
                 emote = utils.get(ctx.guild.emojis, name=emoji[1])
                 if emote.animated:
