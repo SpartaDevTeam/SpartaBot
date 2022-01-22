@@ -83,7 +83,8 @@ async def on_command_error(ctx: commands.Context, exception):
         msg = "You don't have permission to run this command. You need the following permissions:"
 
         for missing_perm in exception.missing_permissions:
-            msg += f"\n{missing_perm.title()}"
+            perm_str = missing_perm.title().replace("_", " ")
+            msg += f"\n{perm_str}"
 
         await ctx.send(msg)
 
@@ -91,7 +92,8 @@ async def on_command_error(ctx: commands.Context, exception):
         msg = "I don't have permission to run this command. I will need the following permissions:"
 
         for missing_perm in exception.missing_permissions:
-            msg += f"\n{missing_perm.title()}"
+            perm_str = missing_perm.title().replace("_", " ")
+            msg += f"\n{perm_str}"
 
         await ctx.send(msg)
 
@@ -139,15 +141,17 @@ async def on_application_command_error(
         msg = "You don't have permission to run this command. You need the following permissions:"
 
         for missing_perm in exception.missing_permissions:
-            msg += f"\n{missing_perm.title()}"
+            perm_str = missing_perm.title().replace("_", " ")
+            msg += f"\n{perm_str}"
 
         await ctx.respond(msg, ephemeral=True)
 
     elif isinstance(exception, commands.BotMissingPermissions):
-        msg = "I don't have permission to run this command. I will need the following permissions:"
+        msg = "I don't have permission to run this command. I need the following permissions:"
 
         for missing_perm in exception.missing_permissions:
-            msg += f"\n{missing_perm.title()}"
+            perm_str = missing_perm.title().replace("_", " ")
+            msg += f"\n{perm_str}"
 
         await ctx.respond(msg, ephemeral=True)
 
