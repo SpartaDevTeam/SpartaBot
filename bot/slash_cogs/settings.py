@@ -262,7 +262,7 @@ class SlashSettings(commands.Cog):
         new_name: str = None,
     ):
         """
-        Steal another server's emoji (requires Nitro)
+        Steal another server's emoji
         """
 
         emoji = emoji.strip()
