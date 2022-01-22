@@ -235,12 +235,12 @@ class SlashSettings(commands.Cog):
         mi_embed.add_field(name="Member ID", value=member.id, inline=False)
         mi_embed.add_field(
             name="Joined Discord",
-            value=f"<t:{member.created_at.timestamp()}:R>",
+            value=f"<t:{int(member.created_at.timestamp())}:R>",
             inline=False,
         )
         mi_embed.add_field(
             name="Joined Server",
-            value=f"<t:{member.joined_at.timestamp()}:R>",
+            value=f"<t:{int(member.joined_at.timestamp())}:R>",
             inline=False,
         )
         mi_embed.add_field(
