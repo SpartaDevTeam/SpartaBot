@@ -85,6 +85,68 @@ class SlashSettings(commands.Cog):
                 "This server's leave message has been reset to default"
             )
 
+    @commands.slash_command(name="welcomechannel", guild_ids=TESTING_GUILDS)
+    @commands.has_guild_permissions(administrator=True)
+    async def welcome_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel = None,
+    ):
+        """
+        Change the channel where welcome messages are sent (don't pass a channel to disable welcome message)
+        """
+
+        Data.check_guild_entry(ctx.guild)
+
+        if channel:
+            channel_id = channel.id
+        else:
+            channel_id = "disabled"
+
+        Data.c.execute(
+            "UPDATE guilds SET welcome_channel = :channel_id WHERE id = :guild_id",
+            {"channel_id": channel_id, "guild_id": ctx.guild.id},
+        )
+        Data.conn.commit()
+
+        if channel:
+            await ctx.respond(
+                f"The server's welcome channel has been set to {channel.mention}"
+            )
+        else:
+            await ctx.respond("The server's welcome message has been disabled")
+
+    @commands.slash_command(name="leavechannel", guild_ids=TESTING_GUILDS)
+    @commands.has_guild_permissions(administrator=True)
+    async def leave_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel = None,
+    ):
+        """
+        Change the channel where leave messages are sent (don't pass a channel to disable leave message)
+        """
+
+        Data.check_guild_entry(ctx.guild)
+
+        if channel:
+            channel_id = channel.id
+        else:
+            channel_id = "disabled"
+
+        Data.c.execute(
+            "UPDATE guilds SET leave_channel = :channel_id WHERE id = :guild_id",
+            {"channel_id": channel_id, "guild_id": ctx.guild.id},
+        )
+        Data.conn.commit()
+
+        if channel:
+            await ctx.respond(
+                f"The server's leave channel has been set to {channel.mention}"
+            )
+        else:
+            await ctx.respond("The server's leave message has been disabled")
+
     @commands.slash_command(name="autorole", guild_ids=TESTING_GUILDS)
     @commands.has_guild_permissions(administrator=True)
     async def auto_role(
