@@ -45,5 +45,4 @@ class SlashServerLogs(commands.Cog):
 
 def setup(bot):
     # TODO: Enable when removing prefix commands
-    #     bot.add_cog(SlashServerLogs(bot))
-    pass
+    pass  # bot.add_cog(SlashServerLogs(bot))
