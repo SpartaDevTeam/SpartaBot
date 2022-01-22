@@ -3,40 +3,44 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageFont, ImageDraw
 
-from bot import MyBot
 from bot.data import Data
 
 
-class WelcomeLeave(commands.Cog):
-    def __init__(self, bot):
-        self.bot: MyBot = bot
-        self.theme_color = discord.Color.purple()
-        self.assets_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-            "assets",
-        )
-        self.cache_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-            "cache",
-        )
+class SlashWelcomeLeave(commands.Cog):
+    """
+    Welcome and leave message sender
+    """
 
-        self.default_welcome_msg = (
-            lambda guild: f"Hello [mention], welcome to {guild.name}!"
-        )
-        self.default_leave_msg = lambda guild: (
-            f"Goodbye [member], thanks for staying at {guild.name}!"
-        )
-        self.asset = lambda asset_name: os.path.join(
-            self.assets_dir, asset_name
-        )
-        self.center_to_corner = lambda center_pos, size: (
-            center_pos[0] - size[0] // 2,
-            center_pos[1] - size[1] // 2,
-        )
+    assets_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+        "assets",
+    )
+    cache_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+        "cache",
+    )
 
+    def __init__(self):
         # Make sure that cache dir exists
         if "cache" not in os.listdir(os.path.dirname(self.cache_dir)):
             os.mkdir(self.cache_dir)
+
+    def default_welcome_msg(self, guild: discord.Guild) -> str:
+        return f"Hello [mention], welcome to {guild.name}!"
+
+    def default_leave_msg(self, guild: discord.Guild) -> str:
+        return f"Goodbye [member], thanks for staying at {guild.name}!"
+
+    def get_asset(self, asset_name: str) -> str:
+        return os.path.join(self.assets_dir, asset_name)
+
+    def center_to_corner(
+        self, center_pos: tuple[int], size: tuple[int]
+    ) -> tuple[int]:
+        return (
+            center_pos[0] - size[0] // 2,
+            center_pos[1] - size[1] // 2,
+        )
 
     async def find_welcome_channel(
         self, guild: discord.Guild
@@ -130,7 +134,7 @@ class WelcomeLeave(commands.Cog):
 
         # Prepare welcome image
         w_img_path = os.path.join(self.cache_dir, "welcome.jpg")
-        w_img = Image.open(self.asset("welcome_image.jpg"))
+        w_img = Image.open(self.get_asset("welcome_image.jpg"))
         avatar_corner_pos = self.center_to_corner(avatar_center_pos, im.size)
 
         # If error occurs during paste function try again
@@ -150,17 +154,17 @@ class WelcomeLeave(commands.Cog):
 
         w_img_draw = ImageDraw.Draw(w_img)
         username_font = ImageFont.truetype(
-            self.asset("montserrat_extrabold.otf"), 165
+            self.get_asset("montserrat_extrabold.otf"), 165
         )
         welcome_font = ImageFont.truetype(
-            self.asset("earthorbiterxtrabold.ttf"), 250
+            self.get_asset("earthorbiterxtrabold.ttf"), 250
         )
         server_font_size = 285
 
         # Make sure that server name doesnt overflow
         while True:
             server_font = ImageFont.truetype(
-                self.asset("earthorbiterxtrabold.ttf"), server_font_size
+                self.get_asset("earthorbiterxtrabold.ttf"), server_font_size
             )
             server_bbox_size = server_font.getsize(guild.name)
 
@@ -255,4 +259,5 @@ class WelcomeLeave(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(WelcomeLeave(bot))
+    # TODO: Enable when removing prefix commands
+    pass  # bot.add_cog(SlashWelcomeLeave())
