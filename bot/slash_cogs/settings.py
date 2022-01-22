@@ -306,7 +306,7 @@ class SlashSettings(commands.Cog):
                 image=image_data,
                 reason=f"Added by {ctx.author} using /steal command",
             )
-            await ctx.respond(f'{emoji} has been added as "{new_name}"')
+            await ctx.respond(f"{emoji} has been added as `:{new_name}:`")
 
         except discord.HTTPException as e:
             await ctx.respond(
