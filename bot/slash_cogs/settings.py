@@ -228,9 +228,7 @@ class SlashSettings(commands.Cog):
         if not member:
             member = ctx.author
 
-        mi_embed = discord.Embed(
-            title=f"{member} Information", color=self.theme_color
-        )
+        mi_embed = discord.Embed(title=f"{member} Information", color=THEME)
         if avatar := member.avatar:
             mi_embed.set_thumbnail(url=avatar.url)
 
