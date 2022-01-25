@@ -119,9 +119,13 @@ class SlashMusic(commands.Cog):
         View all the songs currently in the queue
         """
 
-        guild_queue = self.queues[ctx.guild_id]
-        current_player = self.current_players[ctx.guild_id]
+        guild_queue = self.queues.get(ctx.guild_id)
+        current_player = self.current_players.get(ctx.guild_id)
         queue_embed = discord.Embed(title="Song Queue", color=THEME)
+
+        if not (guild_queue or current_player):
+            await ctx.respond("There isn't any music playing right now")
+            return
 
         # Current player
         channel = current_player.data["channel"]
