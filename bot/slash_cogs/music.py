@@ -3,7 +3,7 @@ import youtube_dl
 import discord
 from discord.ext import commands
 
-from bot import TESTING_GUILDS
+from bot import TESTING_GUILDS, THEME
 from bot.utils import search_youtube
 
 youtube_dl.utils.bug_reports_message = lambda: ""
@@ -58,6 +58,7 @@ class SlashMusic(commands.Cog):
     """
 
     queues: dict[int, list[YTDLSource]] = {}
+    current_players: dict[int, YTDLSource] = {}
     play_next: dict[int, bool] = {}
 
     def __init__(self, bot: commands.Bot):
@@ -77,6 +78,7 @@ class SlashMusic(commands.Cog):
 
         while guild_queue:
             player = guild_queue.pop(0)
+            self.current_players[guild.id] = player
 
             self.play_next[guild.id] = False
             voice_client.play(
@@ -90,6 +92,7 @@ class SlashMusic(commands.Cog):
             guild_queue = self.queues[guild.id]
 
         del self.queues[guild.id]
+        del self.current_players[guild.id]
         del self.play_next[guild.id]
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
@@ -109,6 +112,38 @@ class SlashMusic(commands.Cog):
 
         self.queues[ctx.guild_id].append(player)
         await ctx.respond(f"Added to queue: `{player.title}`")
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def queue(self, ctx: discord.ApplicationContext):
+        """
+        View all the songs currently in the queue
+        """
+
+        guild_queue = self.queues[ctx.guild_id]
+        current_player = self.current_players[ctx.guild_id]
+        queue_embed = discord.Embed(title="Song Queue", color=THEME)
+
+        # Current player
+        channel = current_player.data["channel"]
+        duration_mins = str(current_player.data["duration"] // 60)
+        duration_secs = str(current_player.data["duration"] % 60).zfill(2)
+        queue_embed.add_field(
+            name=f"Currently Playing - {current_player.title}",
+            value=f"**Duration:** {duration_mins}:{duration_secs}\n**By:** {channel}",
+            inline=False,
+        )
+
+        for player in guild_queue:
+            channel = player.data["channel"]
+            duration_mins = str(player.data["duration"] // 60)
+            duration_secs = str(player.data["duration"] % 60).zfill(2)
+            queue_embed.add_field(
+                name=player.title,
+                value=f"**Duration:** {duration_mins}:{duration_secs}\n**By:** {channel}",
+                inline=False,
+            )
+
+        await ctx.respond(embed=queue_embed)
 
     @play.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
