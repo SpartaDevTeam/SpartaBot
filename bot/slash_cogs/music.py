@@ -91,9 +91,12 @@ class SlashMusic(commands.Cog):
 
             guild_queue = self.queues[guild.id]
 
-        del self.queues[guild.id]
-        del self.current_players[guild.id]
-        del self.play_next[guild.id]
+        self.clear_guild_queue(guild.id)
+
+    def clear_guild_queue(self, guild_id: int):
+        del self.queues[guild_id]
+        del self.current_players[guild_id]
+        del self.play_next[guild_id]
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def play(self, ctx: discord.ApplicationContext, song_name: str):
@@ -112,6 +115,43 @@ class SlashMusic(commands.Cog):
 
         self.queues[ctx.guild_id].append(player)
         await ctx.respond(f"Added to queue: `{player.title}`")
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def leave(
+        self, ctx: discord.ApplicationContext, clear_queue: bool = False
+    ):
+        """
+        Leave the current voice channel
+        """
+
+        is_author_admin: discord.Permissions = (
+            ctx.author.guild_permissions.administrator
+            or ctx.author.id == ctx.guild.owner_id
+        )
+
+        if clear_queue and not is_author_admin:
+            await ctx.respond(
+                "You need `Administrator` permissions to clear the song queue",
+                ephemeral=True,
+            )
+            return
+
+        if (bot_vc := ctx.guild.voice_client) and (
+            author_vc := ctx.author.voice
+        ):
+            if bot_vc.channel.id == author_vc.channel.id:
+                if clear_queue:
+                    self.clear_guild_queue(ctx.guild_id)
+
+                await bot_vc.disconnect()
+                await ctx.respond("Left the voice channel")
+
+            else:
+                await ctx.respond(
+                    f"Doesn't seem like we're talking about the same voice channel, come over to {bot_vc.channel.mention}"
+                )
+        else:
+            await ctx.respond("You're not connected to a voice channel")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def queue(self, ctx: discord.ApplicationContext):
