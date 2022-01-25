@@ -1,6 +1,8 @@
 python-dotenv
 git+https://github.com/Pycord-Development/pycord.git  # Pycord 2.0.0a
 pycord-prettyhelp
+youtube-dl
+PyNaCl
 pyfiglet
 jishaku
 aiohttp

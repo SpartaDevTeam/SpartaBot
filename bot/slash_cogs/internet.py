@@ -1,11 +1,10 @@
 import os
-import aiohttp
-import re
 import urbanpython
 import discord
 from discord.ext import commands
 
 from bot import TESTING_GUILDS, THEME
+from bot.utils import search_youtube
 
 
 class SlashInternetStuff(commands.Cog):
@@ -14,8 +13,6 @@ class SlashInternetStuff(commands.Cog):
     """
 
     urban = urbanpython.Urban(os.environ["URBAN_API_KEY"])
-    yt_search_url = "https://www.youtube.com/results?search_query="
-    yt_video_url = "https://www.youtube.com/watch?v="
 
     @commands.slash_command(name="urban", guild_ids=TESTING_GUILDS)
     async def urban_dictionary(
@@ -66,15 +63,8 @@ class SlashInternetStuff(commands.Cog):
         Search YouTube for videos
         """
 
-        formatted_query = "+".join(query.split())
-        request_url = self.yt_search_url + formatted_query
-
         await ctx.defer()
-        async with aiohttp.request("GET", request_url) as resp:
-            html = (await resp.read()).decode()
-
-        video_ids = re.findall(r"watch\?v=(\S{11})", html)
-        first_result = self.yt_video_url + video_ids[0]
+        first_result = await search_youtube(query)
         await ctx.respond(first_result)
 
 

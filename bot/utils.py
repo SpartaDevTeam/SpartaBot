@@ -1,6 +1,7 @@
 import re
 from typing import Any
 from datetime import timedelta
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -75,3 +76,28 @@ async def async_mirror(obj: Any):
     """
 
     return obj
+
+
+async def search_youtube(query: str) -> str:
+    """
+    Search YouTube and returns the top video's URL
+
+    Args:
+        query (str): Search term
+
+    Returns:
+        str: URL of the first video
+    """
+
+    yt_search_url = "https://www.youtube.com/results?search_query="
+    yt_video_url = "https://www.youtube.com/watch?v="
+
+    formatted_query = "+".join(query.split())
+    request_url = yt_search_url + formatted_query
+
+    async with aiohttp.request("GET", request_url) as resp:
+        html = (await resp.read()).decode()
+
+    video_ids = re.findall(r"watch\?v=(\S{11})", html)
+    first_result = yt_video_url + video_ids[0]
+    return first_result
