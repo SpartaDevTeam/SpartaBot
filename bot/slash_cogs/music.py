@@ -57,22 +57,58 @@ class SlashMusic(commands.Cog):
     Jam to your favorite tunes with your favorite bot
     """
 
+    queues: dict[int, list[YTDLSource]] = {}
+    play_next: dict[int, bool] = {}
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    async def music_queue(self, guild: discord.Guild):
+        guild_queue: list[YTDLSource] = self.queues[guild.id]
+        voice_client: discord.VoiceClient = guild.voice_client
+        self.play_next[guild.id] = False
+
+        def after_callback(error):
+            if error:
+                print(f"Player error: {error}")
+
+            self.play_next[guild.id] = True
+            print("Finished playing a song")
+
+        while guild_queue:
+            player = guild_queue.pop(0)
+
+            self.play_next[guild.id] = False
+            voice_client.play(
+                player,
+                after=after_callback,
+            )
+
+            while not self.play_next[guild.id]:
+                await asyncio.sleep(1)
+
+            guild_queue = self.queues[guild.id]
+
+        del self.queues[guild.id]
+        del self.play_next[guild.id]
+
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def play(self, ctx: discord.ApplicationContext, song_name: str):
         """
-        Streams a song from YouTube
+        Add a song to the queue
         """
 
         video_url = await search_youtube(song_name)
         player = await YTDLSource.from_url(
             video_url, loop=ctx.bot.loop, stream=True
         )
-        ctx.guild.voice_client.play(
-            player,
-            after=lambda e: print(f"Player error: {e}") if e else None,
-        )
 
-        await ctx.respond(f"Now playing: {player.title}")
+        if ctx.guild_id not in self.queues:
+            self.queues[ctx.guild_id] = []
+            asyncio.create_task(self.music_queue(ctx.guild))
+
+        self.queues[ctx.guild_id].append(player)
+        await ctx.respond(f"Added to queue: `{player.title}`")
 
     @play.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
@@ -80,9 +116,7 @@ class SlashMusic(commands.Cog):
 
         if author_vc := ctx.author.voice:
             if existing_vc := ctx.guild.voice_client:
-                if existing_vc.channel.id == author_vc.channel.id:
-                    existing_vc.stop()
-                else:
+                if existing_vc.channel.id != author_vc.channel.id:
                     await ctx.respond(
                         f"I'm already in {existing_vc.channel.mention}, please join that channel."
                     )
@@ -103,4 +137,4 @@ class SlashMusic(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(SlashMusic())
+    bot.add_cog(SlashMusic(bot))
