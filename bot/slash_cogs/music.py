@@ -57,52 +57,68 @@ class SlashMusic(commands.Cog):
     Jam to your favorite tunes with your favorite bot
     """
 
+    # TODO: Add remove from queue, resume, and pause commands
+
     queues: dict[int, list[YTDLSource]] = {}
     current_players: dict[int, YTDLSource] = {}
     play_next: dict[int, bool] = {}
+    skip_song: dict[int, bool] = {}
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def music_queue(self, guild: discord.Guild):
-        guild_queue: list[YTDLSource] = self.queues[guild.id]
-        voice_client: discord.VoiceClient = guild.voice_client
-        self.play_next[guild.id] = False
+    async def music_queue(self, ctx: discord.ApplicationContext):
+        voice_client: discord.VoiceClient = ctx.guild.voice_client
+
+        song_queue: list[YTDLSource] = self.queues[ctx.guild_id]
+        self.play_next[ctx.guild_id] = False
+        self.skip_song[ctx.guild_id] = False
 
         def after_callback(error):
             if error:
                 print(f"Player error: {error}")
 
-            self.play_next[guild.id] = True
+            self.play_next[ctx.guild_id] = True
             print("Finished playing a song")
 
-        while guild_queue:
-            player = guild_queue.pop(0)
-            self.current_players[guild.id] = player
+        while song_queue:
+            player = song_queue.pop(0)
+            self.current_players[ctx.guild_id] = player
 
-            self.play_next[guild.id] = False
+            await ctx.respond(f"Now playing: `{player.title}`")
+
+            self.play_next[ctx.guild_id] = False
             voice_client.play(
                 player,
                 after=after_callback,
             )
 
-            while not self.play_next[guild.id]:
+            while (
+                not self.play_next[ctx.guild_id]
+                and not self.skip_song[ctx.guild_id]
+            ):
                 await asyncio.sleep(1)
 
-            guild_queue = self.queues[guild.id]
+            voice_client.stop()
+            self.skip_song[ctx.guild_id] = False
+            song_queue = self.queues[ctx.guild_id]
 
-        self.clear_guild_queue(guild.id)
+        self.clear_guild_queue(ctx.guild_id)
 
     def clear_guild_queue(self, guild_id: int):
         del self.queues[guild_id]
         del self.current_players[guild_id]
         del self.play_next[guild_id]
+        del self.skip_song[guild_id]
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def play(self, ctx: discord.ApplicationContext, song_name: str):
         """
         Add a song to the queue
         """
+
+        if not ctx.guild.voice_client:
+            await ctx.author.voice.channel.connect()
 
         video_url = await search_youtube(song_name)
         player = await YTDLSource.from_url(
@@ -111,7 +127,7 @@ class SlashMusic(commands.Cog):
 
         if ctx.guild_id not in self.queues:
             self.queues[ctx.guild_id] = []
-            asyncio.create_task(self.music_queue(ctx.guild))
+            asyncio.create_task(self.music_queue(ctx))
 
         self.queues[ctx.guild_id].append(player)
         await ctx.respond(f"Added to queue: `{player.title}`")
@@ -136,22 +152,31 @@ class SlashMusic(commands.Cog):
             )
             return
 
-        if (bot_vc := ctx.guild.voice_client) and (
-            author_vc := ctx.author.voice
-        ):
-            if bot_vc.channel.id == author_vc.channel.id:
-                if clear_queue:
-                    self.clear_guild_queue(ctx.guild_id)
+        if bot_vc := ctx.guild.voice_client:
+            if clear_queue:
+                self.clear_guild_queue(ctx.guild_id)
 
-                await bot_vc.disconnect()
-                await ctx.respond("Left the voice channel")
+            await bot_vc.disconnect()
+            await ctx.respond("Left the voice channel")
 
-            else:
-                await ctx.respond(
-                    f"Doesn't seem like we're talking about the same voice channel, come over to {bot_vc.channel.mention}"
-                )
         else:
-            await ctx.respond("You're not connected to a voice channel")
+            await ctx.respond(
+                "I'm not connected to a voice channel", ephemeral=True
+            )
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def skip(self, ctx: discord.ApplicationContext):
+        """
+        Skip the current song
+        """
+
+        if not ctx.guild.voice_client:
+            await ctx.respond(
+                "There isn't any music playing right now", ephemeral=True
+            )
+
+        self.skip_song[ctx.guild_id] = True
+        await ctx.respond("Song has been skipped")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def queue(self, ctx: discord.ApplicationContext):
@@ -164,7 +189,9 @@ class SlashMusic(commands.Cog):
         queue_embed = discord.Embed(title="Song Queue", color=THEME)
 
         if not (guild_queue or current_player):
-            await ctx.respond("There isn't any music playing right now")
+            await ctx.respond(
+                "There isn't any music playing right now", ephemeral=True
+            )
             return
 
         # Current player
@@ -190,6 +217,8 @@ class SlashMusic(commands.Cog):
         await ctx.respond(embed=queue_embed)
 
     @play.before_invoke
+    @leave.before_invoke
+    @skip.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         await ctx.defer()
 
@@ -197,18 +226,17 @@ class SlashMusic(commands.Cog):
             if existing_vc := ctx.guild.voice_client:
                 if existing_vc.channel.id != author_vc.channel.id:
                     await ctx.respond(
-                        f"I'm already in {existing_vc.channel.mention}, please join that channel."
+                        f"I'm already in {existing_vc.channel.mention}, please join that channel.",
+                        ephemeral=True,
                     )
                     raise discord.ApplicationCommandError(
                         "Author not connected to bot's voice channel."
                     )
 
-            else:
-                await author_vc.channel.connect()
-
         else:
             await ctx.respond(
-                "Please connect to a voice channel before using this command"
+                "Please connect to a voice channel before using this command",
+                ephemeral=True,
             )
             raise discord.ApplicationCommandError(
                 "Author not connected to a voice channel."
