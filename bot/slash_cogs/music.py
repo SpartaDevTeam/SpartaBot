@@ -57,7 +57,7 @@ class SlashMusic(commands.Cog):
     Jam to your favorite tunes with your favorite bot
     """
 
-    # TODO: Add remove from queue command
+    # TODO: Add remove from queue, loop command
 
     queues: dict[int, list[YTDLSource]] = {}
     current_players: dict[int, YTDLSource] = {}
@@ -85,7 +85,7 @@ class SlashMusic(commands.Cog):
             player = song_queue.pop(0)
             self.current_players[ctx.guild_id] = player
 
-            await ctx.respond(f"Now playing: `{player.title}`")
+            await ctx.send(f"Now playing: `{player.title}`")
 
             self.play_next[ctx.guild_id] = False
             voice_client.play(
@@ -112,11 +112,11 @@ class SlashMusic(commands.Cog):
                 break
 
         if song_queue:
-            await ctx.respond(
+            await ctx.send(
                 "Leaving the voice channel because everybody left..."
             )
         else:
-            await ctx.respond(
+            await ctx.send(
                 "Leaving the voice channel because the song queue is over..."
             )
 
