@@ -99,11 +99,29 @@ class SlashMusic(commands.Cog):
             ):
                 await asyncio.sleep(1)
 
+            # Update local queue
             voice_client.stop()
             self.skip_song[ctx.guild_id] = False
             song_queue = self.queues[ctx.guild_id]
 
+            # Check if vc is not empty
+            ch: discord.VoiceChannel = await ctx.guild.fetch_channel(
+                voice_client.channel.id
+            )
+            if len(ch.members) <= 1:
+                break
+
+        if song_queue:
+            await ctx.respond(
+                "Leaving the voice channel because everybody left..."
+            )
+        else:
+            await ctx.respond(
+                "Leaving the voice channel because the song queue is over..."
+            )
+
         self.clear_guild_queue(ctx.guild_id)
+        await voice_client.disconnect()
 
     def clear_guild_queue(self, guild_id: int):
         del self.queues[guild_id]
