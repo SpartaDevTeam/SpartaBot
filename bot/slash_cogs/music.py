@@ -57,7 +57,7 @@ class SlashMusic(commands.Cog):
     Jam to your favorite tunes with your favorite bot
     """
 
-    # TODO: Add remove from queue, resume, and pause commands
+    # TODO: Add remove from queue command
 
     queues: dict[int, list[YTDLSource]] = {}
     current_players: dict[int, YTDLSource] = {}
@@ -195,6 +195,42 @@ class SlashMusic(commands.Cog):
 
         self.skip_song[ctx.guild_id] = True
         await ctx.respond("Song has been skipped")
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def resume(self, ctx: discord.ApplicationContext):
+        """
+        Resume the song that was playing
+        """
+
+        if bot_vc := ctx.guild.voice_client:
+            if bot_vc.is_paused():
+                bot_vc.resume()
+                await ctx.respond("Resuming the song...")
+            else:
+                await ctx.respond("The song is already playing")
+
+        else:
+            await ctx.respond(
+                "There isn't any music playing right now", ephemeral=True
+            )
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def pause(self, ctx: discord.ApplicationContext):
+        """
+        Pause the song that is playing
+        """
+
+        if bot_vc := ctx.guild.voice_client:
+            if not bot_vc.is_paused():
+                bot_vc.pause()
+                await ctx.respond("Pausing the song...")
+            else:
+                await ctx.respond("The song is already paused")
+
+        else:
+            await ctx.respond(
+                "There isn't any music playing right now", ephemeral=True
+            )
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def queue(self, ctx: discord.ApplicationContext):
