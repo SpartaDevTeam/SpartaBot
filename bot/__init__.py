@@ -21,6 +21,7 @@ TESTING_GUILDS = (
     if "--debug" in sys.argv
     else None
 )
+HELP_EMBEDS: list[discord.Embed] = []
 
 intents = discord.Intents.default()
 intents.members = True
@@ -218,6 +219,54 @@ async def on_message(message: discord.Message):
     await bot.process_commands(message)
 
 
+@bot.slash_command(guild_ids=TESTING_GUILDS)
+async def help(ctx: discord.ApplicationContext, command: str = None):
+    """
+    Get a list of commands or more information about a specific command
+    """
+
+    if command:
+        cmd_info: discord.SlashCommand = bot.get_application_command(command)
+
+        if not cmd_info:
+            await ctx.respond(f"Command not found: `{command}`")
+            return
+
+        cmd_name = cmd_info.qualified_name
+        formatted_options = []
+
+        for option in cmd_info.options:
+            if option.required:
+                formatted_options.append(f"<{option.name}>")
+            elif option.default is None:
+                formatted_options.append(f"[{option.name}]")
+            else:
+                formatted_options.append(f"[{option.name}={option.default}]")
+
+        options_str = " ".join(formatted_options)
+
+        help_embed = discord.Embed(
+            title=f"/{cmd_name}", color=THEME, description=cmd_info.description
+        )
+        help_embed.set_footer(
+            text=(
+                "Options wrapped in <> are required\n"
+                "Options wrapped in [] are optional"
+            )
+        )
+
+        help_embed.add_field(
+            name="Usage",
+            value=f"```/{cmd_name} {options_str}```",
+            inline=False,
+        )
+
+        await ctx.respond(embed=help_embed)
+
+    else:
+        ...
+
+
 def add_cogs():
     # Prefix Command Cogs
     cogs_dir = os.path.join(
@@ -242,10 +291,46 @@ def add_cogs():
     bot.load_extension("jishaku")
 
 
+def generate_help_embeds():
+    index_embed = discord.Embed(
+        title="Index", color=THEME, description=bot.description
+    )
+    index_embed.set_footer(
+        text="You can use /help command to get more information about a command"
+    )
+
+    cog_embeds = []
+
+    for cog_name, cog in list(bot.cogs.items()):
+        # TODO: Remove conditional and replace call when renaming slash command cogs
+
+        if not cog_name.startswith("Slash"):
+            continue
+
+        cog_name = cog_name.replace("Slash", "")
+        index_embed.add_field(name=cog_name, value=cog.description)
+
+        embed = discord.Embed(
+            title=cog_name, color=THEME, description=cog.description
+        )
+
+        for cmd_info in cog.walk_commands():
+            embed.add_field(
+                name=f"/{cmd_info.qualified_name}",
+                value=cmd_info.description,
+            )
+
+        cog_embeds.append(embed)
+
+    HELP_EMBEDS.append(index_embed)
+    HELP_EMBEDS.extend(cog_embeds)
+
+
 def main():
     try:
         Data.create_tables()
         add_cogs()
+        generate_help_embeds()
         bot.run(TOKEN)
     except KeyboardInterrupt:
         pass

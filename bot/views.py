@@ -266,3 +266,13 @@ class PaginatedSelectView(discord.ui.View):
     async def delete(self, interaction: discord.Interaction):
         if interaction.user.id == self.author_id:
             self.stop()
+
+
+class PaginatedEmbedView(discord.ui.View):
+    current_embed_index = 0
+
+    def __init__(self, author_id: int, embeds: list[discord.Embed]):
+        self.author_id = author_id
+        self.embeds = embeds
+
+    # @discord.ui.button(emoji="⏪")

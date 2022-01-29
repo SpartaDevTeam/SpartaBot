@@ -1,5 +1,5 @@
 python-dotenv
-git+https://github.com/Pycord-Development/pycord.git  # Pycord 2.0.0a
+py-cord==2.0.0b1
 pycord-prettyhelp
 youtube-dl
 PyNaCl
