@@ -272,7 +272,37 @@ class PaginatedEmbedView(discord.ui.View):
     current_embed_index = 0
 
     def __init__(self, author_id: int, embeds: list[discord.Embed]):
+        super().__init__()
         self.author_id = author_id
         self.embeds = embeds
 
-    # @discord.ui.button(emoji="⏪")
+    @discord.ui.button(emoji="⏪")
+    async def previous(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
+        self.current_embed_index -= 1
+
+        if self.current_embed_index < 0:
+            self.current_embed_index = len(self.embeds) - 1
+
+        embed = self.embeds[self.current_embed_index]
+        await interaction.message.edit(embed=embed)
+
+    @discord.ui.button(emoji="⏩")
+    async def next(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
+        self.current_embed_index += 1
+
+        if self.current_embed_index >= len(self.embeds):
+            self.current_embed_index = 0
+
+        embed = self.embeds[self.current_embed_index]
+        await interaction.message.edit(embed=embed)
+
+    @discord.ui.button(emoji="❌")
+    async def close(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
+        await interaction.message.delete()
+        self.stop()

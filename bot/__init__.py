@@ -10,6 +10,7 @@ from discord.ext import commands
 from discord.ext.prettyhelp import PrettyHelp
 
 from bot.data import Data
+from bot.views import PaginatedEmbedView
 from bot.errors import DBLVoteRequired
 
 load_dotenv()
@@ -264,7 +265,15 @@ async def help(ctx: discord.ApplicationContext, command: str = None):
         await ctx.respond(embed=help_embed)
 
     else:
-        ...
+        embed_view = PaginatedEmbedView(ctx.author.id, HELP_EMBEDS)
+        msg = await ctx.respond(embed=HELP_EMBEDS[0], view=embed_view)
+        timed_out = await embed_view.wait()
+
+        if timed_out:
+            if isinstance(msg, discord.Interaction):
+                await msg.delete_original_message()
+            else:
+                await msg.delete()
 
 
 def add_cogs():
@@ -324,6 +333,7 @@ def generate_help_embeds():
 
     HELP_EMBEDS.append(index_embed)
     HELP_EMBEDS.extend(cog_embeds)
+    print("Generated Help Embeds!")
 
 
 def main():
