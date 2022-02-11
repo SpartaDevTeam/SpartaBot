@@ -61,21 +61,21 @@ class SlashMiscellaneous(commands.Cog):
         )
 
     async def load_pending_reminders(self):
-        print("Loading pending reminders...")
+        # TODO: Enable when removing prefix commands
+        # print("Loading pending reminders...")
 
-        Data.c.execute("SELECT * FROM reminders")
-        reminders = Data.c.fetchall()
+        # Data.c.execute("SELECT * FROM reminders")
+        # reminders = Data.c.fetchall()
 
-        reminder_load_tasks = list(map(self.load_reminder, reminders))
-        await asyncio.gather(*reminder_load_tasks)
+        # reminder_load_tasks = list(map(self.load_reminder, reminders))
+        # await asyncio.gather(*reminder_load_tasks)
 
         self.reminders_loaded = True
-        print(f"Loaded {len(reminders)} pending reminders!")
+        # print(f"Loaded {len(reminders)} pending reminders!")
 
-    # TODO: Enable when removing prefix commands
-    # @commands.Cog.listener()
-    # async def on_ready(self):
-    #     await self.load_pending_reminders()
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.load_pending_reminders()
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def info(self, ctx: discord.ApplicationContext):
