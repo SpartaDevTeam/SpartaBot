@@ -52,6 +52,8 @@ class Snipe(commands.Cog):
         help="See recently deleted messages in the current channel",
     )
     async def snipe(self, ctx: commands.Context, limit: int = 1):
+        print("sniped!")
+
         if limit > self.snipe_limit:
             await ctx.send(f"Maximum snipe limit is {self.snipe_limit}")
             return

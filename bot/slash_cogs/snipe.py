@@ -49,6 +49,8 @@ class SlashSnipe(commands.Cog):
         See recently deleted messages in the current channel
         """
 
+        print("sniped!")
+
         if limit > self.snipe_limit:
             await ctx.respond(
                 f"Maximum snipe limit is {self.snipe_limit}", ephemeral=True
