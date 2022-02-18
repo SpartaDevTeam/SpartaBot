@@ -122,7 +122,13 @@ class AutoMod(commands.Cog):
                 (msg.author == message.author)
                 and len(msg.mentions)
                 and (
-                    (datetime.datetime.utcnow() - msg.created_at).seconds < 20
+                    (
+                        datetime.datetime.utcnow().replace(
+                            tzinfo=msg.created_at.tzinfo
+                        )
+                        - msg.created_at
+                    ).seconds
+                    < 20
                 )
             )
 

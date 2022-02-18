@@ -80,7 +80,15 @@ class SlashAutoMod(commands.Cog):
     #         return (
     #             (msg.author == message.author)
     #             and len(msg.mentions)
-    #             and (datetime.utcnow() - msg.created_at).seconds < 20
+    #             and (
+    #                 (
+    #                     datetime.datetime.utcnow().replace(
+    #                         tzinfo=msg.created_at.tzinfo
+    #                     )
+    #                     - msg.created_at
+    #                 ).seconds
+    #                 < 20
+    #             )
     #         )
 
     #     Data.check_guild_entry(message.guild)
@@ -91,8 +99,9 @@ class SlashAutoMod(commands.Cog):
     #     )
     #     activated_features = json.loads(Data.c.fetchone()[0])
 
+    #     # if channel id's data contains "links":
     #     if "links" in activated_features:
-    #         if re.search(_URL_REGEX, message.content):
+    #         if search(self.url_regex, message.content):
     #             await message.delete()
     #             await message.channel.send(
     #                 f"{message.author.mention}, You cannot send links "
@@ -100,6 +109,7 @@ class SlashAutoMod(commands.Cog):
     #                 delete_after=3,
     #             )
 
+    #     # if channel id's data contains "images"
     #     if "images" in activated_features:
     #         if any([hasattr(a, "width") for a in message.attachments]):
     #             await message.delete()
@@ -109,6 +119,7 @@ class SlashAutoMod(commands.Cog):
     #                 delete_after=3,
     #             )
 
+    #     # if channel id's data contains "spam":
     #     if "spam" in activated_features:
     #         if (
     #             len(
