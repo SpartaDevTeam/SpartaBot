@@ -49,8 +49,6 @@ class SlashSnipe(commands.Cog):
         See recently deleted messages in the current channel
         """
 
-        print("sniped!")
-
         if limit > self.snipe_limit:
             await ctx.respond(
                 f"Maximum snipe limit is {self.snipe_limit}", ephemeral=True
@@ -64,7 +62,8 @@ class SlashSnipe(commands.Cog):
             snipe_embed = discord.Embed(title="Message Snipe", color=THEME)
 
             if msgs:
-                top_author: discord.Member = await ctx.bot.fetch_user(
+                await ctx.defer()
+                top_author: discord.Member = await ctx.bot.get_or_fetch_user(
                     msgs[0].author.id
                 )
 
@@ -103,7 +102,8 @@ class SlashSnipe(commands.Cog):
             editsnipe_embed = discord.Embed(title="Edit Snipe", color=THEME)
 
             if msgs:
-                top_author: discord.Member = await ctx.bot.fetch_user(
+                await ctx.defer()
+                top_author: discord.Member = await ctx.bot.get_or_fetch_user(
                     msgs[0][0].author.id
                 )
 

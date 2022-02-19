@@ -52,8 +52,6 @@ class Snipe(commands.Cog):
         help="See recently deleted messages in the current channel",
     )
     async def snipe(self, ctx: commands.Context, limit: int = 1):
-        print("sniped!")
-
         if limit > self.snipe_limit:
             await ctx.send(f"Maximum snipe limit is {self.snipe_limit}")
             return
@@ -67,9 +65,10 @@ class Snipe(commands.Cog):
             )
 
             if msgs:
-                top_author: discord.Member = await self.bot.fetch_user(
-                    msgs[0].author.id
-                )
+                async with ctx.typing():
+                    top_author: discord.Member = (
+                        await self.bot.get_or_fetch_user(msgs[0].author.id)
+                    )
 
                 if top_author:
                     snipe_embed.set_thumbnail(url=str(top_author.avatar.url))
@@ -101,9 +100,10 @@ class Snipe(commands.Cog):
             )
 
             if msgs:
-                top_author: discord.Member = await self.bot.fetch_user(
-                    msgs[0][0].author.id
-                )
+                async with ctx.typing():
+                    top_author: discord.Member = (
+                        await self.bot.get_or_fetch_user(msgs[0][0].author.id)
+                    )
 
                 if top_author:
                     editsnipe_embed.set_thumbnail(
