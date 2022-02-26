@@ -57,7 +57,14 @@ def get_prefix(client: commands.Bot, message: discord.Message):
 
 
 help_cmd = PrettyHelp(
-    color=THEME, verify_checks=False, command_attrs={"hidden": True}
+    color=THEME,
+    verify_checks=False,
+    command_attrs={"hidden": True},
+    ending_note=(
+        "Please use the new slash commands (/help), use of prefix commands "
+        "(s!help) is discouraged. Type {ctx.clean_prefix}{help.invoked_with} "
+        "command for more info on a command."
+    ),
 )
 bot = MyBot(
     command_prefix=get_prefix,
