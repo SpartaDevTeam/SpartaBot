@@ -77,6 +77,9 @@ class SlashMusic(commands.Cog):
         def after_callback(error):
             if error:
                 print(f"Player error: {error}")
+                asyncio.create_task(
+                    ctx.send("An error occurred while playing the song.")
+                )
 
             self.play_next[ctx.guild_id] = True
             print("Finished playing a song")
@@ -233,6 +236,22 @@ class SlashMusic(commands.Cog):
             )
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
+    @commands.has_guild_permissions(administrator=True)
+    async def volume(self, ctx: discord.ApplicationContext, new_volume: int):
+        """
+        Change the volume of the song that is playing
+        """
+
+        if bot_vc := ctx.guild.voice_client:
+            new_volume = max(0, min(new_volume, 100))
+            bot_vc.source.volume = new_volume / 100
+            await ctx.respond(f"Volume changed to **{new_volume}%**")
+        else:
+            await ctx.respond(
+                "There isn't any music playing right now", ephemeral=True
+            )
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def queue(self, ctx: discord.ApplicationContext):
         """
         View all the songs currently in the queue
@@ -240,13 +259,17 @@ class SlashMusic(commands.Cog):
 
         guild_queue = self.queues.get(ctx.guild_id)
         current_player = self.current_players.get(ctx.guild_id)
-        queue_embed = discord.Embed(title="Song Queue", color=THEME)
 
-        if not (guild_queue or current_player):
+        if not (bot_vc := ctx.guild.voice_client):
             await ctx.respond(
                 "There isn't any music playing right now", ephemeral=True
             )
             return
+
+        queue_embed = discord.Embed(title="Song Queue", color=THEME)
+        queue_embed.set_footer(
+            text=f"Volume: {int(bot_vc.source.volume * 100)}%"
+        )
 
         # Current player
         channel = current_player.data["channel"]
@@ -273,6 +296,7 @@ class SlashMusic(commands.Cog):
     @play.before_invoke
     @leave.before_invoke
     @skip.before_invoke
+    @volume.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         await ctx.defer()
 
