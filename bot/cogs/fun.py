@@ -249,7 +249,7 @@ class Fun(commands.Cog):
         await webhook.send(
             message,
             username=member.display_name,
-            avatar_url=member.avatar.url,
+            avatar_url=member.display_avatar.url,
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
