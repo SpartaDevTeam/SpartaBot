@@ -41,4 +41,5 @@ class ServerLogs(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(ServerLogs(bot))
+    # bot.add_cog(ServerLogs(bot))
+    pass

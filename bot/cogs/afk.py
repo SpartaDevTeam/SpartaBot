@@ -50,4 +50,5 @@ class AFK(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(AFK(bot))
+    # bot.add_cog(AFK(bot))
+    pass

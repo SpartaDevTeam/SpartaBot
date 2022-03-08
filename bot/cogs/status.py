@@ -44,4 +44,5 @@ class Status(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Status(bot))
+    # bot.add_cog(Status(bot))
+    pass

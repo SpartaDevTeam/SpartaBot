@@ -13,31 +13,30 @@ class SlashAutoResponse(commands.Cog):
     Commands to make Sparta automatically reply to certain phrases
     """
 
-    # TODO: Enable when removing prefix commands
-    # @commands.Cog.listener()
-    # async def on_message(self, message: discord.Message):
-    #     if message.author.bot:
-    #         return
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
 
-    #     Data.c.execute(
-    #         "SELECT auto_responses FROM guilds WHERE id = :guild_id",
-    #         {"guild_id": message.guild.id},
-    #     )
-    #     auto_resps = json.loads(Data.c.fetchone()[0])
-    #     content: str = message.content
-    #     channel: discord.TextChannel = message.channel
+        Data.c.execute(
+            "SELECT auto_responses FROM guilds WHERE id = :guild_id",
+            {"guild_id": message.guild.id},
+        )
+        auto_resps = json.loads(Data.c.fetchone()[0])
+        content: str = message.content
+        channel: discord.TextChannel = message.channel
 
-    #     if content in auto_resps:
-    #         response = auto_resps[content]
+        if content in auto_resps:
+            response = auto_resps[content]
 
-    #         # Auto Response Variables
-    #         response = response.replace("[member]", str(message.author))
-    #         response = response.replace("[nick]", message.author.display_name)
-    #         response = response.replace("[name]", message.author.name)
+            # Auto Response Variables
+            response = response.replace("[member]", str(message.author))
+            response = response.replace("[nick]", message.author.display_name)
+            response = response.replace("[name]", message.author.name)
 
-    #         await channel.send(
-    #             response, allowed_mentions=discord.AllowedMentions.none()
-    #         )
+            await channel.send(
+                response, allowed_mentions=discord.AllowedMentions.none()
+            )
 
     @dbl_vote_required()
     @commands.slash_command(name="addautoresponse", guild_ids=TESTING_GUILDS)

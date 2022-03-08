@@ -66,9 +66,9 @@ class Miscellaneous(commands.Cog):
             pass
         Data.delete_reminder_entry(reminder_id)
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        await self.load_pending_reminders()
+    # @commands.Cog.listener()
+    # async def on_ready(self):
+    #     await self.load_pending_reminders()
 
     @commands.command(name="info", help="Display bot information")
     async def info(self, ctx: commands.Context):

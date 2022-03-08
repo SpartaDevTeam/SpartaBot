@@ -36,6 +36,4 @@ class SlashAFK(commands.Cog):
 
 
 def setup(bot):
-    # TODO: Enable when removing prefix commands
-    # bot.add_cog(SlashAFK(bot))
-    pass
+    bot.add_cog(SlashAFK(bot))

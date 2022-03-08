@@ -1,3 +1,4 @@
+import asyncio
 import os
 import discord
 from discord.ext import commands
@@ -211,7 +212,8 @@ class SlashWelcomeLeave(commands.Cog):
         )
 
         # Save the image to cache
-        w_img.save(w_img_path)
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, w_img.save, w_img_path)
 
         await welcome_channel.send(
             welcome_message, file=discord.File(w_img_path)
@@ -259,5 +261,4 @@ class SlashWelcomeLeave(commands.Cog):
 
 
 def setup(bot):
-    # TODO: Enable when removing prefix commands
-    pass  # bot.add_cog(SlashWelcomeLeave())
+    bot.add_cog(SlashWelcomeLeave())

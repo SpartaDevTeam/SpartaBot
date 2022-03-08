@@ -61,17 +61,16 @@ class SlashMiscellaneous(commands.Cog):
         )
 
     async def load_pending_reminders(self):
-        # TODO: Enable when removing prefix commands
-        # print("Loading pending reminders...")
+        print("Loading pending reminders...")
 
-        # Data.c.execute("SELECT * FROM reminders")
-        # reminders = Data.c.fetchall()
+        Data.c.execute("SELECT * FROM reminders")
+        reminders = Data.c.fetchall()
 
-        # reminder_load_tasks = list(map(self.load_reminder, reminders))
-        # await asyncio.gather(*reminder_load_tasks)
+        reminder_load_tasks = list(map(self.load_reminder, reminders))
+        await asyncio.gather(*reminder_load_tasks)
 
-        self.reminders_loaded = True
-        # print(f"Loaded {len(reminders)} pending reminders!")
+        self.reminders_loaded = True  # TODO: Make this globally accessible
+        print(f"Loaded {len(reminders)} pending reminders!")
 
     @commands.Cog.listener()
     async def on_ready(self):

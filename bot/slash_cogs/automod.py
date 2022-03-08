@@ -70,72 +70,71 @@ class SlashAutoMod(commands.Cog):
         ]
         save()
 
-    # TODO: Enable when removing prefix commands
-    # @commands.Cog.listener()
-    # async def on_message(self, message: discord.Message):
-    #     if not message.guild or message.author.bot:
-    #         return
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if not message.guild or message.author.bot:
+            return
 
-    #     def spam_check(msg):
-    #         return (
-    #             (msg.author == message.author)
-    #             and len(msg.mentions)
-    #             and (
-    #                 (
-    #                     datetime.datetime.utcnow().replace(
-    #                         tzinfo=msg.created_at.tzinfo
-    #                     )
-    #                     - msg.created_at
-    #                 ).seconds
-    #                 < 20
-    #             )
-    #         )
+        def spam_check(msg):
+            return (
+                (msg.author == message.author)
+                and len(msg.mentions)
+                and (
+                    (
+                        datetime.datetime.utcnow().replace(
+                            tzinfo=msg.created_at.tzinfo
+                        )
+                        - msg.created_at
+                    ).seconds
+                    < 20
+                )
+            )
 
-    #     Data.check_guild_entry(message.guild)
+        Data.check_guild_entry(message.guild)
 
-    #     Data.c.execute(
-    #         "SELECT activated_automod FROM guilds WHERE id = :guild_id",
-    #         {"guild_id": message.guild.id},
-    #     )
-    #     activated_features = json.loads(Data.c.fetchone()[0])
+        Data.c.execute(
+            "SELECT activated_automod FROM guilds WHERE id = :guild_id",
+            {"guild_id": message.guild.id},
+        )
+        activated_features = json.loads(Data.c.fetchone()[0])
 
-    #     # if channel id's data contains "links":
-    #     if "links" in activated_features:
-    #         if search(self.url_regex, message.content):
-    #             await message.delete()
-    #             await message.channel.send(
-    #                 f"{message.author.mention}, You cannot send links "
-    #                 "in this channel!",
-    #                 delete_after=3,
-    #             )
+        # if channel id's data contains "links":
+        if "links" in activated_features:
+            if re.search(_URL_REGEX, message.content):
+                await message.delete()
+                await message.channel.send(
+                    f"{message.author.mention}, You cannot send links "
+                    "in this channel!",
+                    delete_after=3,
+                )
 
-    #     # if channel id's data contains "images"
-    #     if "images" in activated_features:
-    #         if any([hasattr(a, "width") for a in message.attachments]):
-    #             await message.delete()
-    #             await message.channel.send(
-    #                 f"{message.author.mention}, You cannot send images "
-    #                 "in this channel!",
-    #                 delete_after=3,
-    #             )
+        # if channel id's data contains "images"
+        if "images" in activated_features:
+            if any([hasattr(a, "width") for a in message.attachments]):
+                await message.delete()
+                await message.channel.send(
+                    f"{message.author.mention}, You cannot send images "
+                    "in this channel!",
+                    delete_after=3,
+                )
 
-    #     # if channel id's data contains "spam":
-    #     if "spam" in activated_features:
-    #         if (
-    #             len(
-    #                 list(
-    #                     filter(
-    #                         lambda m: spam_check(m), self.bot.cached_messages
-    #                     )
-    #                 )
-    #             )
-    #             >= 5
-    #         ):
-    #             await message.channel.send(
-    #                 f"{message.author.mention}, Do not spam mentions "
-    #                 "in this channel!",
-    #                 delete_after=3,
-    #             )
+        # if channel id's data contains "spam":
+        if "spam" in activated_features:
+            if (
+                len(
+                    list(
+                        filter(
+                            lambda m: spam_check(m), self.bot.cached_messages
+                        )
+                    )
+                )
+                >= 5
+            ):
+                await message.channel.send(
+                    f"{message.author.mention}, Do not spam mentions "
+                    "in this channel!",
+                    delete_after=3,
+                )
 
 
 def setup(bot):
