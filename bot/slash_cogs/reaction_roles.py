@@ -14,6 +14,9 @@ class SlashReactionRoles(commands.Cog):
     Commands to setup reaction roles for members of your server to give
     themselves roles
     """
+    
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(
@@ -320,4 +323,4 @@ class SlashReactionRoles(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(SlashReactionRoles())
+    bot.add_cog(SlashReactionRoles(bot))
