@@ -221,6 +221,16 @@ class Miscellaneous(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
+    @commands.command(name="unafk", help="Unset your AFK status")
+    async def unafk(self, ctx: commands.Context):
+        already_afk = Data.afk_entry_exists(ctx.author)
+
+        if already_afk:
+            Data.delete_afk_data(ctx.author)
+            await ctx.send("You are no longer AFK'd")
+        else:
+            await ctx.send("You are not currently AFK'd")
+
     @commands.command(
         name="uptime", help="Check how long the bot has been up for"
     )

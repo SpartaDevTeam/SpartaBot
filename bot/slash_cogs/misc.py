@@ -213,7 +213,7 @@ class SlashMiscellaneous(commands.Cog):
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def afk(self, ctx: discord.ApplicationContext, reason: str):
         """
-        Let others know that you are AFK when someone mentions you
+        Sets your AFK status
         """
 
         already_afk = Data.afk_entry_exists(ctx.author)
@@ -232,6 +232,20 @@ class SlashMiscellaneous(commands.Cog):
             f"You have been AFK'd for the following reason:\n{reason}",
             allowed_mentions=discord.AllowedMentions.none(),
         )
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def unafk(self, ctx: discord.ApplicationContext):
+        """
+        Unset your AFK status
+        """
+
+        already_afk = Data.afk_entry_exists(ctx.author)
+
+        if already_afk:
+            Data.delete_afk_data(ctx.author)
+            await ctx.respond("You are no longer AFK'd")
+        else:
+            await ctx.respond("You are not currently AFK'd")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def uptime(self, ctx: discord.ApplicationContext):

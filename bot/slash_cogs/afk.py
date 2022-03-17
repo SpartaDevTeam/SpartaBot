@@ -13,14 +13,6 @@ class SlashAFK(commands.Cog):
         afks = Data.c.fetchall()
 
         for afk_entry in afks:
-            if int(afk_entry[0]) == message.author.id:
-                await message.channel.send(
-                    f"{message.author.mention}, you have been un-AFK'd",
-                    allowed_mentions=discord.AllowedMentions.none(),
-                )
-                Data.delete_afk_data(message.author)
-                continue
-
             user = await self.bot.fetch_user(int(afk_entry[0]))
             if user in message.mentions:
                 afk_reason = afk_entry[1]
