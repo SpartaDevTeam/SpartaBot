@@ -16,6 +16,9 @@ class SlashAutoMod(commands.Cog):
     Commands to setup Auto-Mod in Sparta
     """
 
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     @commands.has_guild_permissions(administrator=True)
     async def automod(self, ctx: discord.ApplicationContext):
@@ -138,4 +141,4 @@ class SlashAutoMod(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(SlashAutoMod())
+    bot.add_cog(SlashAutoMod(bot))
