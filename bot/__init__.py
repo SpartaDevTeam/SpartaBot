@@ -364,4 +364,4 @@ def main():
     finally:
         print("Exiting...")
         loop.run_until_complete(bot.close())
-        loop.run_until_complete(db.close())
+        loop.run_until_complete(db.close_db())
