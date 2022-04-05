@@ -14,9 +14,10 @@ from bot.views import PaginatedEmbedView
 from bot.errors import DBLVoteRequired
 
 THEME = discord.Color.purple()
+
 TESTING_GUILDS = (
-    list(map(int, os.environ["TESTING_GUILDS"].split(",")))
-    if "--debug" in sys.argv
+    list(map(int, os.getenv("TESTING_GUILDS").split(",")))
+    if "--debug" in sys.argv and "TESTING_GUILDS" in os.environ
     else None
 )
 HELP_EMBEDS: list[discord.Embed] = []
