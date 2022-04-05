@@ -1,6 +1,7 @@
 import asyncio
 import os
 import dotenv
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -8,6 +9,9 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from alembic import context
+
+dotenv.load_dotenv()
+from bot.db.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,9 +24,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -83,7 +85,6 @@ async def run_migrations_online():
     await connectable.dispose()
 
 
-dotenv.load_dotenv()
 config.set_main_option("sqlalchemy.url", os.getenv("DB_URI"))
 
 if context.is_offline_mode():

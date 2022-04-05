@@ -13,7 +13,6 @@ from bot.db import models
 from bot.views import PaginatedEmbedView
 from bot.errors import DBLVoteRequired
 
-TOKEN = os.environ["TOKEN"]
 THEME = discord.Color.purple()
 TESTING_GUILDS = (
     list(map(int, os.environ["TESTING_GUILDS"].split(",")))
@@ -352,13 +351,13 @@ def generate_help_embeds():
 
 def main():
     loop = asyncio.get_event_loop()
+    token = os.environ["TOKEN"]
 
     try:
-        # loop.run_until_complete(db.create_tables())
-        asyncio.run(db.create_tables())
+        db.init_engine()
         add_cogs()
         generate_help_embeds()
-        loop.run_until_complete(bot.start(TOKEN))
+        loop.run_until_complete(bot.start(token))
     except KeyboardInterrupt or SystemExit:
         pass
     finally:
