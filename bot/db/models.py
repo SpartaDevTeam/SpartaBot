@@ -4,13 +4,13 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class Guilds(Base):
+class Guild(Base):
     __tablename__ = "guilds"
 
     id = Column(BigInteger, primary_key=True)
-    infractions = Column(JSON, default="[]", nullable=False)
+    infractions = Column(JSON, default=[], nullable=False)
     mute_role = Column(BigInteger, default=None, nullable=True)
-    activated_automod = Column(JSON, default="[]", nullable=False)
+    activated_automod = Column(JSON, default=[], nullable=False)
 
     welcome_message = Column(String, default=None, nullable=True)
     leave_message = Column(String, default=None, nullable=True)
@@ -30,7 +30,7 @@ class AFK(Base):
     message = Column(String, nullable=False)
 
 
-class ReactionRoles(Base):
+class ReactionRole(Base):
     __tablename__ = "reaction_roles"
 
     id = Column(String, primary_key=True)
@@ -41,7 +41,7 @@ class ReactionRoles(Base):
     role_id = Column(BigInteger, nullable=False)
 
 
-class Reminders(Base):
+class Reminder(Base):
     __tablename__ = "reminders"
 
     id = Column(String, primary_key=True)
@@ -51,14 +51,14 @@ class Reminders(Base):
     due = Column(DateTime, nullable=False)
 
 
-class Webhooks(Base):
+class Webhook(Base):
     __tablename__ = "webhooks"
 
     channel_id = Column(BigInteger, primary_key=True)
     webhook_url = Column(String, nullable=False)
 
 
-class AutoResponses(Base):
+class AutoResponse(Base):
     __tablename__ = "auto_responses"
 
     id = Column(String, primary_key=True)

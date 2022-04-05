@@ -1,5 +1,6 @@
 python-dotenv
 sqlalchemy[asyncio]
+alembic
 asyncpg
 py-cord==2.0.0b5
 pycord-prettyhelp

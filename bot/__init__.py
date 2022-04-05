@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.ext.prettyhelp import PrettyHelp
 
 from bot import db
+from bot.db import models
 from bot.views import PaginatedEmbedView
 from bot.errors import DBLVoteRequired
 
@@ -39,17 +40,25 @@ class MyBot(commands.Bot):
         print(f"Bot logged into {guild_count} guilds...")
 
 
-def get_prefix(client: commands.Bot, message: discord.Message):
+async def get_prefix(
+    client: commands.Bot, message: discord.Message
+) -> list[str]:
     if not message.guild:
         return commands.when_mentioned_or("s!")(client, message)
 
-    Data.check_guild_entry(message.guild)
+    async with db.async_session() as session:
+        guild_data: models.Guild | None = await session.get(
+            models.Guild, message.guild.id
+        )
 
-    Data.c.execute(
-        "SELECT prefix FROM guilds WHERE id = :guild_id",
-        {"guild_id": message.guild.id},
-    )
-    prefix = Data.c.fetchone()[0]
+        if guild_data:
+            prefix = guild_data.prefix
+        else:
+            new_guild_data = models.Guild(id=message.guild.id)
+            session.add(new_guild_data)
+            await session.commit()
+
+            prefix = models.Guild.prefix.default
 
     return commands.when_mentioned_or(prefix)(client, message)
 
