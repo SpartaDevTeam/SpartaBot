@@ -325,7 +325,6 @@ def generate_help_embeds():
             continue
 
         cog_name = cog_name.replace("Slash", "")
-        index_embed.add_field(name=cog_name, value=cog.description)
 
         embed = discord.Embed(
             title=cog_name, color=THEME, description=cog.description
@@ -337,7 +336,9 @@ def generate_help_embeds():
                 value=cmd_info.description,
             )
 
-        cog_embeds.append(embed)
+        if embed.fields:
+            index_embed.add_field(name=cog_name, value=cog.description)
+            cog_embeds.append(embed)
 
     HELP_EMBEDS.append(index_embed)
     HELP_EMBEDS.extend(cog_embeds)

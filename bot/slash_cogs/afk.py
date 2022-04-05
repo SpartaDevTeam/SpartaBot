@@ -6,6 +6,10 @@ from bot.data import Data
 
 
 class SlashAFK(commands.Cog):
+    """
+    Manage your AFK status
+    """
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
