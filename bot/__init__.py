@@ -1,19 +1,16 @@
+import asyncio
 import os
 import sys
 import time
-
-from dotenv import load_dotenv
 
 import discord
 import topgg
 from discord.ext import commands
 from discord.ext.prettyhelp import PrettyHelp
 
-from bot.data import Data
+from bot import db
 from bot.views import PaginatedEmbedView
 from bot.errors import DBLVoteRequired
-
-load_dotenv()
 
 TOKEN = os.environ["TOKEN"]
 THEME = discord.Color.purple()
@@ -345,15 +342,17 @@ def generate_help_embeds():
 
 
 def main():
+    loop = asyncio.get_event_loop()
+
     try:
-        Data.create_tables()
+        # loop.run_until_complete(db.create_tables())
+        asyncio.run(db.create_tables())
         add_cogs()
         generate_help_embeds()
-        bot.run(TOKEN)
-    except KeyboardInterrupt:
-        pass
-    except SystemExit:
+        loop.run_until_complete(bot.start(TOKEN))
+    except KeyboardInterrupt or SystemExit:
         pass
     finally:
-        Data.conn.close()
         print("Exiting...")
+        loop.run_until_complete(bot.close())
+        loop.run_until_complete(db.close())
