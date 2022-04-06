@@ -6,7 +6,8 @@ from discord.ext import commands
 from discord.utils import _URL_REGEX
 
 from bot import TESTING_GUILDS, THEME
-from bot.data import Data
+from bot import db
+from bot.db import models
 from bot.enums import AutoModFeatures
 from bot.views import AutoModView
 

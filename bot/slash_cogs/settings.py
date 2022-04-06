@@ -3,7 +3,8 @@ import discord
 from discord.ext import commands
 
 from bot import TESTING_GUILDS, THEME
-from bot.data import Data
+from bot import db
+from bot.db import models
 
 
 class SlashSettings(commands.Cog):

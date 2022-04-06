@@ -5,7 +5,8 @@ from datetime import datetime
 from discord.ext import commands
 from bot import TESTING_GUILDS, THEME
 
-from bot.data import Data
+from bot import db
+from bot.db import models
 from bot.utils import str_time_to_timedelta
 from bot.views import SuggestView
 

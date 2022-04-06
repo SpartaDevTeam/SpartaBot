@@ -5,7 +5,8 @@ from discord.ext import commands
 from discord import utils
 
 from bot import MyBot
-from bot.data import Data
+from bot import db
+from bot.db import models
 
 
 class Settings(commands.Cog):

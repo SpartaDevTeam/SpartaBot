@@ -62,5 +62,6 @@ class AutoResponse(Base):
     __tablename__ = "auto_responses"
 
     id = Column(String, primary_key=True)
+    guild_id = Column(BigInteger, nullable=False)
     activation = Column(String, nullable=False)
     response = Column(String, nullable=False)

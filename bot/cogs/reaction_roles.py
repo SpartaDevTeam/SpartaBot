@@ -4,7 +4,8 @@ import discord
 from discord.ext import commands
 
 from bot import MyBot
-from bot.data import Data
+from bot import db
+from bot.db import models
 from bot.utils import dbl_vote_required
 
 

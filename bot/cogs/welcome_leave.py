@@ -4,7 +4,8 @@ from discord.ext import commands
 from PIL import Image, ImageFont, ImageDraw
 
 from bot import MyBot
-from bot.data import Data
+from bot import db
+from bot.db import models
 
 
 class WelcomeLeave(commands.Cog):

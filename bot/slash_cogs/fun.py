@@ -6,7 +6,8 @@ import discord
 from discord.ext import commands
 
 from bot import THEME, TESTING_GUILDS
-from bot.data import Data
+from bot import db
+from bot.db import models
 from bot.views import PollView
 
 

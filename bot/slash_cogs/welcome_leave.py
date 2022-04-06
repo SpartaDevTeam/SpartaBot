@@ -4,7 +4,8 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageFont, ImageDraw
 
-from bot.data import Data
+from bot import db
+from bot.db import models
 
 
 class SlashWelcomeLeave(commands.Cog):

@@ -58,7 +58,7 @@ async def get_prefix(
             session.add(new_guild_data)
             await session.commit()
 
-            prefix = models.Guild.prefix.default
+            prefix = new_guild_data.prefix
 
     return commands.when_mentioned_or(prefix)(client, message)
 
