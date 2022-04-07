@@ -15,32 +15,6 @@ class AutoResponse(commands.Cog):
         self.description = "Commands to setup Sparta Bot to automatically reply to certain phrases"
         self.theme_color = discord.Color.purple()
 
-    # @commands.Cog.listener()
-    # async def on_message(self, message: discord.Message):
-    #     if message.author.bot:
-    #         return
-
-    #     Data.c.execute(
-    #         "SELECT auto_responses FROM guilds WHERE id = :guild_id",
-    #         {"guild_id": message.guild.id},
-    #     )
-    #     auto_resps = json.loads(Data.c.fetchone()[0])
-    #     content: str = message.content
-    #     channel: discord.TextChannel = message.channel
-
-    #     for activation in auto_resps:
-    #         response = auto_resps[activation]
-
-    #         # Auto Response Variables
-    #         response = response.replace("[member]", str(message.author))
-    #         response = response.replace("[nick]", message.author.display_name)
-    #         response = response.replace("[name]", message.author.name)
-
-    #         if content == activation:
-    #             await channel.send(
-    #                 response, allowed_mentions=discord.AllowedMentions.none()
-    #             )
-
     @commands.command(
         name="addautoresponse",
         aliases=["addauto", "aar"],

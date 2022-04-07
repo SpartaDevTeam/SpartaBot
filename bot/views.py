@@ -31,15 +31,18 @@ class ConfirmView(discord.ui.View):
 
 
 class AutoModButton(discord.ui.Button):
-    def __init__(self, label: str, enabled: bool, author_id: int):
+    def __init__(
+        self, label: str, feature_name: str, enabled: bool, author_id: int
+    ):
+        self.feature_name = feature_name
         self.author_id = author_id
+        self.enabled = enabled
 
         if enabled:
             style = ButtonStyle.success
         else:
             style = ButtonStyle.danger
 
-        self.enabled = enabled
         super().__init__(label=label, style=style)
 
     async def callback(self, interaction: discord.Interaction):
@@ -53,7 +56,7 @@ class AutoModButton(discord.ui.Button):
         else:
             self.style = ButtonStyle.danger
 
-        self.view.set_feature(self.label.lower(), self.enabled)
+        self.view.set_feature(self.feature_name, self.enabled)
         await interaction.message.edit(view=self.view)
 
 
@@ -64,7 +67,9 @@ class AutoModView(discord.ui.View):
         children = []
 
         for feature, enabled in list(feature_options.items()):
-            button = AutoModButton(feature.capitalize(), enabled, author_id)
+            button = AutoModButton(
+                feature.replace("_", " ").title(), feature, enabled, author_id
+            )
             children.append(button)
 
         super().__init__(*children)

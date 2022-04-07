@@ -1,4 +1,12 @@
-from sqlalchemy import Column, JSON, String, BigInteger, Integer, DateTime
+from sqlalchemy import (
+    Column,
+    JSON,
+    String,
+    BigInteger,
+    Integer,
+    DateTime,
+    Boolean,
+)
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -10,7 +18,6 @@ class Guild(Base):
     id = Column(BigInteger, primary_key=True)
     infractions = Column(JSON, default=[], nullable=False)
     mute_role = Column(BigInteger, default=None, nullable=True)
-    activated_automod = Column(JSON, default=[], nullable=False)
 
     welcome_message = Column(String, default=None, nullable=True)
     leave_message = Column(String, default=None, nullable=True)
@@ -65,3 +72,12 @@ class AutoResponse(Base):
     guild_id = Column(BigInteger, nullable=False)
     activation = Column(String, nullable=False)
     response = Column(String, nullable=False)
+
+
+class AutoMod(Base):
+    __tablename__ = "auto_mod"
+
+    guild_id = Column(BigInteger, primary_key=True)
+    links = Column(Boolean, default=False, nullable=False)
+    images = Column(Boolean, default=False, nullable=False)
+    ping_spam = Column(Boolean, default=False, nullable=False)
