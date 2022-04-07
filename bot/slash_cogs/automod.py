@@ -52,7 +52,7 @@ class SlashAutoMod(commands.Cog):
             for feature in AutoModFeatures:
                 if feature.name.lower() in features:
                     mod_embed.add_field(
-                        name=feature.name.capitalize(),
+                        name=feature.name.replace("_", " ").title(),
                         value=feature.value,
                         inline=False,
                     )
