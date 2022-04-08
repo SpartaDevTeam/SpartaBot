@@ -1,4 +1,3 @@
-import json
 import re
 import discord
 from datetime import datetime
@@ -73,31 +72,24 @@ class SlashAutoMod(commands.Cog):
         if not message.guild or message.author.bot:
             return
 
-        def spam_check(msg):
+        def ping_spam_check(msg: discord.Message) -> bool:
             return (
                 (msg.author == message.author)
                 and len(msg.mentions)
                 and (
-                    (
-                        datetime.datetime.utcnow().replace(
-                            tzinfo=msg.created_at.tzinfo
-                        )
-                        - msg.created_at
-                    ).seconds
-                    < 20
-                )
+                    datetime.utcnow().replace(tzinfo=msg.created_at.tzinfo)
+                    - msg.created_at
+                ).seconds
+                < 5
             )
 
-        Data.check_guild_entry(message.guild)
+        async with db.async_session() as session:
+            if data := await session.get(models.AutoMod, message.guild.id):
+                auto_mod: models.AutoMod = data
+            else:
+                return
 
-        Data.c.execute(
-            "SELECT activated_automod FROM guilds WHERE id = :guild_id",
-            {"guild_id": message.guild.id},
-        )
-        activated_features = json.loads(Data.c.fetchone()[0])
-
-        # if channel id's data contains "links":
-        if "links" in activated_features:
+        if auto_mod.links:
             if re.search(_URL_REGEX, message.content):
                 await message.delete()
                 await message.channel.send(
@@ -106,8 +98,7 @@ class SlashAutoMod(commands.Cog):
                     delete_after=3,
                 )
 
-        # if channel id's data contains "images"
-        if "images" in activated_features:
+        if auto_mod.images:
             if any([hasattr(a, "width") for a in message.attachments]):
                 await message.delete()
                 await message.channel.send(
@@ -116,18 +107,8 @@ class SlashAutoMod(commands.Cog):
                     delete_after=3,
                 )
 
-        # if channel id's data contains "spam":
-        if "spam" in activated_features:
-            if (
-                len(
-                    list(
-                        filter(
-                            lambda m: spam_check(m), self.bot.cached_messages
-                        )
-                    )
-                )
-                >= 5
-            ):
+        if auto_mod.ping_spam:
+            if any(filter(ping_spam_check, self.bot.cached_messages)):
                 await message.channel.send(
                     f"{message.author.mention}, Do not spam mentions "
                     "in this channel!",
