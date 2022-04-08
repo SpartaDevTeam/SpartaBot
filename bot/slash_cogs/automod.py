@@ -75,7 +75,8 @@ class SlashAutoMod(commands.Cog):
         def ping_spam_check(msg: discord.Message) -> bool:
             return (
                 (msg.author == message.author)
-                and len(msg.mentions)
+                and msg.mentions
+                and message.mentions
                 and (
                     datetime.utcnow().replace(tzinfo=msg.created_at.tzinfo)
                     - msg.created_at
