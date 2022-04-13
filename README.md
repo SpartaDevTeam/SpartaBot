@@ -5,7 +5,7 @@ Moderation, automod, welcome and leave message, reaction roles, fun commands, et
 
 ## How to run
 
-1. Install the dependencies in `requirements.txt` normally and `requirements_no_deps.txt` with pip's `--no-deps` flag. The `install_deps.sh` script does exactly this and was made for convenience.
+1. Install Python 3.10 or newer. Then install the dependencies in `requirements.txt` normally and `requirements_no_deps.txt` with pip's `--no-deps` flag. The `install_deps.sh` script does exactly this and was made for convenience.
 2. Add the following environment variables to a `.env` file in the root directory:
     - `TOKEN` - Your Discord Bot Token.
     - `URBAN_API_KEY` - API key for accessing Urban Dictionary's API.
