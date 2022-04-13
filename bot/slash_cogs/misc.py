@@ -3,7 +3,7 @@ import uuid
 import discord
 from datetime import datetime
 from discord.ext import commands
-from sqlalchemy import select
+from sqlalchemy.future import select
 
 from bot import TESTING_GUILDS, THEME, db
 from bot.db import models

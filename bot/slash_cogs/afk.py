@@ -1,7 +1,7 @@
 import asyncio
 import discord
 from discord.ext import commands
-from sqlalchemy import select
+from sqlalchemy.future import select
 
 from bot import db
 from bot.db import models
