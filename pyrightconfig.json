@@ -1,6 +1,0 @@
-{
-    "python.analysis.useLibraryCodeForTypes": true,
-    "python.analysis.diagnosticMode": "workspace",
-    "python.venvPath": "./env/",
-    "reportOptionalMemberAccess": false
-}
