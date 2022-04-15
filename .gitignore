@@ -210,5 +210,3 @@ fabric.properties
 
 # Bot cache
 bot/cache/
-
-pyrightconfig.json
