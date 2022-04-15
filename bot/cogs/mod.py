@@ -7,8 +7,7 @@ from typing import Union
 import discord
 from discord.ext import commands
 
-from bot import MyBot
-from bot import db
+from bot import MyBot, db
 from bot.db import models
 from bot.utils import str_time_to_timedelta
 

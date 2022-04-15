@@ -1,6 +1,5 @@
 from sqlalchemy import (
     Column,
-    JSON,
     String,
     BigInteger,
     Integer,
@@ -16,7 +15,6 @@ class Guild(Base):
     __tablename__ = "guilds"
 
     id = Column(BigInteger, primary_key=True)
-    infractions = Column(JSON, default=[], nullable=False)
     mute_role = Column(BigInteger, default=None, nullable=True)
 
     welcome_message = Column(String, default=None, nullable=True)
@@ -81,3 +79,13 @@ class AutoMod(Base):
     links = Column(Boolean, default=False, nullable=False)
     images = Column(Boolean, default=False, nullable=False)
     ping_spam = Column(Boolean, default=False, nullable=False)
+
+
+class Infraction(Base):
+    __tablename__ = "infractions"
+
+    id = Column(String, primary_key=True)
+    guild_id = Column(BigInteger, nullable=False)
+    user_id = Column(BigInteger, nullable=False)
+    moderator_id = Column(BigInteger, nullable=False)
+    reason = Column(String, nullable=False)
