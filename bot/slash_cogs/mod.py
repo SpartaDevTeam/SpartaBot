@@ -2,6 +2,7 @@ import asyncio
 import random
 import time
 import discord
+from typing import Sequence
 from uuid import uuid4
 from discord.errors import HTTPException
 from discord.ext import commands
@@ -30,7 +31,7 @@ class SlashModeration(commands.Cog):
             reason="No existing mute role provided",
         )
 
-        guild_channels: list[
+        guild_channels: Sequence[
             discord.abc.GuildChannel
         ] = await guild.fetch_channels()
 
@@ -42,22 +43,32 @@ class SlashModeration(commands.Cog):
         for category in guild.categories:
             await category.set_permissions(mute_role, send_messages=False)
 
-        Data.c.execute(
-            "UPDATE guilds SET mute_role = :mute_role_id WHERE id = :guild_id",
-            {"mute_role_id": mute_role.id, "guild_id": guild.id},
-        )
-        Data.conn.commit()
+        # Add new mute_role to database
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(models.Guild, guild.id)
+
+            if guild_data:
+                guild_data.mute_role = mute_role.id  # type: ignore
+            else:
+                new_guild_data = models.Guild(id=guild.id, mute_role=mute_role.id)
+                session.add(new_guild_data)
+
+            await session.commit()
 
         return mute_role
 
     async def get_guild_mute_role(self, guild: discord.Guild) -> discord.Role:
-        Data.check_guild_entry(guild)
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(models.Guild, guild.id)
 
-        Data.c.execute(
-            "SELECT mute_role FROM guilds WHERE id = :guild_id",
-            {"guild_id": guild.id},
-        )
-        mute_role_id = Data.c.fetchone()[0]
+            if guild_data:
+                mute_role_id = guild_data.mute_role
+            else:
+                new_guild_data = models.Guild(id=guild.id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                mute_role_id = None
 
         if mute_role_id is None:
             # Create mute role if none is provided
@@ -65,7 +76,7 @@ class SlashModeration(commands.Cog):
 
         else:
             # Get mute role if one was provided
-            mute_role = guild.get_role(mute_role_id)
+            mute_role = guild.get_role(mute_role_id)  # type: ignore
 
             # Check if the provided role still exists
             if mute_role is None:
@@ -115,7 +126,7 @@ class SlashModeration(commands.Cog):
         self, ctx: discord.ApplicationContext, member: discord.Member | None = None
     ):
         """
-        See all the times a person has been warned
+        See all the infractions in this server
         """
 
         async with db.async_session() as session:
@@ -328,7 +339,7 @@ class SlashModeration(commands.Cog):
         ctx: discord.ApplicationContext,
         member: discord.Member,
         *,
-        reason: str = None,
+        reason: str | None = None,
     ):
         """
         Permanently remove a person from the server
@@ -371,10 +382,9 @@ class SlashModeration(commands.Cog):
 
         name = username[:-5]  # first character to 6th last character
         discriminator = username[-4:]  # last 4 characters
-        guild_bans = await ctx.guild.bans()
         user_to_unban = None
 
-        for ban_entry in guild_bans:
+        async for ban_entry in ctx.guild.bans():
             banned_user: discord.User = ban_entry.user
 
             if (
@@ -405,7 +415,7 @@ class SlashModeration(commands.Cog):
         ctx: discord.ApplicationContext,
         member: discord.Member,
         *,
-        reason: str = None,
+        reason: str | None = None,
     ):
         """
         Remove a person from the server
@@ -436,7 +446,7 @@ class SlashModeration(commands.Cog):
     async def lock_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel = None,
+        channel: discord.TextChannel | None = None,
     ):
         """
         Prevent non-admins from sending messages in this channel
@@ -456,7 +466,7 @@ class SlashModeration(commands.Cog):
     async def unlock_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel = None,
+        channel: discord.TextChannel | None = None,
     ):
         """
         Reverse the effects of /lock
@@ -493,17 +503,22 @@ class SlashModeration(commands.Cog):
 
         await ctx.defer(ephemeral=True)
 
-        # Fetch clear cap
-        Data.c.execute(
-            "SELECT clear_cap FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
-        limit = Data.c.fetchone()[0]
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(models.Guild, ctx.guild_id)
+
+            if guild_data:
+                limit = guild_data.clear_cap
+            else:
+                new_guild_data = models.Guild(id=ctx.guild_id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                limit = new_guild_data.clear_cap
 
         if limit and amount > limit:
             exceeds_by = amount - limit
             await ctx.respond(
-                f"Clear amount exceeds this server's limit by {exceeds_by}",
+                f"Clear amount exceeds this server's limit by {exceeds_by}. The limit is {limit}.",
                 ephemeral=True,
             )
             return
@@ -517,7 +532,7 @@ class SlashModeration(commands.Cog):
     async def nuke(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel = None,
+        channel: discord.TextChannel | None = None,
     ):
         """
         Clear all messages at once in a channel

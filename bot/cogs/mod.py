@@ -94,7 +94,7 @@ class Moderation(commands.Cog):
 
         new_infraction = models.Infraction(
             id=uuid4().hex,
-            guild_id=ctx.guild_id,
+            guild_id=ctx.guild.id,
             user_id=member.id,
             moderator_id=ctx.author.id,
             reason=reason,
@@ -117,7 +117,7 @@ class Moderation(commands.Cog):
     ):
         async with db.async_session() as session:
             q = select(models.Infraction).where(
-                models.Infraction.guild_id == ctx.guild_id
+                models.Infraction.guild_id == ctx.guild.id
             )
 
             if member:
@@ -186,7 +186,7 @@ class Moderation(commands.Cog):
         if member is None:
             async with db.async_session() as session:
                 q = select(models.Infraction).where(
-                    models.Infraction.guild_id == ctx.guild_id
+                    models.Infraction.guild_id == ctx.guild.id
                 )
                 result = await session.execute(q)
                 tasks = [session.delete(inf) for inf in result.scalars().all()]
@@ -205,7 +205,7 @@ class Moderation(commands.Cog):
             async with db.async_session() as session:
                 q = (
                     select(models.Infraction)
-                    .where(models.Infraction.guild_id == ctx.guild_id)
+                    .where(models.Infraction.guild_id == ctx.guild.id)
                     .where(models.Infraction.user_id == member.id)
                 )
                 result = await session.execute(q)
@@ -425,17 +425,22 @@ class Moderation(commands.Cog):
         else:
             ch = ctx.channel
 
-        # Fetch clear cap
-        Data.c.execute(
-            "SELECT clear_cap FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
-        limit = Data.c.fetchone()[0]
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(models.Guild, ctx.guild.id)
+
+            if guild_data:
+                limit = guild_data.clear_cap
+            else:
+                new_guild_data = models.Guild(id=ctx.guild.id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                limit = new_guild_data.clear_cap
 
         if limit and message_count > limit:
             exceeds_by = message_count - limit
             await ctx.send(
-                f"Message clear count exceeds this server's limit by {exceeds_by}"
+                f"Message clear count exceeds this server's limit by {exceeds_by}. The limit is {limit}."
             )
             return
 
