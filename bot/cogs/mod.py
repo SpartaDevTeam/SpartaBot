@@ -131,7 +131,9 @@ class Moderation(commands.Cog):
         else:
             embed_title = f"All Infractions in {ctx.guild.name}"
 
-        infractions_embed = discord.Embed(title=embed_title, color=self.theme_color)
+        infractions_embed = discord.Embed(
+            title=embed_title, color=self.theme_color
+        )
 
         if infracs:
 
@@ -196,7 +198,10 @@ class Moderation(commands.Cog):
             await ctx.send("Cleared all infractions in this server...")
 
         else:
-            if ctx.guild.owner_id != ctx.author.id and ctx.author.top_role <= member.top_role:
+            if (
+                ctx.guild.owner_id != ctx.author.id
+                and ctx.author.top_role <= member.top_role
+            ):
                 await ctx.send(
                     "You cannot use the command on this person because their top role is higher than or equal to yours."
                 )
@@ -426,7 +431,9 @@ class Moderation(commands.Cog):
             ch = ctx.channel
 
         async with db.async_session() as session:
-            guild_data: models.Guild | None = await session.get(models.Guild, ctx.guild.id)
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
             if guild_data:
                 limit = guild_data.clear_cap

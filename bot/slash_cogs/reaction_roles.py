@@ -2,9 +2,9 @@ import asyncio
 from emoji import emojize
 import discord
 from discord.ext import commands
+from sqlalchemy.future import select
 
-from bot import TESTING_GUILDS, THEME
-from bot import db
+from bot import TESTING_GUILDS, THEME, db
 from bot.db import models
 from bot.utils import dbl_vote_required, async_mirror
 from bot.views import PaginatedSelectView
@@ -23,81 +23,65 @@ class SlashReactionRoles(commands.Cog):
     async def on_raw_reaction_add(
         self, payload: discord.RawReactionActionEvent
     ):
-        guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
-        member: discord.Member = await guild.fetch_member(payload.user_id)
-
-        if member == self.bot.user:
+        if not payload.guild_id:
             return
 
-        Data.c.execute(
-            "SELECT channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
-            {"guild_id": guild.id},
-        )
-        react_roles = Data.c.fetchall()
+        guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
+        member: discord.Member = await guild.fetch_member(payload.user_id)
+        emoji: int | str | None = payload.emoji.id or payload.emoji.name
 
-        for rr in react_roles:
-            rr_channel_id = rr[0]
-            rr_message_id = rr[1]
+        if member == self.bot.user or not emoji:
+            return
 
-            try:
-                rr_emoji: discord.Emoji = await guild.fetch_emoji(int(rr[2]))
-            except ValueError:
-                rr_emoji: discord.PartialEmoji = discord.PartialEmoji(
-                    name=emojize(rr[2])
-                )
+        async with db.async_session() as session:
+            q = (
+                select(models.ReactionRole)
+                .where(models.ReactionRole.guild_id == guild.id)
+                .where(models.ReactionRole.channel_id == payload.channel_id)
+                .where(models.ReactionRole.message_id == payload.message_id)
+                .where(models.ReactionRole.emoji == emoji)
+            )
+            result = await session.execute(q)
+            rr: models.ReactionRole = result.scalar()
 
-            rr_role: discord.Role = guild.get_role(int(rr[3]))
-
-            if (
-                payload.channel_id == rr_channel_id
-                and payload.message_id == rr_message_id
-                and payload.emoji.name == rr_emoji.name
-            ):
-                await member.add_roles(rr_role, reason="Reaction Role")
-                await member.send(
-                    f"You have been given the **{rr_role}** role in **{guild}**"
-                )
+            if rr:
+                if role := guild.get_role(rr.role_id):  # type: ignore
+                    await member.add_roles(role, reason="Reaction Role")
+                    await member.send(
+                        f"You have been given the **{role}** role in **{guild}**"
+                    )
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(
         self, payload: discord.RawReactionActionEvent
     ):
-        guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
-        member: discord.Member = await guild.fetch_member(payload.user_id)
-
-        if member == self.bot.user:
+        if not payload.guild_id:
             return
 
-        Data.c.execute(
-            "SELECT channel_id, message_id, emoji, role_id FROM reaction_roles WHERE guild_id = :guild_id",
-            {"guild_id": guild.id},
-        )
-        react_roles = Data.c.fetchall()
+        guild: discord.Guild = await self.bot.fetch_guild(payload.guild_id)
+        member: discord.Member = await guild.fetch_member(payload.user_id)
+        emoji: int | str | None = payload.emoji.id or payload.emoji.name
 
-        for rr in react_roles:
-            rr_channel_id = rr[0]
-            rr_message_id = rr[1]
+        if member == self.bot.user or not emoji:
+            return
 
-            if rr[2].isnumeric():
-                rr_emoji: discord.Emoji = await guild.fetch_emoji(int(rr[2]))
-            else:
-                rr_emoji: discord.PartialEmoji = discord.PartialEmoji(
-                    name=emojize(rr[2])
-                )
+        async with db.async_session() as session:
+            q = (
+                select(models.ReactionRole)
+                .where(models.ReactionRole.guild_id == guild.id)
+                .where(models.ReactionRole.channel_id == payload.channel_id)
+                .where(models.ReactionRole.message_id == payload.message_id)
+                .where(models.ReactionRole.emoji == emoji)
+            )
+            result = await session.execute(q)
+            rr: models.ReactionRole = result.scalar()
 
-            rr_role: discord.Role = guild.get_role(int(rr[3]))
-
-            if (
-                payload.channel_id == rr_channel_id
-                and payload.message_id == rr_message_id
-                and payload.emoji.name == rr_emoji.name
-            ):
-                await member.remove_roles(
-                    rr_role, reason="Sparta Reaction Role"
-                )
-                await member.send(
-                    f"Your **{rr_role}** role in **{guild}** has been removed"
-                )
+            if rr:
+                if role := guild.get_role(rr.role_id):  # type: ignore
+                    await member.remove_roles(role, reason="Reaction Role")
+                    await member.send(
+                        f"Your **{role}** role in **{guild}** has been removed"
+                    )
 
     @commands.slash_command(name="addreactionrole", guild_ids=TESTING_GUILDS)
     @commands.bot_has_guild_permissions(manage_roles=True, add_reactions=True)

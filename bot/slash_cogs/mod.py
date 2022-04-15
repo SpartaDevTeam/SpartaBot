@@ -45,12 +45,16 @@ class SlashModeration(commands.Cog):
 
         # Add new mute_role to database
         async with db.async_session() as session:
-            guild_data: models.Guild | None = await session.get(models.Guild, guild.id)
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
 
             if guild_data:
                 guild_data.mute_role = mute_role.id  # type: ignore
             else:
-                new_guild_data = models.Guild(id=guild.id, mute_role=mute_role.id)
+                new_guild_data = models.Guild(
+                    id=guild.id, mute_role=mute_role.id
+                )
                 session.add(new_guild_data)
 
             await session.commit()
@@ -59,7 +63,9 @@ class SlashModeration(commands.Cog):
 
     async def get_guild_mute_role(self, guild: discord.Guild) -> discord.Role:
         async with db.async_session() as session:
-            guild_data: models.Guild | None = await session.get(models.Guild, guild.id)
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
 
             if guild_data:
                 mute_role_id = guild_data.mute_role
@@ -123,7 +129,9 @@ class SlashModeration(commands.Cog):
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     @commands.has_guild_permissions(administrator=True)
     async def infractions(
-        self, ctx: discord.ApplicationContext, member: discord.Member | None = None
+        self,
+        ctx: discord.ApplicationContext,
+        member: discord.Member | None = None,
     ):
         """
         See all the infractions in this server
@@ -210,7 +218,9 @@ class SlashModeration(commands.Cog):
                         models.Infraction.guild_id == ctx.guild_id
                     )
                     result = await session.execute(q)
-                    tasks = [session.delete(inf) for inf in result.scalars().all()]
+                    tasks = [
+                        session.delete(inf) for inf in result.scalars().all()
+                    ]
                     await asyncio.gather(*tasks)
                     await session.commit()
 
@@ -243,7 +253,9 @@ class SlashModeration(commands.Cog):
 
     @commands.slash_command(name="removeinfraction", guild_ids=TESTING_GUILDS)
     @commands.has_guild_permissions(administrator=True)
-    async def remove_infraction(self, ctx: discord.ApplicationContext, id: str):
+    async def remove_infraction(
+        self, ctx: discord.ApplicationContext, id: str
+    ):
         """
         Delete a particular infraction
         """
@@ -504,7 +516,9 @@ class SlashModeration(commands.Cog):
         await ctx.defer(ephemeral=True)
 
         async with db.async_session() as session:
-            guild_data: models.Guild | None = await session.get(models.Guild, ctx.guild_id)
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
 
             if guild_data:
                 limit = guild_data.clear_cap
