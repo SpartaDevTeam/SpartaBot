@@ -180,7 +180,7 @@ class Moderation(commands.Cog):
     )
     @commands.has_guild_permissions(administrator=True)
     async def clear_infractions(
-        self, ctx: commands.Context, member: discord.Member | int | None = None
+        self, ctx: commands.Context, member: discord.Member | int = None
     ):
         if isinstance(member, int):
             member: discord.Member = ctx.guild.get_member(member)

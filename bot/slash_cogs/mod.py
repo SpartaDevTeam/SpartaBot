@@ -131,7 +131,7 @@ class SlashModeration(commands.Cog):
     async def infractions(
         self,
         ctx: discord.ApplicationContext,
-        member: discord.Member | None = None,
+        member: discord.Member = None,
     ):
         """
         See all the infractions in this server
@@ -198,7 +198,7 @@ class SlashModeration(commands.Cog):
     async def clear_infractions(
         self,
         ctx: discord.ApplicationContext,
-        member: discord.Member | None = None,
+        member: discord.Member = None,
     ):
         """
         Clear somebody's infractions in the current server
@@ -277,7 +277,7 @@ class SlashModeration(commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         member: discord.Member,
-        mute_time: str | None = None,
+        mute_time: str = None,
     ):
         """
         Prevent someone from sending messages. For temp mute, specify a time. Example: /mute @member 5h
@@ -351,7 +351,7 @@ class SlashModeration(commands.Cog):
         ctx: discord.ApplicationContext,
         member: discord.Member,
         *,
-        reason: str | None = None,
+        reason: str = None,
     ):
         """
         Permanently remove a person from the server
@@ -427,7 +427,7 @@ class SlashModeration(commands.Cog):
         ctx: discord.ApplicationContext,
         member: discord.Member,
         *,
-        reason: str | None = None,
+        reason: str = None,
     ):
         """
         Remove a person from the server
@@ -458,7 +458,7 @@ class SlashModeration(commands.Cog):
     async def lock_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel | None = None,
+        channel: discord.TextChannel = None,
     ):
         """
         Prevent non-admins from sending messages in this channel
@@ -478,7 +478,7 @@ class SlashModeration(commands.Cog):
     async def unlock_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel | None = None,
+        channel: discord.TextChannel = None,
     ):
         """
         Reverse the effects of /lock
@@ -546,7 +546,7 @@ class SlashModeration(commands.Cog):
     async def nuke(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel | None = None,
+        channel: discord.TextChannel = None,
     ):
         """
         Clear all messages at once in a channel

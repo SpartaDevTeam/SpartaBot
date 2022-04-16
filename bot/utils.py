@@ -1,4 +1,5 @@
 import re
+import sys
 from typing import Any
 from datetime import timedelta
 import aiohttp
@@ -50,15 +51,12 @@ def dbl_vote_required():
     async def predicate(ctx: commands.Context | discord.ApplicationContext):
         bot: MyBot = ctx.bot
 
-        if await bot.topgg_client.get_user_vote(ctx.author.id):
+        if "--debug" in sys.argv or await bot.topgg_client.get_user_vote(
+            ctx.author.id
+        ):
             return True
 
-        if isinstance(ctx, discord.ApplicationContext):
-            await ctx.respond(
-                "Please vote for the me on Top.gg to use this command. Use `/vote` for more info."
-            )
-        else:
-            raise DBLVoteRequired()
+        raise DBLVoteRequired()
 
     return commands.check(predicate)
 
