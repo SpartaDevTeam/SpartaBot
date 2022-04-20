@@ -6,8 +6,8 @@ import discord
 import pyfiglet
 from discord.ext import commands
 
-from bot import MyBot
-from bot.data import Data
+from bot import MyBot, db
+from bot.db import models
 
 
 class Fun(commands.Cog):
@@ -220,30 +220,36 @@ class Fun(commands.Cog):
     async def impersonate(
         self, ctx: commands.Context, member: discord.Member, *, message: str
     ):
-        webhook_url = Data.webhook_entry_exists(ctx.channel)
-
-        if webhook_url:
-            webhook = discord.utils.get(
-                await ctx.channel.webhooks(), url=webhook_url
+        async with db.async_session() as session:
+            webhook_data: models.Webhook = await session.get(
+                models.Webhook, ctx.channel.id
             )
 
-            if not webhook:
+            if webhook_data:
+                webhook = discord.utils.get(
+                    await ctx.channel.webhooks(), url=webhook_data.webhook_url
+                )
+
+                if not webhook:
+                    webhook: discord.Webhook = (
+                        await ctx.channel.create_webhook(
+                            name="Sparta Impersonate Command",
+                            reason="Impersonation Command",
+                        )
+                    )
+                    webhook_data.webhook_url = webhook.url
+                    await session.commit()
+
+            else:
                 webhook: discord.Webhook = await ctx.channel.create_webhook(
                     name="Sparta Impersonate Command",
                     reason="Impersonation Command",
                 )
-                Data.c.execute(
-                    "UPDATE webhooks SET webhook_url = :new_url WHERE channel_id = :ch_id",
-                    {"new_url": webhook.url, "ch_id": ctx.channel.id},
+                new_webhook_data = models.Webhook(
+                    channel_id=ctx.channel.id, webhook_url=webhook.url
                 )
-                Data.conn.commit()
-
-        else:
-            webhook: discord.Webhook = await ctx.channel.create_webhook(
-                name="Sparta Impersonate Command",
-                reason="Impersonation Command",
-            )
-            Data.create_new_webhook_data(ctx.channel, webhook.url)
+                session.add(new_webhook_data)
+                await session.commit()
 
         await ctx.message.delete()
         await webhook.send(

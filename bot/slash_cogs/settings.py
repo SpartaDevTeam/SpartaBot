@@ -2,8 +2,8 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from bot import TESTING_GUILDS, THEME
-from bot.data import Data
+from bot import TESTING_GUILDS, THEME, db
+from bot.db import models
 
 
 class SlashSettings(commands.Cog):
@@ -20,13 +20,20 @@ class SlashSettings(commands.Cog):
         Set a role to give to people when you mute them
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET mute_role = :mute_role_id WHERE id = :guild_id",
-            {"mute_role_id": role.id, "guild_id": ctx.guild_id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.mute_role = role.id
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild_id, mute_role=role.id
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         await ctx.respond(
             f"The mute role has been set to {role.mention}",
@@ -42,13 +49,20 @@ class SlashSettings(commands.Cog):
         Change the welcome message of your server. Variables you can use: [mention], [member], [server]
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET welcome_message = :new_message WHERE id = :guild_id",
-            {"new_message": message, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.welcome_message = message
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild_id, welcome_message=message
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if message:
             await ctx.respond(
@@ -68,13 +82,20 @@ class SlashSettings(commands.Cog):
         Change the leave message of your server. Variables you can use: [member], [server]
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET leave_message = :new_message WHERE id = :guild_id",
-            {"new_message": message, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.leave_message = message
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild_id, leave_message=message
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if message:
             await ctx.respond(
@@ -96,18 +117,22 @@ class SlashSettings(commands.Cog):
         Change the channel where welcome messages are sent (don't pass a channel to disable welcome message)
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
 
-        if channel:
-            channel_id = channel.id
-        else:
-            channel_id = "disabled"
+            ch = str(channel.id) if channel else "disabled"
 
-        Data.c.execute(
-            "UPDATE guilds SET welcome_channel = :channel_id WHERE id = :guild_id",
-            {"channel_id": channel_id, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.welcome_channel = ch
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild_id, welcome_channel=ch
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if channel:
             await ctx.respond(
@@ -127,18 +152,22 @@ class SlashSettings(commands.Cog):
         Change the channel where leave messages are sent (don't pass a channel to disable leave message)
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
 
-        if channel:
-            channel_id = channel.id
-        else:
-            channel_id = "disabled"
+            ch = str(channel.id) if channel else "disabled"
 
-        Data.c.execute(
-            "UPDATE guilds SET leave_channel = :channel_id WHERE id = :guild_id",
-            {"channel_id": channel_id, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.leave_channel = ch
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild_id, leave_channel=ch
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if channel:
             await ctx.respond(
@@ -156,15 +185,22 @@ class SlashSettings(commands.Cog):
         Set a role to give to new members who join your server
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
 
-        role_id = role.id if role else None
+            role_id = role.id if role else None
 
-        Data.c.execute(
-            "UPDATE guilds SET auto_role = :auto_role_id WHERE id = :guild_id",
-            {"auto_role_id": role_id, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.auto_role = role_id
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild_id, auto_role=role_id
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if role:
             await ctx.respond(
@@ -320,15 +356,18 @@ class SlashSettings(commands.Cog):
         Set the maximum number of messages that can be cleared using /clear
         """
 
-        Data.check_guild_entry(ctx.guild)
-        Data.c.execute(
-            "UPDATE guilds SET clear_cap = :limit WHERE id = :guild_id",
-            {
-                "limit": limit,
-                "guild_id": ctx.guild.id,
-            },
-        )
-        Data.conn.commit()
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
+
+            if guild:
+                guild.clear_cap = limit
+            else:
+                new_guild_data = models.Guild(id=ctx.guild_id, clear_cap=limit)
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if limit:
             await ctx.respond(

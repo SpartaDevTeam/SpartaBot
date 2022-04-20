@@ -4,8 +4,8 @@ import discord
 from discord.ext import commands
 from discord import utils
 
-from bot import MyBot
-from bot.data import Data
+from bot import MyBot, db
+from bot.db import models
 
 
 class Settings(commands.Cog):
@@ -23,13 +23,20 @@ class Settings(commands.Cog):
     )
     @commands.has_guild_permissions(manage_roles=True)
     async def set_mute_role(self, ctx: commands.Context, role: discord.Role):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET mute_role = :mute_role_id WHERE id = :guild_id",
-            {"mute_role_id": role.id, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.mute_role = role.id
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild.id, mute_role=role.id
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         await ctx.send(f"The mute role has been set to **{role}**")
 
@@ -43,13 +50,20 @@ class Settings(commands.Cog):
     async def set_welcome_message(
         self, ctx: commands.Context, *, message: str = None
     ):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET welcome_message = :new_message WHERE id = :guild_id",
-            {"new_message": message, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.welcome_message = message
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild.id, welcome_message=message
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if message:
             await ctx.send(
@@ -70,13 +84,20 @@ class Settings(commands.Cog):
     async def set_leave_message(
         self, ctx: commands.Context, *, message: str = None
     ):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET leave_message = :new_message WHERE id = :guild_id",
-            {"new_message": message, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.leave_message = message
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild.id, leave_message=message
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if message:
             await ctx.send(
@@ -96,18 +117,22 @@ class Settings(commands.Cog):
     async def set_welcome_channel(
         self, ctx: commands.Context, *, channel: discord.TextChannel = None
     ):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
-        if channel:
-            channel_id = channel.id
-        else:
-            channel_id = "disabled"
+            ch = str(channel.id) if channel else "disabled"
 
-        Data.c.execute(
-            "UPDATE guilds SET welcome_channel = :channel_id WHERE id = :guild_id",
-            {"channel_id": channel_id, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.welcome_channel = ch
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild.id, welcome_channel=ch
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if channel:
             await ctx.send(
@@ -125,18 +150,22 @@ class Settings(commands.Cog):
     async def set_leave_channel(
         self, ctx: commands.Context, *, channel: discord.TextChannel = None
     ):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
-        if channel:
-            channel_id = channel.id
-        else:
-            channel_id = "disabled"
+            ch = str(channel.id) if channel else "disabled"
 
-        Data.c.execute(
-            "UPDATE guilds SET leave_channel = :channel_id WHERE id = :guild_id",
-            {"channel_id": channel_id, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.leave_channel = ch
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild.id, leave_channel=ch
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if channel:
             await ctx.send(
@@ -155,13 +184,22 @@ class Settings(commands.Cog):
     async def set_auto_role(
         self, ctx: commands.Context, *, role: discord.Role
     ):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET auto_role = :auto_role_id WHERE id = :guild_id",
-            {"auto_role_id": role.id, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            role_id = role.id if role else None
+
+            if guild:
+                guild.auto_role = role_id
+            else:
+                new_guild_data = models.Guild(
+                    id=ctx.guild.id, auto_role=role_id
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         await ctx.send(
             f"The auto role has been set to **{role.mention}**",
@@ -249,13 +287,18 @@ class Settings(commands.Cog):
     )
     @commands.has_guild_permissions(administrator=True)
     async def prefix(self, ctx: commands.Context, pref: str = "s!"):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
 
-        Data.c.execute(
-            "UPDATE guilds SET prefix = :new_prefix WHERE id = :guild_id",
-            {"new_prefix": pref, "guild_id": ctx.guild.id},
-        )
-        Data.conn.commit()
+            if guild:
+                guild.prefix = pref
+            else:
+                new_guild_data = models.Guild(id=ctx.guild.id, prefix=pref)
+                session.add(new_guild_data)
+
+            await session.commit()
 
         await ctx.send(f"The prefix has been changed to **{pref}**")
 
@@ -321,15 +364,18 @@ class Settings(commands.Cog):
     @commands.command(name="setclearcap", aliases=["clearcap", "cc"])
     @commands.has_guild_permissions(administrator=True)
     async def set_clear_cap(self, ctx: commands.Context, limit: int = None):
-        Data.check_guild_entry(ctx.guild)
-        Data.c.execute(
-            "UPDATE guilds SET clear_cap = :limit WHERE id = :guild_id",
-            {
-                "limit": limit,
-                "guild_id": ctx.guild.id,
-            },
-        )
-        Data.conn.commit()
+        async with db.async_session() as session:
+            guild: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
+
+            if guild:
+                guild.clear_cap = limit
+            else:
+                new_guild_data = models.Guild(id=ctx.guild.id, clear_cap=limit)
+                session.add(new_guild_data)
+
+            await session.commit()
 
         if limit:
             await ctx.send(

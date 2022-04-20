@@ -1,13 +1,15 @@
 import asyncio
-import json
 import random
 import time
 import discord
+from typing import Sequence
+from uuid import uuid4
 from discord.errors import HTTPException
 from discord.ext import commands
+from sqlalchemy.future import select
 
-from bot import TESTING_GUILDS, THEME
-from bot.data import Data
+from bot import TESTING_GUILDS, THEME, db
+from bot.db import models
 from bot.utils import str_time_to_timedelta
 from bot.views import ConfirmView
 
@@ -29,7 +31,7 @@ class SlashModeration(commands.Cog):
             reason="No existing mute role provided",
         )
 
-        guild_channels: list[
+        guild_channels: Sequence[
             discord.abc.GuildChannel
         ] = await guild.fetch_channels()
 
@@ -41,22 +43,38 @@ class SlashModeration(commands.Cog):
         for category in guild.categories:
             await category.set_permissions(mute_role, send_messages=False)
 
-        Data.c.execute(
-            "UPDATE guilds SET mute_role = :mute_role_id WHERE id = :guild_id",
-            {"mute_role_id": mute_role.id, "guild_id": guild.id},
-        )
-        Data.conn.commit()
+        # Add new mute_role to database
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
+
+            if guild_data:
+                guild_data.mute_role = mute_role.id  # type: ignore
+            else:
+                new_guild_data = models.Guild(
+                    id=guild.id, mute_role=mute_role.id
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         return mute_role
 
     async def get_guild_mute_role(self, guild: discord.Guild) -> discord.Role:
-        Data.check_guild_entry(guild)
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
 
-        Data.c.execute(
-            "SELECT mute_role FROM guilds WHERE id = :guild_id",
-            {"guild_id": guild.id},
-        )
-        mute_role_id = Data.c.fetchone()[0]
+            if guild_data:
+                mute_role_id = guild_data.mute_role
+            else:
+                new_guild_data = models.Guild(id=guild.id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                mute_role_id = None
 
         if mute_role_id is None:
             # Create mute role if none is provided
@@ -64,7 +82,7 @@ class SlashModeration(commands.Cog):
 
         else:
             # Get mute role if one was provided
-            mute_role = guild.get_role(mute_role_id)
+            mute_role = guild.get_role(mute_role_id)  # type: ignore
 
             # Check if the provided role still exists
             if mute_role is None:
@@ -94,77 +112,84 @@ class SlashModeration(commands.Cog):
             )
             return
 
-        Data.check_guild_entry(ctx.guild)
-
-        Data.c.execute(
-            "SELECT infractions FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
+        new_infraction = models.Infraction(
+            id=uuid4().hex,
+            guild_id=ctx.guild_id,
+            user_id=member.id,
+            moderator_id=ctx.author.id,
+            reason=reason,
         )
-        guild_infractions: list = json.loads(Data.c.fetchone()[0])
 
-        new_infraction = {"member": member.id, "reason": reason}
-        guild_infractions.append(new_infraction)
+        async with db.async_session() as session:
+            session.add(new_infraction)
+            await session.commit()
 
-        Data.c.execute(
-            "UPDATE guilds SET infractions = :new_infractions WHERE id = :guild_id",
-            {
-                "new_infractions": json.dumps(guild_infractions),
-                "guild_id": ctx.guild.id,
-            },
-        )
-        Data.conn.commit()
         await ctx.respond(f"**{member}** has been warned because: *{reason}*")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     @commands.has_guild_permissions(administrator=True)
     async def infractions(
-        self, ctx: discord.ApplicationContext, member: discord.Member = None
+        self,
+        ctx: discord.ApplicationContext,
+        member: discord.Member = None,
     ):
         """
-        See all the times a person has been warned
+        See all the infractions in this server
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            q = select(models.Infraction).where(
+                models.Infraction.guild_id == ctx.guild_id
+            )
 
-        Data.c.execute(
-            "SELECT infractions FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
+            if member:
+                q = q.where(models.Infraction.user_id == member.id)
 
-        if member is None:
-            infracs = json.loads(Data.c.fetchone()[0])
-            embed_title = f"All Infractions in {ctx.guild.name}"
-        else:
-            infracs = [
-                infrac
-                for infrac in json.loads(Data.c.fetchone()[0])
-                if infrac["member"] == member.id
-            ]
+            result = await session.execute(q)
+            infracs: list[models.Infraction] = result.scalars().all()
+
+        if member:
             embed_title = f"Infractions by {member} in {ctx.guild.name}"
+        else:
+            embed_title = f"All Infractions in {ctx.guild.name}"
 
         infractions_embed = discord.Embed(title=embed_title, color=THEME)
 
         if infracs:
-            for infrac in infracs:
+
+            async def embed_task(infraction: models.Infraction):
                 if member:
                     guild_member = member
                 else:
-                    guild_member = await ctx.bot.fetch_user(infrac["member"])
-                    if not guild_member:
-                        guild_member = f"User ID: {infrac['member']}"
+                    guild_member = await ctx.guild.fetch_member(
+                        infraction.user_id
+                    )
 
-                reason = infrac["reason"]
+                moderator = await ctx.guild.fetch_member(
+                    infraction.moderator_id
+                )
+
                 infractions_embed.add_field(
-                    name=str(guild_member),
-                    value=f"Reason: *{reason}*",
+                    name=f"ID: {infraction.id}",
+                    value=(
+                        f"**Member:** {guild_member.mention}\n"
+                        f"**Reason:** {infraction.reason}\n"
+                        f"**Warned by:** {moderator.mention}"
+                    ),
                     inline=False,
                 )
+
+            tasks = [embed_task(inf) for inf in infracs]
+            await asyncio.gather(*tasks)
+
         elif member:
             infractions_embed.description = (
                 f"There are no infractions for {member}"
             )
         else:
-            infractions_embed.description = "There are no infractions"
+            infractions_embed.description = (
+                "There are no infractions in this server"
+            )
 
         await ctx.respond(embed=infractions_embed)
 
@@ -179,11 +204,6 @@ class SlashModeration(commands.Cog):
         Clear somebody's infractions in the current server
         """
 
-        if isinstance(member, int):
-            member = ctx.guild.get_member(member)
-
-        Data.check_guild_entry(ctx.guild)
-
         if member is None:
             confirm_view = ConfirmView(ctx.author.id)
             await ctx.respond(
@@ -193,11 +213,16 @@ class SlashModeration(commands.Cog):
             await confirm_view.wait()
 
             if confirm_view.do_action:
-                Data.c.execute(
-                    "UPDATE guilds SET infractions = '[]' WHERE id = :guild_id",
-                    {"guild_id": ctx.guild.id},
-                )
-                Data.conn.commit()
+                async with db.async_session() as session:
+                    q = select(models.Infraction).where(
+                        models.Infraction.guild_id == ctx.guild_id
+                    )
+                    result = await session.execute(q)
+                    tasks = [
+                        session.delete(inf) for inf in result.scalars().all()
+                    ]
+                    await asyncio.gather(*tasks)
+                    await session.commit()
 
                 await ctx.respond("Cleared all infractions in this server")
 
@@ -211,26 +236,39 @@ class SlashModeration(commands.Cog):
                 )
                 return
 
-            Data.c.execute(
-                "SELECT infractions FROM guilds WHERE id = :guild_id",
-                {"guild_id": ctx.guild.id},
-            )
-            user_infractions = json.loads(Data.c.fetchone()[0])
-            new_infractions = [
-                inf for inf in user_infractions if inf["member"] != member.id
-            ]
-            Data.c.execute(
-                "UPDATE guilds SET infractions = :new_infractions WHERE id = :guild_id",
-                {
-                    "new_infractions": json.dumps(new_infractions),
-                    "guild_id": ctx.guild.id,
-                },
-            )
-            Data.conn.commit()
+            async with db.async_session() as session:
+                q = (
+                    select(models.Infraction)
+                    .where(models.Infraction.guild_id == ctx.guild_id)
+                    .where(models.Infraction.user_id == member.id)
+                )
+                result = await session.execute(q)
+                tasks = [session.delete(inf) for inf in result.scalars().all()]
+                await asyncio.gather(*tasks)
+                await session.commit()
 
             await ctx.respond(
-                f"Cleared all infractions by **{member}** in this server..."
+                f"Cleared all infractions by **{member}** in this server"
             )
+
+    @commands.slash_command(name="removeinfraction", guild_ids=TESTING_GUILDS)
+    @commands.has_guild_permissions(administrator=True)
+    async def remove_infraction(
+        self, ctx: discord.ApplicationContext, id: str
+    ):
+        """
+        Delete a particular infraction
+        """
+
+        async with db.async_session() as session:
+            inf = await session.get(models.Infraction, id)
+
+            if inf:
+                await session.delete(inf)
+                await session.commit()
+                await ctx.respond(f"Deleted infraction with ID `{id}`")
+            else:
+                await ctx.respond("Unable to find an infraction with that ID")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     @commands.bot_has_guild_permissions(manage_roles=True)
@@ -356,10 +394,9 @@ class SlashModeration(commands.Cog):
 
         name = username[:-5]  # first character to 6th last character
         discriminator = username[-4:]  # last 4 characters
-        guild_bans = await ctx.guild.bans()
         user_to_unban = None
 
-        for ban_entry in guild_bans:
+        async for ban_entry in ctx.guild.bans():
             banned_user: discord.User = ban_entry.user
 
             if (
@@ -478,17 +515,24 @@ class SlashModeration(commands.Cog):
 
         await ctx.defer(ephemeral=True)
 
-        # Fetch clear cap
-        Data.c.execute(
-            "SELECT clear_cap FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
-        limit = Data.c.fetchone()[0]
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, ctx.guild_id
+            )
+
+            if guild_data:
+                limit = guild_data.clear_cap
+            else:
+                new_guild_data = models.Guild(id=ctx.guild_id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                limit = new_guild_data.clear_cap
 
         if limit and amount > limit:
             exceeds_by = amount - limit
             await ctx.respond(
-                f"Clear amount exceeds this server's limit by {exceeds_by}",
+                f"Clear amount exceeds this server's limit by {exceeds_by}. The limit is {limit}.",
                 ephemeral=True,
             )
             return

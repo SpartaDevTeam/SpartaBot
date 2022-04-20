@@ -1,12 +1,11 @@
-import json
 import re
 import discord
 from datetime import datetime
 from discord.ext import commands
 from discord.utils import _URL_REGEX
 
-from bot import TESTING_GUILDS, THEME
-from bot.data import Data
+from bot import TESTING_GUILDS, THEME, db
+from bot.db import models
 from bot.enums import AutoModFeatures
 from bot.views import AutoModView
 
@@ -26,83 +25,72 @@ class SlashAutoMod(commands.Cog):
         Allows you to enable/disable automod features
         """
 
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            auto_mod_data = await session.get(models.AutoMod, ctx.guild.id)
 
-        Data.c.execute(
-            "SELECT activated_automod FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
-        activated_features = json.loads(Data.c.fetchone()[0])
+            if not auto_mod_data:
+                auto_mod_data = models.AutoMod(guild_id=ctx.guild.id)
+                session.add(auto_mod_data)
 
-        def save():
-            Data.c.execute(
-                "UPDATE guilds SET activated_automod = :new_features WHERE id = :guild_id",
-                {
-                    "new_features": json.dumps(activated_features),
-                    "guild_id": ctx.guild.id,
-                },
-            )
-            Data.conn.commit()
+            features = {
+                attr: getattr(auto_mod_data, attr, False)
+                for attr in dir(auto_mod_data)
+                if not (
+                    attr.startswith("_")
+                    or attr.endswith("_")
+                    or attr in ["guild_id", "registry", "metadata"]
+                )
+            }
 
-        mod_embed = discord.Embed(
-            title="Auto Mod",
-            description="Allow Sparta to administrate on its own",
-            color=THEME,
-        )
-        view_data = {}
-
-        for feature in AutoModFeatures:
-            lower_name = feature.name.lower()
-            view_data[lower_name] = lower_name in activated_features
-
-            mod_embed.add_field(
-                name=feature.name.capitalize(),
-                value=feature.value,
-                inline=False,
+            mod_embed = discord.Embed(
+                title="Auto Mod",
+                description="Allow Sparta to administrate on its own",
+                color=THEME,
             )
 
-        mod_embed.set_footer(text="Enable or disable an Auto Mod feature")
+            for feature in AutoModFeatures:
+                if feature.name.lower() in features:
+                    mod_embed.add_field(
+                        name=feature.name.replace("_", " ").title(),
+                        value=feature.value,
+                        inline=False,
+                    )
 
-        automod_view = AutoModView(view_data, ctx.author.id)
-        await ctx.respond(embed=mod_embed, view=automod_view)
-        await automod_view.wait()
+            mod_embed.set_footer(text="Enable or disable an Auto Mod feature")
 
-        new_features = list(automod_view.features.items())
-        activated_features = [
-            feature for feature, enabled in new_features if enabled
-        ]
-        save()
+            automod_view = AutoModView(features, ctx.author.id)
+            await ctx.respond(embed=mod_embed, view=automod_view)
+            await automod_view.wait()
+
+            for feature, value in list(automod_view.features.items()):
+                setattr(auto_mod_data, feature, value)
+
+            await session.commit()
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if not message.guild or message.author.bot:
             return
 
-        def spam_check(msg):
+        def ping_spam_check(msg: discord.Message) -> bool:
             return (
                 (msg.author == message.author)
-                and len(msg.mentions)
+                and msg.mentions
+                and message.mentions
                 and (
-                    (
-                        datetime.datetime.utcnow().replace(
-                            tzinfo=msg.created_at.tzinfo
-                        )
-                        - msg.created_at
-                    ).seconds
-                    < 20
-                )
+                    datetime.utcnow().replace(tzinfo=msg.created_at.tzinfo)
+                    - msg.created_at
+                ).seconds
+                < 5
             )
 
-        Data.check_guild_entry(message.guild)
+        async with db.async_session() as session:
+            if data := await session.get(models.AutoMod, message.guild.id):
+                auto_mod: models.AutoMod = data
+            else:
+                return
 
-        Data.c.execute(
-            "SELECT activated_automod FROM guilds WHERE id = :guild_id",
-            {"guild_id": message.guild.id},
-        )
-        activated_features = json.loads(Data.c.fetchone()[0])
-
-        # if channel id's data contains "links":
-        if "links" in activated_features:
+        if auto_mod.links:
             if re.search(_URL_REGEX, message.content):
                 await message.delete()
                 await message.channel.send(
@@ -111,8 +99,7 @@ class SlashAutoMod(commands.Cog):
                     delete_after=3,
                 )
 
-        # if channel id's data contains "images"
-        if "images" in activated_features:
+        if auto_mod.images:
             if any([hasattr(a, "width") for a in message.attachments]):
                 await message.delete()
                 await message.channel.send(
@@ -121,18 +108,8 @@ class SlashAutoMod(commands.Cog):
                     delete_after=3,
                 )
 
-        # if channel id's data contains "spam":
-        if "spam" in activated_features:
-            if (
-                len(
-                    list(
-                        filter(
-                            lambda m: spam_check(m), self.bot.cached_messages
-                        )
-                    )
-                )
-                >= 5
-            ):
+        if auto_mod.ping_spam:
+            if any(filter(ping_spam_check, self.bot.cached_messages)):
                 await message.channel.send(
                     f"{message.author.mention}, Do not spam mentions "
                     "in this channel!",

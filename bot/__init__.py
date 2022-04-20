@@ -1,25 +1,23 @@
+import asyncio
 import os
 import sys
 import time
-
-from dotenv import load_dotenv
 
 import discord
 import topgg
 from discord.ext import commands
 from discord.ext.prettyhelp import PrettyHelp
 
-from bot.data import Data
+from bot import db
+from bot.db import models
 from bot.views import PaginatedEmbedView
 from bot.errors import DBLVoteRequired
 
-load_dotenv()
-
-TOKEN = os.environ["TOKEN"]
 THEME = discord.Color.purple()
+
 TESTING_GUILDS = (
-    list(map(int, os.environ["TESTING_GUILDS"].split(",")))
-    if "--debug" in sys.argv
+    list(map(int, os.getenv("TESTING_GUILDS").split(",")))
+    if "--debug" in sys.argv and "TESTING_GUILDS" in os.environ
     else None
 )
 HELP_EMBEDS: list[discord.Embed] = []
@@ -42,17 +40,25 @@ class MyBot(commands.Bot):
         print(f"Bot logged into {guild_count} guilds...")
 
 
-def get_prefix(client: commands.Bot, message: discord.Message):
+async def get_prefix(
+    client: commands.Bot, message: discord.Message
+) -> list[str]:
     if not message.guild:
         return commands.when_mentioned_or("s!")(client, message)
 
-    Data.check_guild_entry(message.guild)
+    async with db.async_session() as session:
+        guild_data: models.Guild | None = await session.get(
+            models.Guild, message.guild.id
+        )
 
-    Data.c.execute(
-        "SELECT prefix FROM guilds WHERE id = :guild_id",
-        {"guild_id": message.guild.id},
-    )
-    prefix = Data.c.fetchone()[0]
+        if guild_data:
+            prefix = guild_data.prefix
+        else:
+            new_guild_data = models.Guild(id=message.guild.id)
+            session.add(new_guild_data)
+            await session.commit()
+
+            prefix = new_guild_data.prefix
 
     return commands.when_mentioned_or(prefix)(client, message)
 
@@ -81,7 +87,7 @@ bot = MyBot(
 
 @bot.event
 async def on_command_error(ctx: commands.Context, exception):
-    prefix = get_prefix(bot, ctx.message)
+    prefix = await get_prefix(bot, ctx.message)
 
     if isinstance(exception, commands.MissingRequiredArgument):
         await ctx.send(
@@ -346,15 +352,17 @@ def generate_help_embeds():
 
 
 def main():
+    loop = asyncio.get_event_loop()
+    token = os.environ["TOKEN"]
+
     try:
-        Data.create_tables()
+        db.init_engine()
         add_cogs()
         generate_help_embeds()
-        bot.run(TOKEN)
-    except KeyboardInterrupt:
-        pass
-    except SystemExit:
+        loop.run_until_complete(bot.start(token))
+    except KeyboardInterrupt or SystemExit:
         pass
     finally:
-        Data.conn.close()
         print("Exiting...")
+        loop.run_until_complete(bot.close())
+        loop.run_until_complete(db.close_db())

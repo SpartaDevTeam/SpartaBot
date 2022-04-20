@@ -3,9 +3,10 @@ import uuid
 import discord
 from datetime import datetime
 from discord.ext import commands
-from bot import TESTING_GUILDS, THEME
+from sqlalchemy.future import select
 
-from bot.data import Data
+from bot import TESTING_GUILDS, THEME, db
+from bot.db import models
 from bot.utils import str_time_to_timedelta
 from bot.views import SuggestView
 
@@ -24,14 +25,16 @@ class SlashMiscellaneous(commands.Cog):
     async def reminder(
         self,
         reminder_id: str,
-        user: discord.User,
+        user_id: discord.User,
         seconds: float,
         reminder_msg: str,
         reminder_start_time: datetime,
     ):
         await asyncio.sleep(seconds)
         rem_start_time_str = f"<t:{int(reminder_start_time.timestamp())}:R>"
+
         try:
+            user = await self.bot.fetch_user(user_id)
             await user.send(
                 f"You asked me to remind you {rem_start_time_str} about:"
                 f"\n*{reminder_msg}*",
@@ -39,38 +42,38 @@ class SlashMiscellaneous(commands.Cog):
             )
         except discord.Forbidden:
             pass
-        Data.delete_reminder_entry(reminder_id)
 
-    async def load_reminder(self, reminder_data: list):
-        reminder_id = reminder_data[0]
-        user = await self.bot.fetch_user(reminder_data[1])
-        reminder_msg = reminder_data[2]
-        started_at = datetime.strptime(reminder_data[3], Data.datetime_format)
+        async with db.async_session() as session:
+            rem_data = await session.get(models.Reminder, reminder_id)
+            await session.delete(rem_data)
+            await session.commit()
 
+    def load_reminder(self, reminder_data: models.Reminder):
         now = datetime.now()
-        due_at = datetime.strptime(reminder_data[4], Data.datetime_format)
+        time_diff = (reminder_data.due - now).total_seconds()
 
         asyncio.create_task(
             self.reminder(
-                reminder_id,
-                user,
-                (due_at - now).total_seconds(),
-                reminder_msg,
-                started_at,
+                reminder_data.id,
+                reminder_data.user_id,
+                time_diff,
+                reminder_data.message,
+                reminder_data.start,
             )
         )
 
     async def load_pending_reminders(self):
         print("Loading pending reminders...")
 
-        Data.c.execute("SELECT * FROM reminders")
-        reminders = Data.c.fetchall()
+        async with db.async_session() as session:
+            q = select(models.Reminder)
+            result = await session.execute(q)
 
-        reminder_load_tasks = list(map(self.load_reminder, reminders))
-        await asyncio.gather(*reminder_load_tasks)
+            for reminder in result.scalars():
+                self.load_reminder(reminder)
 
         self.reminders_loaded = True  # TODO: Make this globally accessible
-        print(f"Loaded {len(reminders)} pending reminders!")
+        print("Loaded reminders!")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -187,23 +190,18 @@ class SlashMiscellaneous(commands.Cog):
         time_to_end = f"<t:{int((now + remind_timedelta).timestamp())}:R>"
 
         reminder_id = uuid.uuid4()
-        Data.create_new_reminder_entry(
-            reminder_id.hex,
-            ctx.author,
-            message,
-            now.strftime(Data.datetime_format),
-            (now + remind_timedelta).strftime(Data.datetime_format),
+        new_reminder = models.Reminder(
+            id=reminder_id.hex,
+            user_id=ctx.author.id,
+            message=message,
+            start=now,
+            due=now + remind_timedelta,
         )
+        self.load_reminder(new_reminder)
 
-        asyncio.create_task(
-            self.reminder(
-                reminder_id.hex,
-                ctx.author,
-                remind_timedelta.total_seconds(),
-                message,
-                now,
-            )
-        )
+        async with db.async_session() as session:
+            session.add(new_reminder)
+            await session.commit()
 
         await ctx.respond(
             f"Reminder set for {time_to_end} about:\n{message}",
@@ -216,18 +214,21 @@ class SlashMiscellaneous(commands.Cog):
         Sets your AFK status
         """
 
-        already_afk = Data.afk_entry_exists(ctx.author)
-
-        if already_afk:
-            Data.c.execute(
-                """UPDATE afks SET afk_reason = :new_reason
-                WHERE user_id = :user_id""",
-                {"new_reason": reason, "user_id": ctx.author.id},
+        async with db.async_session() as session:
+            afk_data: models.AFK | None = await session.get(
+                models.AFK, ctx.author.id
             )
-        else:
-            Data.create_new_afk_data(ctx.author, reason)
 
-        Data.conn.commit()
+            if afk_data:
+                afk_data.message = reason
+            else:
+                new_afk_data = models.AFK(
+                    user_id=ctx.author.id, message=reason
+                )
+                session.add(new_afk_data)
+
+            await session.commit()
+
         await ctx.respond(
             f"You have been AFK'd for the following reason:\n{reason}",
             allowed_mentions=discord.AllowedMentions.none(),
@@ -239,13 +240,17 @@ class SlashMiscellaneous(commands.Cog):
         Unset your AFK status
         """
 
-        already_afk = Data.afk_entry_exists(ctx.author)
+        async with db.async_session() as session:
+            afk_data: models.AFK | None = await session.get(
+                models.AFK, ctx.author.id
+            )
 
-        if already_afk:
-            Data.delete_afk_data(ctx.author)
-            await ctx.respond("You are no longer AFK'd")
-        else:
-            await ctx.respond("You are not currently AFK'd")
+            if afk_data:
+                await session.delete(afk_data)
+                await session.commit()
+                await ctx.respond("You are no longer AFK'd")
+            else:
+                await ctx.respond("You are not currently AFK'd")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def uptime(self, ctx: discord.ApplicationContext):

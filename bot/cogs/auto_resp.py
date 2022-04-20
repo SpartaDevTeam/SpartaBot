@@ -1,10 +1,11 @@
 import asyncio
-import json
 import discord
+from uuid import uuid4
 from discord.ext import commands
+from sqlalchemy.future import select
 
-from bot import MyBot
-from bot.data import Data
+from bot import MyBot, db
+from bot.db import models
 from bot.utils import dbl_vote_required
 
 
@@ -13,32 +14,6 @@ class AutoResponse(commands.Cog):
         self.bot: MyBot = bot
         self.description = "Commands to setup Sparta Bot to automatically reply to certain phrases"
         self.theme_color = discord.Color.purple()
-
-    # @commands.Cog.listener()
-    # async def on_message(self, message: discord.Message):
-    #     if message.author.bot:
-    #         return
-
-    #     Data.c.execute(
-    #         "SELECT auto_responses FROM guilds WHERE id = :guild_id",
-    #         {"guild_id": message.guild.id},
-    #     )
-    #     auto_resps = json.loads(Data.c.fetchone()[0])
-    #     content: str = message.content
-    #     channel: discord.TextChannel = message.channel
-
-    #     for activation in auto_resps:
-    #         response = auto_resps[activation]
-
-    #         # Auto Response Variables
-    #         response = response.replace("[member]", str(message.author))
-    #         response = response.replace("[nick]", message.author.display_name)
-    #         response = response.replace("[name]", message.author.name)
-
-    #         if content == activation:
-    #             await channel.send(
-    #                 response, allowed_mentions=discord.AllowedMentions.none()
-    #             )
 
     @commands.command(
         name="addautoresponse",
@@ -54,53 +29,57 @@ class AutoResponse(commands.Cog):
             await ctx.send("Please provide all the fields.")
             return
 
-        Data.check_guild_entry(ctx.guild)
         activation = options_split[0].strip()
         response = options_split[1].strip()
 
-        Data.c.execute(
-            "SELECT auto_responses FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
-        current_auto_resps = json.loads(Data.c.fetchone()[0])
-
-        if activation in current_auto_resps:
-
-            def check_msg(message: discord.Message):
-                return (
-                    message.author == ctx.author
-                    and message.channel == ctx.channel
-                )
-
-            await ctx.send(
-                "An auto response with this activation already exists and will be overwritten by the new one. Do you want to continue? (Yes to continue, anything else to abort)"
+        async with db.async_session() as session:
+            q = (
+                select(models.AutoResponse)
+                .where(models.AutoResponse.guild_id == ctx.guild.id)
+                .where(models.AutoResponse.activation == activation)
             )
+            result = await session.execute(q)
+            duplicate_auto_resp: models.AutoResponse | None = result.scalar()
 
-            try:
-                confirmation: discord.Message = await self.bot.wait_for(
-                    "message", check=check_msg, timeout=30
+            if duplicate_auto_resp:
+
+                def check_msg(message: discord.Message):
+                    return (
+                        message.author == ctx.author
+                        and message.channel == ctx.channel
+                    )
+
+                await ctx.send(
+                    "An auto response with this activation already exists and will be overwritten by the new one. Do you want to continue? (Yes to continue, anything else to abort)"
                 )
 
-                if confirmation.content.lower() == "yes":
-                    await ctx.send("Overwriting existing auto response!")
-                else:
-                    await ctx.send("Aborting!")
+                try:
+                    confirmation: discord.Message = await self.bot.wait_for(
+                        "message", check=check_msg, timeout=30
+                    )
+
+                    if confirmation.content.lower() == "yes":
+                        await ctx.send("Overwriting existing auto response!")
+                    else:
+                        await ctx.send("Aborting!")
+                        return
+
+                except asyncio.TimeoutError:
+                    await ctx.send("No response received, aborting!")
                     return
 
-            except asyncio.TimeoutError:
-                await ctx.send("No response received, aborting!")
-                return
+                duplicate_auto_resp.response = response
 
-        current_auto_resps[activation] = response
+            else:
+                new_auto_resp = models.AutoResponse(
+                    id=uuid4().hex,
+                    guild_id=ctx.guild.id,
+                    activation=activation,
+                    response=response,
+                )
+                session.add(new_auto_resp)
 
-        Data.c.execute(
-            "UPDATE guilds SET auto_responses = :new_responses WHERE id = :guild_id",
-            {
-                "new_responses": json.dumps(current_auto_resps),
-                "guild_id": ctx.guild.id,
-            },
-        )
-        Data.conn.commit()
+            await session.commit()
 
         await ctx.send(
             f"New auto response added with\n\nActivation Phrase:```{activation}```\nResponse:```{response}```"
@@ -113,36 +92,26 @@ class AutoResponse(commands.Cog):
     )
     @commands.has_guild_permissions(administrator=True)
     async def remove_auto_response(
-        self, ctx: commands.Context, *, activation: str = None
+        self, ctx: commands.Context, id: str = None
     ):
-        Data.check_guild_entry(ctx.guild)
-
-        if activation:
-            Data.c.execute(
-                "SELECT auto_responses FROM guilds WHERE id = :guild_id",
-                {"guild_id": ctx.guild.id},
-            )
-            current_auto_resps = json.loads(Data.c.fetchone()[0])
-
-            if activation not in current_auto_resps:
-                await ctx.send(
-                    "An auto response with this activation phrase does not exist"
+        if id:
+            async with db.async_session() as session:
+                auto_resp: models.AutoResponse | None = await session.get(
+                    models.AutoResponse, id
                 )
-                return
 
-            del current_auto_resps[activation]
+                if not auto_resp:
+                    await ctx.send(
+                        "An auto response with this ID does not exist"
+                    )
+                    return
 
-            Data.c.execute(
-                "UPDATE guilds SET auto_responses = :new_responses WHERE id = :guild_id",
-                {
-                    "new_responses": json.dumps(current_auto_resps),
-                    "guild_id": ctx.guild.id,
-                },
-            )
-            Data.conn.commit()
-            await ctx.send(
-                f"Auto response with activation:```{activation}```has been removed"
-            )
+                await session.delete(auto_resp)
+                await session.commit()
+
+                await ctx.send(
+                    f"Auto response with\nactivation: `{auto_resp.activation}`\nresponse: `{auto_resp.response}`\nhas been removed"
+                )
 
         else:
 
@@ -162,11 +131,15 @@ class AutoResponse(commands.Cog):
                 )
 
                 if confirmation.content.lower() == "yes":
-                    Data.c.execute(
-                        "UPDATE guilds SET auto_responses = '{}' WHERE id = :guild_id",
-                        {"guild_id": ctx.guild.id},
-                    )
-                    Data.conn.commit()
+                    async with db.async_session() as session:
+                        q = select(models.AutoResponse).where(
+                            models.AutoResponse.guild_id == ctx.guild.id
+                        )
+                        results = await session.execute(q)
+                        tasks = [session.delete(r) for r in results.scalars()]
+                        await asyncio.gather(*tasks)
+                        await session.commit()
+
                     await ctx.send(
                         "All auto responses in this server have been deleted"
                     )
@@ -182,23 +155,24 @@ class AutoResponse(commands.Cog):
         help="See all the auto responses in your server",
     )
     async def view_auto_responses(self, ctx: commands.Context):
-        Data.check_guild_entry(ctx.guild)
-
-        Data.c.execute(
-            "SELECT auto_responses FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
-        auto_resps = json.loads(Data.c.fetchone()[0])
+        async with db.async_session() as session:
+            q = select(models.AutoResponse).where(
+                models.AutoResponse.guild_id == ctx.guild.id
+            )
+            result = await session.execute(q)
+            auto_resps: list[models.AutoResponse] = result.scalars().all()
 
         if len(auto_resps) > 0:
             auto_resps_embed = discord.Embed(
                 title=f"Auto Responses in {ctx.guild}", color=self.theme_color
             )
 
-            for activation in auto_resps:
-                response = auto_resps[activation]
+            for ar in auto_resps:
+                field_value = (
+                    f"Activation: `{ar.activation}`\nResponse: `{ar.response}`"
+                )
                 auto_resps_embed.add_field(
-                    name=activation, value=response, inline=False
+                    name=ar.id, value=field_value, inline=False
                 )
 
             await ctx.send(embed=auto_resps_embed)

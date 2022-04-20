@@ -4,8 +4,8 @@ import discord
 from datetime import datetime
 from discord.ext import commands
 
-from bot import MyBot
-from bot.data import Data
+from bot import MyBot, db
+from bot.db import models
 from bot.utils import str_time_to_timedelta
 
 
@@ -18,33 +18,33 @@ class Miscellaneous(commands.Cog):
         self.reminders_loaded = False
         self.suggestion_channel = 848474796856836117
 
-    async def load_pending_reminders(self):
-        print("Loading pending reminders...")
+    # async def load_pending_reminders(self):
+    #     print("Loading pending reminders...")
 
-        Data.c.execute("SELECT * FROM reminders")
-        reminders = Data.c.fetchall()
+    #     Data.c.execute("SELECT * FROM reminders")
+    #     reminders = Data.c.fetchall()
 
-        for rem in reminders:
-            reminder_id = rem[0]
-            user = await self.bot.fetch_user(rem[1])
-            reminder_msg = rem[2]
-            started_at = datetime.strptime(rem[3], Data.datetime_format)
+    #     for rem in reminders:
+    #         reminder_id = rem[0]
+    #         user = await self.bot.fetch_user(rem[1])
+    #         reminder_msg = rem[2]
+    #         started_at = datetime.strptime(rem[3], Data.datetime_format)
 
-            now = datetime.now()
-            due_at = datetime.strptime(rem[4], Data.datetime_format)
+    #         now = datetime.now()
+    #         due_at = datetime.strptime(rem[4], Data.datetime_format)
 
-            asyncio.create_task(
-                self.reminder(
-                    reminder_id,
-                    user,
-                    (due_at - now).total_seconds(),
-                    reminder_msg,
-                    started_at,
-                )
-            )
+    #         asyncio.create_task(
+    #             self.reminder(
+    #                 reminder_id,
+    #                 user,
+    #                 (due_at - now).total_seconds(),
+    #                 reminder_msg,
+    #                 started_at,
+    #             )
+    #         )
 
-        self.reminders_loaded = True
-        print(f"Loaded {len(reminders)} pending reminders!")
+    #     self.reminders_loaded = True
+    #     print(f"Loaded {len(reminders)} pending reminders!")
 
     async def reminder(
         self,
@@ -64,11 +64,16 @@ class Miscellaneous(commands.Cog):
             )
         except discord.Forbidden:
             pass
-        Data.delete_reminder_entry(reminder_id)
 
-    # @commands.Cog.listener()
-    # async def on_ready(self):
-    #     await self.load_pending_reminders()
+        async with db.async_session() as session:
+            rem_data = await session.get(models.Reminder, reminder_id)
+            await session.delete(rem_data)
+            await session.commit()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.reminders_loaded = True  # TODO: Remove this line
+        # await self.load_pending_reminders()
 
     @commands.command(name="info", help="Display bot information")
     async def info(self, ctx: commands.Context):
@@ -181,14 +186,6 @@ class Miscellaneous(commands.Cog):
         )
 
         reminder_id = uuid.uuid4()
-        Data.create_new_reminder_entry(
-            reminder_id.hex,
-            ctx.author,
-            reminder_msg,
-            now.strftime(Data.datetime_format),
-            (now + remind_time).strftime(Data.datetime_format),
-        )
-
         asyncio.create_task(
             self.reminder(
                 reminder_id.hex,
@@ -199,23 +196,37 @@ class Miscellaneous(commands.Cog):
             )
         )
 
+        new_reminder = models.Reminder(
+            id=reminder_id.hex,
+            user_id=ctx.author.id,
+            message=reminder_msg,
+            start=now,
+            due=now + remind_time,
+        )
+        async with db.async_session() as session:
+            session.add(new_reminder)
+            await session.commit()
+
     @commands.command(
         name="afk",
         help="Lets others know that you are AFK when someone mentions you",
     )
     async def afk(self, ctx: commands.Context, *, reason: str):
-        already_afk = Data.afk_entry_exists(ctx.author)
-
-        if already_afk:
-            Data.c.execute(
-                """UPDATE afks SET afk_reason = :new_reason
-                WHERE user_id = :user_id""",
-                {"new_reason": reason, "user_id": ctx.author.id},
+        async with db.async_session() as session:
+            afk_data: models.AFK | None = await session.get(
+                models.AFK, ctx.author.id
             )
-        else:
-            Data.create_new_afk_data(ctx.author, reason)
 
-        Data.conn.commit()
+            if afk_data:
+                afk_data.message = reason
+            else:
+                new_afk_data = models.AFK(
+                    user_id=ctx.author.id, message=reason
+                )
+                session.add(new_afk_data)
+
+            await session.commit()
+
         await ctx.send(
             f"You have been AFK'd for the following reason:\n*{reason}*",
             allowed_mentions=discord.AllowedMentions.none(),
@@ -223,13 +234,17 @@ class Miscellaneous(commands.Cog):
 
     @commands.command(name="unafk", help="Unset your AFK status")
     async def unafk(self, ctx: commands.Context):
-        already_afk = Data.afk_entry_exists(ctx.author)
+        async with db.async_session() as session:
+            afk_data: models.AFK | None = await session.get(
+                models.AFK, ctx.author.id
+            )
 
-        if already_afk:
-            Data.delete_afk_data(ctx.author)
-            await ctx.send("You are no longer AFK'd")
-        else:
-            await ctx.send("You are not currently AFK'd")
+            if afk_data:
+                await session.delete(afk_data)
+                await session.commit()
+                await ctx.send("You are no longer AFK'd")
+            else:
+                await ctx.send("You are not currently AFK'd")
 
     @commands.command(
         name="uptime", help="Check how long the bot has been up for"

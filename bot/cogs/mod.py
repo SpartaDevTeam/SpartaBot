@@ -1,14 +1,15 @@
 import asyncio
-import json
 import time
 import random
-from typing import Union
+from typing import Sequence
+from uuid import uuid4
 
 import discord
 from discord.ext import commands
+from sqlalchemy.future import select
 
-from bot import MyBot
-from bot.data import Data
+from bot import MyBot, db
+from bot.db import models
 from bot.utils import str_time_to_timedelta
 
 
@@ -25,8 +26,9 @@ class Moderation(commands.Cog):
             "https://media1.tenor.com/images/1daf50232c9eda10459560e8c1e532ea/tenor.gif",
         ]
 
-    async def create_mute_role(self, guild: discord.Guild):
+    async def create_mute_role(self, guild: discord.Guild) -> discord.Role:
         print(f"Creating new mute role for server {guild.name}")
+
         role_perms = discord.Permissions(send_messages=False)
         role_color = discord.Color.dark_gray()
         mute_role = await guild.create_role(
@@ -36,7 +38,7 @@ class Moderation(commands.Cog):
             reason="No existing mute role provided",
         )
 
-        guild_channels: list[
+        guild_channels: Sequence[
             discord.abc.GuildChannel
         ] = await guild.fetch_channels()
 
@@ -48,30 +50,48 @@ class Moderation(commands.Cog):
         for category in guild.categories:
             await category.set_permissions(mute_role, send_messages=False)
 
-        Data.c.execute(
-            "UPDATE guilds SET mute_role = :mute_role_id WHERE id = :guild_id",
-            {"mute_role_id": mute_role.id, "guild_id": guild.id},
-        )
-        Data.conn.commit()
+        # Add new mute_role to database
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
+
+            if guild_data:
+                guild_data.mute_role = mute_role.id  # type: ignore
+            else:
+                new_guild_data = models.Guild(
+                    id=guild.id, mute_role=mute_role.id
+                )
+                session.add(new_guild_data)
+
+            await session.commit()
 
         return mute_role
 
-    async def get_guild_mute_role(self, guild: discord.Guild):
-        Data.check_guild_entry(guild)
+    async def get_guild_mute_role(self, guild: discord.Guild) -> discord.Role:
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
 
-        Data.c.execute(
-            "SELECT mute_role FROM guilds WHERE id = :guild_id",
-            {"guild_id": guild.id},
-        )
-        mute_role_id = Data.c.fetchone()[0]
+            if guild_data:
+                mute_role_id = guild_data.mute_role
+            else:
+                new_guild_data = models.Guild(id=guild.id)
+                session.add(new_guild_data)
+                await session.commit()
 
-        if mute_role_id is None:  # Create mute role if none is provided
+                mute_role_id = None
+
+        if mute_role_id is None:
+            # Create mute role if none is provided
             mute_role = await self.create_mute_role(guild)
 
-        else:  # Get mute role if one was provided
-            mute_role = guild.get_role(mute_role_id)
+        else:
+            # Get mute role if one was provided
+            mute_role = guild.get_role(mute_role_id)  # type: ignore
 
-            # Check if the role provided still exists
+            # Check if the provided role still exists
             if mute_role is None:
                 mute_role = await self.create_mute_role(guild)
 
@@ -91,25 +111,18 @@ class Moderation(commands.Cog):
             )
             return
 
-        Data.check_guild_entry(ctx.guild)
-
-        Data.c.execute(
-            "SELECT infractions FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
+        new_infraction = models.Infraction(
+            id=uuid4().hex,
+            guild_id=ctx.guild.id,
+            user_id=member.id,
+            moderator_id=ctx.author.id,
+            reason=reason,
         )
-        guild_infractions: list = json.loads(Data.c.fetchone()[0])
 
-        new_infraction = {"member": member.id, "reason": reason}
-        guild_infractions.append(new_infraction)
+        async with db.async_session() as session:
+            session.add(new_infraction)
+            await session.commit()
 
-        Data.c.execute(
-            "UPDATE guilds SET infractions = :new_infractions WHERE id = :guild_id",
-            {
-                "new_infractions": json.dumps(guild_infractions),
-                "guild_id": ctx.guild.id,
-            },
-        )
-        Data.conn.commit()
         await ctx.send(f"**{member}** has been warned because: *{reason}*")
 
     @commands.command(
@@ -121,41 +134,60 @@ class Moderation(commands.Cog):
     async def infractions(
         self, ctx: commands.Context, member: discord.Member = None
     ):
-        Data.check_guild_entry(ctx.guild)
+        async with db.async_session() as session:
+            q = select(models.Infraction).where(
+                models.Infraction.guild_id == ctx.guild.id
+            )
 
-        Data.c.execute(
-            "SELECT infractions FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
+            if member:
+                q = q.where(models.Infraction.user_id == member.id)
 
-        if member is None:
-            infracs = json.loads(Data.c.fetchone()[0])
-            embed_title = f"All Infractions in {ctx.guild.name}"
-        else:
-            infracs = [
-                infrac
-                for infrac in json.loads(Data.c.fetchone()[0])
-                if infrac["member"] == member.id
-            ]
+            result = await session.execute(q)
+            infracs: list[models.Infraction] = result.scalars().all()
+
+        if member:
             embed_title = f"Infractions by {member} in {ctx.guild.name}"
+        else:
+            embed_title = f"All Infractions in {ctx.guild.name}"
 
         infractions_embed = discord.Embed(
             title=embed_title, color=self.theme_color
         )
 
-        for infrac in infracs:
-            if member:
-                guild_member = member
-            else:
-                guild_member = await self.bot.fetch_user(infrac["member"])
-                if not guild_member:
-                    guild_member = f"User ID: {infrac['member']}"
+        if infracs:
 
-            reason = infrac["reason"]
-            infractions_embed.add_field(
-                name=str(guild_member),
-                value=f"Reason: *{reason}*",
-                inline=False,
+            async def embed_task(infraction: models.Infraction):
+                if member:
+                    guild_member = member
+                else:
+                    guild_member = await ctx.guild.fetch_member(
+                        infraction.user_id
+                    )
+
+                moderator = await ctx.guild.fetch_member(
+                    infraction.moderator_id
+                )
+
+                infractions_embed.add_field(
+                    name=f"ID: {infraction.id}",
+                    value=(
+                        f"**Member:** {guild_member.mention}\n"
+                        f"**Reason:** {infraction.reason}\n"
+                        f"**Warned by:** {moderator.mention}"
+                    ),
+                    inline=False,
+                )
+
+            tasks = [embed_task(inf) for inf in infracs]
+            await asyncio.gather(*tasks)
+
+        elif member:
+            infractions_embed.description = (
+                f"There are no infractions for {member}"
+            )
+        else:
+            infractions_embed.description = (
+                "There are no infractions in this server"
             )
 
         await ctx.send(embed=infractions_embed)
@@ -167,45 +199,43 @@ class Moderation(commands.Cog):
     )
     @commands.has_guild_permissions(administrator=True)
     async def clear_infractions(
-        self, ctx: commands.Context, member: Union[discord.Member, int] = None
+        self, ctx: commands.Context, member: discord.Member | int = None
     ):
         if isinstance(member, int):
-            member = ctx.guild.get_member(member)
-
-        Data.check_guild_entry(ctx.guild)
+            member: discord.Member = ctx.guild.get_member(member)
 
         if member is None:
-            Data.c.execute(
-                "UPDATE guilds SET infractions = '[]' WHERE id = :guild_id",
-                {"guild_id": ctx.guild.id},
-            )
-            Data.conn.commit()
+            async with db.async_session() as session:
+                q = select(models.Infraction).where(
+                    models.Infraction.guild_id == ctx.guild.id
+                )
+                result = await session.execute(q)
+                tasks = [session.delete(inf) for inf in result.scalars().all()]
+                await asyncio.gather(*tasks)
+                await session.commit()
 
             await ctx.send("Cleared all infractions in this server...")
 
         else:
-            if ctx.author.top_role <= member.top_role:
+            if (
+                ctx.guild.owner_id != ctx.author.id
+                and ctx.author.top_role <= member.top_role
+            ):
                 await ctx.send(
                     "You cannot use the command on this person because their top role is higher than or equal to yours."
                 )
                 return
 
-            Data.c.execute(
-                "SELECT infractions FROM guilds WHERE id = :guild_id",
-                {"guild_id": ctx.guild.id},
-            )
-            user_infractions = json.loads(Data.c.fetchone()[0])
-            new_infractions = [
-                inf for inf in user_infractions if inf["member"] != member.id
-            ]
-            Data.c.execute(
-                "UPDATE guilds SET infractions = :new_infractions WHERE id = :guild_id",
-                {
-                    "new_infractions": json.dumps(new_infractions),
-                    "guild_id": ctx.guild.id,
-                },
-            )
-            Data.conn.commit()
+            async with db.async_session() as session:
+                q = (
+                    select(models.Infraction)
+                    .where(models.Infraction.guild_id == ctx.guild.id)
+                    .where(models.Infraction.user_id == member.id)
+                )
+                result = await session.execute(q)
+                tasks = [session.delete(inf) for inf in result.scalars().all()]
+                await asyncio.gather(*tasks)
+                await session.commit()
 
             await ctx.send(
                 f"Cleared all infractions by **{member}** in this server..."
@@ -419,17 +449,24 @@ class Moderation(commands.Cog):
         else:
             ch = ctx.channel
 
-        # Fetch clear cap
-        Data.c.execute(
-            "SELECT clear_cap FROM guilds WHERE id = :guild_id",
-            {"guild_id": ctx.guild.id},
-        )
-        limit = Data.c.fetchone()[0]
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, ctx.guild.id
+            )
+
+            if guild_data:
+                limit = guild_data.clear_cap
+            else:
+                new_guild_data = models.Guild(id=ctx.guild.id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                limit = new_guild_data.clear_cap
 
         if limit and message_count > limit:
             exceeds_by = message_count - limit
             await ctx.send(
-                f"Message clear count exceeds this server's limit by {exceeds_by}"
+                f"Message clear count exceeds this server's limit by {exceeds_by}. The limit is {limit}."
             )
             return
 
