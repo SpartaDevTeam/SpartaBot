@@ -69,17 +69,24 @@ class SlashWelcomeLeave(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         guild: discord.Guild = member.guild
-        Data.check_guild_entry(guild)
 
-        Data.c.execute(
-            """SELECT welcome_message, welcome_channel, auto_role
-            FROM guilds WHERE id = :guild_id""",
-            {"guild_id": guild.id},
-        )
-        data = Data.c.fetchone()
-        welcome_message = data[0]
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
 
-        welcome_channel_id = data[1]
+            if guild_data:
+                welcome_message = guild_data.welcome_message
+                welcome_channel_id = guild_data.welcome_channel
+                auto_role_id = guild_data.auto_role
+            else:
+                new_guild_data = models.Guild(id=guild.id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                welcome_message = new_guild_data.welcome_message
+                welcome_channel_id = new_guild_data.welcome_channel
+                auto_role_id = new_guild_data.auto_role
 
         if welcome_channel_id == "disabled":
             return
@@ -94,8 +101,8 @@ class SlashWelcomeLeave(commands.Cog):
         else:
             welcome_channel = guild.get_channel(int(welcome_channel_id))
 
-        if data[2]:
-            auto_role = guild.get_role(int(data[2]))
+        if auto_role_id:
+            auto_role = guild.get_role(int(auto_role_id))
         else:
             auto_role = None
 
@@ -227,16 +234,22 @@ class SlashWelcomeLeave(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         guild: discord.Guild = member.guild
-        Data.check_guild_entry(guild)
 
-        Data.c.execute(
-            """SELECT leave_message, leave_channel FROM guilds
-            WHERE id = :guild_id""",
-            {"guild_id": guild.id},
-        )
-        data = Data.c.fetchone()
-        leave_message = data[0]
-        leave_channel_id = data[1]
+        async with db.async_session() as session:
+            guild_data: models.Guild | None = await session.get(
+                models.Guild, guild.id
+            )
+
+            if guild_data:
+                leave_message = guild_data.leave_message
+                leave_channel_id = guild_data.leave_channel
+            else:
+                new_guild_data = models.Guild(id=guild.id)
+                session.add(new_guild_data)
+                await session.commit()
+
+                leave_message = new_guild_data.leave_message
+                leave_channel_id = new_guild_data.leave_channel
 
         if leave_channel_id == "disabled":
             return
