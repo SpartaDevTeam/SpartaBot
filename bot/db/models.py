@@ -20,8 +20,8 @@ class Guild(Base):
     welcome_message = Column(String, default=None, nullable=True)
     leave_message = Column(String, default=None, nullable=True)
 
-    welcome_channel = Column(BigInteger, default=None, nullable=True)
-    leave_channel = Column(BigInteger, default=None, nullable=True)
+    welcome_channel = Column(String, default=None, nullable=True)
+    leave_channel = Column(String, default=None, nullable=True)
 
     auto_role = Column(BigInteger, default=None, nullable=True)
     prefix = Column(String, default="s!", nullable=False)
