@@ -2,6 +2,7 @@ import asyncio
 import discord
 from discord.ext import commands
 from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot import db
 from bot.db import models
@@ -16,20 +17,21 @@ class SlashAFK(commands.Cog):
         self.bot = bot
 
     async def process_afk(self, message: discord.Message):
-        async def run_afk(afk_data: models.AFK):
-            user = await self.bot.fetch_user(afk_data.user_id)
-            if user in message.mentions:
+        async def run_afk(session: AsyncSession, member: discord.Member):
+            q = select(models.AFK).where(models.AFK.user_id == member.id)
+            result = await session.execute(q)
+
+            if afk_data := result.scalar():
                 await message.channel.send(
-                    f"{user} is currently AFK because:\n*{afk_data.message}*",
+                    f"{member} is currently AFK because:\n*{afk_data.message}*",
                     allowed_mentions=discord.AllowedMentions.none(),
                 )
 
         async with db.async_session() as session:
-            q = select(models.AFK)
-            result = await session.execute(q)
-            afk_tasks = [run_afk(afk) for afk in result.scalars()]
-
-        await asyncio.gather(*afk_tasks)
+            afk_tasks = [
+                run_afk(session, member) for member in message.mentions
+            ]
+            await asyncio.gather(*afk_tasks)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
