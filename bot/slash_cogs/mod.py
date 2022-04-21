@@ -586,7 +586,7 @@ class SlashModeration(commands.Cog):
                 await ctx.send(f"Unable to nuke {channel.mention}: {e.text}")
 
     @commands.slash_command(name="impersonatelogs", guild_id=TESTING_GUILDS)
-    @commands.bot_has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(administrator=True)
     async def impersonate_logs(self, ctx: discord.ApplicationContext):
         """
         See the impersonation logs for this server
