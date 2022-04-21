@@ -9,6 +9,7 @@ from discord.ext import commands
 from sqlalchemy.future import select
 
 from bot import TESTING_GUILDS, THEME, db
+from bot import views
 from bot.db import models
 from bot.utils import str_time_to_timedelta
 from bot.views import ConfirmView
@@ -592,7 +593,7 @@ class SlashModeration(commands.Cog):
         See the impersonation logs for this server
         """
 
-        await ctx.defer(ephemeral=True)
+        await ctx.defer()
 
         async with db.async_session() as session:
             q = select(models.ImpersonationLog).where(
@@ -602,40 +603,53 @@ class SlashModeration(commands.Cog):
             logs: list[models.ImpersonationLog] = results.scalars().all()
             logs.sort(key=lambda x: x.timestamp, reverse=True)
 
-        if logs:
-            logs_embed = discord.Embed(
-                title=f"Impersonation Logs for {ctx.guild}", color=THEME
-            )
-            logs_embed.set_author(
-                name=str(ctx.author), icon_url=ctx.author.display_avatar.url
-            )
-
-            async def run_embed_task(imp: models.ImpersonationLog):
-                user, impersonator = await asyncio.gather(
-                    ctx.guild.fetch_member(imp.user_id),
-                    ctx.guild.fetch_member(imp.impersonator_id),
-                )
-                jump_url = f"https://discord.com/channels/{imp.guild_id}/{imp.channel_id}/{imp.message_id}"
-                embed_str = (
-                    f"Impersonated User: {user.mention}\n"
-                    f"Impersonator: {impersonator.mention}\n"
-                    f"Sent on: <t:{int(imp.timestamp.timestamp())}>\n"
-                    f"[Jump to Message]({jump_url})"
-                )
-                logs_embed.add_field(
-                    name=imp.message, value=embed_str, inline=False
-                )
-
-            # TODO: Pagination
-            embed_tasks = [run_embed_task(imp) for imp in logs]
-            await asyncio.gather(*embed_tasks)
-            await ctx.respond(embed=logs_embed, ephemeral=True)
-
-        else:
+        if not logs:
             await ctx.respond(
                 "Nobody has used impersonate in this server yet",
                 ephemeral=True,
             )
+            return
+
+        base_embed = discord.Embed(
+            title=f"Impersonation Logs for {ctx.guild}", color=THEME
+        )
+        base_embed.set_author(
+            name=str(ctx.author), icon_url=ctx.author.display_avatar.url
+        )
+
+        max_per_page = 5
+        page_count = len(logs) // max_per_page + 1
+        log_embeds: list[discord.Embed] = [
+            base_embed.copy().set_footer(text=f"Page {i+1} of {page_count}")
+            for i in range(page_count)
+        ]
+
+        for i, imp in enumerate(logs):
+            current_embed = log_embeds[i // max_per_page]
+
+            jump_url = f"https://discord.com/channels/{imp.guild_id}/{imp.channel_id}/{imp.message_id}"
+            embed_str = (
+                f"Impersonated User: <@{imp.user_id}>\n"
+                f"Impersonator: <@{imp.impersonator_id}>\n"
+                f"Sent on: <t:{int(imp.timestamp.timestamp())}>\n"
+                f"[Jump to Message]({jump_url})"
+            )
+
+            current_embed.add_field(
+                name=imp.message, value=embed_str, inline=False
+            )
+
+        if len(logs) > max_per_page:
+            page_view = views.PaginatedEmbedView(ctx.author.id, log_embeds)
+            msg = await ctx.respond(embed=log_embeds[0], view=page_view)
+
+            if await page_view.wait():  # if the view timed out
+                if isinstance(msg, discord.Interaction):
+                    msg.delete_original_message()
+                else:
+                    msg.delete()
+        else:
+            await ctx.respond(embed=log_embeds[0])
 
 
 def setup(bot):
