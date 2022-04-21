@@ -4,6 +4,7 @@ import string
 import pyfiglet
 import discord
 from discord.ext import commands
+from uuid import uuid4
 
 from bot import THEME, TESTING_GUILDS, db
 from bot.db import models
@@ -260,6 +261,8 @@ class SlashFun(commands.Cog):
         Pretend to be another member of your server
         """
 
+        await ctx.defer(ephemeral=True)
+
         async with db.async_session() as session:
             webhook_data: models.Webhook = await session.get(
                 models.Webhook, ctx.channel.id
@@ -291,12 +294,27 @@ class SlashFun(commands.Cog):
                 session.add(new_webhook_data)
                 await session.commit()
 
-        await webhook.send(
+        msg = await webhook.send(
             message,
             username=member.display_name,
             avatar_url=member.display_avatar.url,
             allowed_mentions=discord.AllowedMentions.none(),
+            wait=True,
         )
+
+        async with db.async_session() as session:
+            new_imp_log = models.ImpersonationLog(
+                id=uuid4().hex,
+                guild_id=ctx.guild_id,
+                channel_id=ctx.channel_id,
+                message_id=msg.id,
+                user_id=member.id,
+                impersonator_id=ctx.author.id,
+                message=msg.content,
+            )
+            session.add(new_imp_log)
+            await session.commit()
+
         await ctx.respond("Amogus", ephemeral=True)
 
 

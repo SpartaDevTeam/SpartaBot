@@ -585,6 +585,57 @@ class SlashModeration(commands.Cog):
                 await new_ch.delete()
                 await ctx.send(f"Unable to nuke {channel.mention}: {e.text}")
 
+    @commands.slash_command(name="impersonatelogs", guild_id=TESTING_GUILDS)
+    @commands.bot_has_guild_permissions(administrator=True)
+    async def impersonate_logs(self, ctx: discord.ApplicationContext):
+        """
+        See the impersonation logs for this server
+        """
+
+        await ctx.defer(ephemeral=True)
+
+        async with db.async_session() as session:
+            q = select(models.ImpersonationLog).where(
+                models.ImpersonationLog.guild_id == ctx.guild_id
+            )
+            results = await session.execute(q)
+            logs: list[models.ImpersonationLog] = results.scalars().all()
+            logs.sort(key=lambda x: x.timestamp, reverse=True)
+
+        if logs:
+            logs_embed = discord.Embed(
+                title=f"Impersonation Logs for {ctx.guild}", color=THEME
+            )
+            logs_embed.set_author(
+                name=str(ctx.author), icon_url=ctx.author.display_avatar.url
+            )
+
+            async def run_embed_task(imp: models.ImpersonationLog):
+                user, impersonator = await asyncio.gather(
+                    ctx.guild.fetch_member(imp.user_id),
+                    ctx.guild.fetch_member(imp.impersonator_id),
+                )
+                jump_url = f"https://discord.com/channels/{imp.guild_id}/{imp.channel_id}/{imp.message_id}"
+                embed_str = (
+                    f"Impersonated User: {user.mention}\n"
+                    f"Impersonator: {impersonator.mention}\n"
+                    f"Sent on: <t:{int(imp.timestamp.timestamp())}>\n"
+                    f"[Jump to Message]({jump_url})"
+                )
+                logs_embed.add_field(
+                    name=imp.message, value=embed_str, inline=False
+                )
+
+            embed_tasks = [run_embed_task(imp) for imp in logs]
+            await asyncio.gather(*embed_tasks)
+            await ctx.respond(embed=logs_embed, ephemeral=True)
+
+        else:
+            await ctx.respond(
+                "Nobody has used impersonate in this server yet",
+                ephemeral=True,
+            )
+
 
 def setup(bot):
     bot.add_cog(SlashModeration())

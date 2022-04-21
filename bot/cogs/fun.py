@@ -1,6 +1,7 @@
 import asyncio
 import random
 import string
+from uuid import uuid4
 
 import discord
 import pyfiglet
@@ -252,12 +253,26 @@ class Fun(commands.Cog):
                 await session.commit()
 
         await ctx.message.delete()
-        await webhook.send(
+        msg = await webhook.send(
             message,
             username=member.display_name,
             avatar_url=member.display_avatar.url,
             allowed_mentions=discord.AllowedMentions.none(),
+            wait=True,
         )
+
+        async with db.async_session() as session:
+            new_imp_log = models.ImpersonationLog(
+                id=uuid4().hex,
+                guild_id=ctx.guild.id,
+                channel_id=ctx.channel.id,
+                message_id=msg.id,
+                user_id=member.id,
+                impersonator_id=ctx.author.id,
+                message=msg.content,
+            )
+            session.add(new_imp_log)
+            await session.commit()
 
 
 def setup(bot):
