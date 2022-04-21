@@ -626,6 +626,7 @@ class SlashModeration(commands.Cog):
                     name=imp.message, value=embed_str, inline=False
                 )
 
+            # TODO: Pagination
             embed_tasks = [run_embed_task(imp) for imp in logs]
             await asyncio.gather(*embed_tasks)
             await ctx.respond(embed=logs_embed, ephemeral=True)

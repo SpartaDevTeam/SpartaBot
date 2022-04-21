@@ -178,7 +178,7 @@ class Miscellaneous(commands.Cog):
 
         now = datetime.now()
         remind_time = str_time_to_timedelta(remind_time_string)
-        time_to_end = f"<t:{int((now + remind_time).timestamp())}:R>"
+        time_to_end = f"<t:{int((now + remind_time).timestamp())}>"
 
         await ctx.send(
             f"Reminder set for {time_to_end} about:\n*{reminder_msg}*",

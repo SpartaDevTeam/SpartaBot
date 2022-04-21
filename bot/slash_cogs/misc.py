@@ -187,7 +187,7 @@ class SlashMiscellaneous(commands.Cog):
 
         now = datetime.now()
         remind_timedelta = str_time_to_timedelta(remind_time)
-        time_to_end = f"<t:{int((now + remind_timedelta).timestamp())}:R>"
+        time_to_end = f"<t:{int((now + remind_timedelta).timestamp())}>"
 
         reminder_id = uuid.uuid4()
         new_reminder = models.Reminder(

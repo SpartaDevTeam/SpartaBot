@@ -247,7 +247,7 @@ class SlashSettings(commands.Cog):
         si_embed.add_field(name="Server ID", value=ctx.guild.id, inline=False)
         si_embed.add_field(
             name="Server Age",
-            value=f"Created <t:{int(ctx.guild.created_at.timestamp())}:R>",
+            value=f"Created on <t:{int(ctx.guild.created_at.timestamp())}>",
             inline=False,
         )
 
@@ -271,12 +271,12 @@ class SlashSettings(commands.Cog):
         mi_embed.add_field(name="Member ID", value=member.id, inline=False)
         mi_embed.add_field(
             name="Joined Discord",
-            value=f"<t:{int(member.created_at.timestamp())}:R>",
+            value=f"<t:{int(member.created_at.timestamp())}>",
             inline=False,
         )
         mi_embed.add_field(
             name="Joined Server",
-            value=f"<t:{int(member.joined_at.timestamp())}:R>",
+            value=f"<t:{int(member.joined_at.timestamp())}>",
             inline=False,
         )
         mi_embed.add_field(
