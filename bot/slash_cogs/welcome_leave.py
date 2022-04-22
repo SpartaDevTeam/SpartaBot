@@ -116,7 +116,7 @@ class SlashWelcomeLeave(commands.Cog):
 
         # Get user's avatar
         avatar_path = os.path.join(self.cache_dir, "pfp.jpg")
-        await member.avatar.save(avatar_path)
+        await member.display_avatar.save(avatar_path)
 
         # Welcome image variables
         avatar_center_pos = (1920, 867)
