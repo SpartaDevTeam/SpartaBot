@@ -285,6 +285,9 @@ class PaginatedEmbedView(discord.ui.View):
     async def previous(
         self, button: discord.ui.Button, interaction: discord.Interaction
     ):
+        if not interaction.user.id == self.author_id:
+            return
+
         self.current_embed_index -= 1
 
         if self.current_embed_index < 0:
@@ -297,6 +300,9 @@ class PaginatedEmbedView(discord.ui.View):
     async def next(
         self, button: discord.ui.Button, interaction: discord.Interaction
     ):
+        if not interaction.user.id == self.author_id:
+            return
+
         self.current_embed_index += 1
 
         if self.current_embed_index >= len(self.embeds):
@@ -309,5 +315,6 @@ class PaginatedEmbedView(discord.ui.View):
     async def close(
         self, button: discord.ui.Button, interaction: discord.Interaction
     ):
-        await interaction.message.delete()
-        self.stop()
+        if interaction.id == self.author_id:
+            await interaction.message.delete()
+            self.stop()
