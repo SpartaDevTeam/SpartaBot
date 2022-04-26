@@ -68,8 +68,9 @@ class SlashSnipe(commands.Cog):
                 )
 
                 if top_author:
-                    if avatar := top_author.avatar:
-                        snipe_embed.set_thumbnail(url=avatar.url)
+                    snipe_embed.set_thumbnail(
+                        url=top_author.display_avatar.url
+                    )
 
             for msg in msgs:
                 snipe_embed.add_field(
@@ -108,8 +109,9 @@ class SlashSnipe(commands.Cog):
                 )
 
                 if top_author:
-                    if avatar := top_author.avatar:
-                        editsnipe_embed.set_thumbnail(url=avatar.url)
+                    editsnipe_embed.set_thumbnail(
+                        url=top_author.display_avatar.url
+                    )
 
             for msg in msgs:
                 editsnipe_embed.add_field(
