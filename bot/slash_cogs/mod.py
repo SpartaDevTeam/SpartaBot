@@ -538,7 +538,7 @@ class SlashModeration(commands.Cog):
             )
             return
 
-        await ctx.channel.purge(limit=amount + 1)
+        await ctx.channel.purge(limit=amount)
         await ctx.respond(f"Cleared {amount} message(s)", ephemeral=True)
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
