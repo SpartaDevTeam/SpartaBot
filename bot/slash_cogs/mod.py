@@ -644,11 +644,11 @@ class SlashModeration(commands.Cog):
             page_view = views.PaginatedEmbedView(ctx.author.id, log_embeds)
             msg = await ctx.respond(embed=log_embeds[0], view=page_view)
 
-            if await page_view.wait():  # if the view timed out
-                if isinstance(msg, discord.Interaction):
-                    msg.delete_original_message()
-                else:
-                    msg.delete()
+            if isinstance(msg, discord.Interaction):
+                msg.delete_original_message()
+            else:
+                msg.delete()
+
         else:
             await ctx.respond(embed=log_embeds[0])
 
