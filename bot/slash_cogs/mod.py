@@ -645,9 +645,9 @@ class SlashModeration(commands.Cog):
             msg = await ctx.respond(embed=log_embeds[0], view=page_view)
 
             if isinstance(msg, discord.Interaction):
-                msg.delete_original_message()
+                await msg.delete_original_message()
             else:
-                msg.delete()
+                await msg.delete()
 
         else:
             await ctx.respond(embed=log_embeds[0])
