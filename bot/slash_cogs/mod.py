@@ -1,5 +1,6 @@
 import asyncio
 import random
+import math
 import time
 import discord
 from typing import Sequence
@@ -618,7 +619,7 @@ class SlashModeration(commands.Cog):
         )
 
         max_per_page = 5
-        page_count = len(logs) // max_per_page + 1
+        page_count = math.ceil(len(logs) / max_per_page)
         log_embeds: list[discord.Embed] = [
             base_embed.copy().set_footer(text=f"Page {i+1} of {page_count}")
             for i in range(page_count)
@@ -636,7 +637,7 @@ class SlashModeration(commands.Cog):
             )
 
             current_embed.add_field(
-                name=imp.message, value=embed_str, inline=False
+                name=imp.message[:20], value=embed_str, inline=False
             )
 
         if len(logs) > max_per_page:
