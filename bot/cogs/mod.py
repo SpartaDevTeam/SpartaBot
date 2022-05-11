@@ -24,6 +24,7 @@ class Moderation(commands.Cog):
             "https://media1.tenor.com/images/3ddd966749079d6802bcea8dbcceb365/tenor.gif",
             "https://media1.tenor.com/images/403968cd056f0d0bfb5cce75e131b4d4/tenor.gif",
             "https://media1.tenor.com/images/1daf50232c9eda10459560e8c1e532ea/tenor.gif",
+            "https://tenor.com/0ac3.gif",
         ]
 
     async def create_mute_role(self, guild: discord.Guild) -> discord.Role:
