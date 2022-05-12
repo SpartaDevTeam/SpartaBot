@@ -645,7 +645,7 @@ class SlashModeration(commands.Cog):
             page_view = views.PaginatedEmbedView(ctx.author.id, log_embeds)
             msg = await ctx.respond(embed=log_embeds[0], view=page_view)
             await page_view.wait()
-            
+
             if isinstance(msg, discord.Interaction):
                 await msg.delete_original_message()
             else:
