@@ -1,43 +1,72 @@
-import asyncio
 import discord
 from discord.ext import commands
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from discord.ext.commands.core import command
+from bot import TESTING_GUILDS, db
+from afks import afks
 
-from bot import db
-from bot.db import models
-
-
-class SlashAFK(commands.Cog):
+class AFK(commands.Cog):
     """
-    Manage your AFK status
+   A Global AFK command 
     """
+    def remove(afk):
+        if "(AFK)" in afk.split():
+            return " ".join(afk.split()[1:])
+        else:
+             return AFK
 
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
+    @commands.slash_command( guild_ids=TESTING_GUILDS)
+    async def afk( 
+        self, 
+        ctx:discord.ApplicationContext, 
+        reason = "No Reason Given!"
+        ):
 
-    async def process_afk(self, message: discord.Message):
-        async def run_afk(session: AsyncSession, member: discord.Member):
-            q = select(models.AFK).where(models.AFK.user_id == member.id)
-            result = await session.execute(q)
+        """
+        Set's your AFK status
+        """
+        member = ctx.author
 
-            if afk_data := result.scalar():
-                await message.channel.send(
-                    f"{member} is currently AFK because:\n*{afk_data.message}*",
-                    allowed_mentions=discord.AllowedMentions.none(),
-                )
+        if member.id in afks.keys():
+           afks.pop(member.id)
+        else:
+            try:
+                await member.edit(nick = f"(AFK) {member.display_name}")
+            except:
+                pass
 
-        async with db.async_session() as session:
-            afk_tasks = [
-                run_afk(session, member) for member in message.mentions
-            ]
-            await asyncio.gather(*afk_tasks)
+        afks[member.id] = reason 
+        embed = discord.Embed(
+            title = "Member AFK",
+            description = f"{member.mention} has gone AFK ",
+            colour = member.color
+        )
+        embed.set_thumbnail(url = ctx.bot.avatar.url)
+        embed.set_author(
+            name = ctx.author,
+            icon_url = ctx.user.avatar.url
+        )
+        embed.add_field(
+            name = 'AFK note :',
+            value = reason
+             )
+        await ctx.respond(embed = embed)
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if message.author != self.bot.user:
-            await self.process_afk(message)
+    async def on_message(self,message):
 
+        if message.author.id in afks.keys():
+            afks.pop(message.author.id)
+            try:
+                authorname = message.author.display_name.replace("(AFK)", "")
+                await message.author.edit(nick = authorname)
+            except:
+                pass
+            await message.channel.send(f'Welcome back {message.author.name}, I removed you AFK')
 
+        for id, reason in afks.items():
+            member = discord.utils.get(message.guild.members, id = id)
+            if (message.reference and member == (await message.channel.fetch_message(message.reference.message_id)).author) or member.id in message.raw_mentions:
+                await message.reply(f"{member.name} is AFK Because ***{reason}***")
 def setup(bot):
-    bot.add_cog(SlashAFK(bot))
+    bot.add_cog(AFK()) 
+
