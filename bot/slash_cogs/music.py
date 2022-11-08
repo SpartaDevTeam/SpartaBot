@@ -1,55 +1,11 @@
+import os
+import re
 import asyncio
-import youtube_dl
+import wavelink
 import discord
 from discord.ext import commands
 
 from bot import TESTING_GUILDS, THEME
-from bot.utils import search_youtube
-
-youtube_dl.utils.bug_reports_message = lambda: ""
-
-
-class YTDLSource(discord.PCMVolumeTransformer):
-    ytdl_format_options = {
-        "format": "bestaudio/best",
-        "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
-        "restrictfilenames": True,
-        "noplaylist": True,
-        "nocheckcertificate": True,
-        "ignoreerrors": False,
-        "logtostderr": False,
-        "quiet": True,
-        "no_warnings": True,
-        "default_search": "auto",
-        "source_address": "0.0.0.0",  # Bind to ipv4 since ipv6 addresses cause issues at certain times
-    }
-    ffmpeg_options = {"options": "-vn"}
-
-    ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
-
-    def __init__(self, source, *, data, volume=0.5):
-        super().__init__(source, volume)
-
-        self.data = data
-
-        self.title = data.get("title")
-        self.url = data.get("url")
-
-    @classmethod
-    async def from_url(cls, url, *, loop=None, stream=False):
-        loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(
-            None, lambda: cls.ytdl.extract_info(url, download=not stream)
-        )
-
-        if "entries" in data:
-            # Takes the first item from a playlist
-            data = data["entries"][0]
-
-        filename = data["url"] if stream else cls.prepare_filename(data)
-        return cls(
-            discord.FFmpegPCMAudio(filename, **cls.ffmpeg_options), data=data
-        )
 
 
 class SlashMusic(commands.Cog):
@@ -59,99 +15,68 @@ class SlashMusic(commands.Cog):
 
     # TODO: Add remove from queue, loop command
 
-    queues: dict[int, list[YTDLSource]] = {}
-    current_players: dict[int, YTDLSource] = {}
-    play_next: dict[int, bool] = {}
-    skip_song: dict[int, bool] = {}
+    queues: dict[int, asyncio.Queue[wavelink.YouTubeTrack]] = {}
+    play_next: dict[int, asyncio.Event] = {}
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        bot.loop.create_task(self.connect_nodes())
 
-    async def music_queue(self, ctx: discord.ApplicationContext):
-        voice_client: discord.VoiceClient = ctx.guild.voice_client
+    async def connect_nodes(self):
+        """Connect to Lavalink Nodes"""
 
-        song_queue: list[YTDLSource] = self.queues[ctx.guild_id]
-        self.play_next[ctx.guild_id] = False
-        self.skip_song[ctx.guild_id] = False
-
-        def after_callback(error):
-            if error:
-                print(f"Player error: {error}")
-                asyncio.create_task(
-                    ctx.send("An error occurred while playing the song.")
-                )
-
-            self.play_next[ctx.guild_id] = True
-            print("Finished playing a song")
-
-        while song_queue:
-            player = song_queue.pop(0)
-            self.current_players[ctx.guild_id] = player
-
-            await ctx.send(f"Now playing: `{player.title}`")
-
-            self.play_next[ctx.guild_id] = False
-            voice_client.play(
-                player,
-                after=after_callback,
-            )
-
-            while (
-                not self.play_next[ctx.guild_id]
-                and not self.skip_song[ctx.guild_id]
-            ):
-                await asyncio.sleep(1)
-
-            # Update local queue
-            voice_client.stop()
-            self.skip_song[ctx.guild_id] = False
-            song_queue = self.queues[ctx.guild_id]
-
-            # Check if vc is not empty
-            ch: discord.VoiceChannel = await ctx.guild.fetch_channel(
-                voice_client.channel.id
-            )
-            if len(ch.members) <= 1:
-                break
-
-        if song_queue:
-            await ctx.send(
-                "Leaving the voice channel because everybody left..."
-            )
-        else:
-            await ctx.send(
-                "Leaving the voice channel because the song queue is over..."
-            )
-
-        self.clear_guild_queue(ctx.guild_id)
-        await voice_client.disconnect()
-
-    def clear_guild_queue(self, guild_id: int):
-        del self.queues[guild_id]
-        del self.current_players[guild_id]
-        del self.play_next[guild_id]
-        del self.skip_song[guild_id]
-
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
-    async def play(self, ctx: discord.ApplicationContext, song_name: str):
-        """
-        Add a song to the queue
-        """
-
-        if not ctx.guild.voice_client:
-            await ctx.author.voice.channel.connect()
-
-        video_url = await search_youtube(song_name)
-        player = await YTDLSource.from_url(
-            video_url, loop=ctx.bot.loop, stream=True
+        await self.bot.wait_until_ready()
+        await wavelink.NodePool.create_node(
+            bot=self.bot,
+            host=os.environ["LAVALINK_HOST"],
+            port=int(os.environ["LAVALINK_PORT"]),
+            password=os.environ["LAVALINK_PASSWORD"],
         )
 
-        if ctx.guild_id not in self.queues:
-            self.queues[ctx.guild_id] = []
-            asyncio.create_task(self.music_queue(ctx))
+    async def get_voice_client(
+        self, ctx: discord.ApplicationContext
+    ) -> wavelink.Player:
+        if ctx.voice_client:
+            return ctx.voice_client  # type: ignore
+        return await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
 
-        self.queues[ctx.guild_id].append(player)
-        await ctx.respond(f"Added to queue: `{player.title}`")
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def play(self, ctx: discord.ApplicationContext, search: str):
+        """
+        Search a song by name or URL, and add it to the song queue
+        """
+
+        if not ctx.guild_id:
+            return
+
+        search_results = await wavelink.YouTubeTrack.search(search)
+
+        if re.match(
+            r"^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$", search
+        ):
+            filtered_results = [t for t in search_results if t.uri == search]
+
+            if filtered_results:
+                search_track = filtered_results[0]
+            else:
+                await ctx.respond(
+                    "No videos were found that matched the given URL!",
+                    ephemeral=True,
+                )
+                return
+        else:
+            search_track = search_results[0]
+
+        if not search_track:
+            await ctx.respond(
+                "Unable to find a track with the given search query/URL!",
+                ephemeral=True,
+            )
+            return
+
+        vc = await self.get_voice_client(ctx)
+        await vc.play(search_track)
+        # TODO: song queue
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def leave(
@@ -300,11 +225,16 @@ class SlashMusic(commands.Cog):
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         await ctx.defer()
 
-        if author_vc := ctx.author.voice:
+        if not ctx.guild:
+            raise discord.ApplicationCommandError(
+                "Music command was run outisde a guild."
+            )
+
+        if author_vc := ctx.author.voice:  # type: ignore
             if existing_vc := ctx.guild.voice_client:
-                if existing_vc.channel.id != author_vc.channel.id:
+                if existing_vc.channel.id != author_vc.channel.id:  # type: ignore
                     await ctx.respond(
-                        f"I'm already in {existing_vc.channel.mention}, please join that channel.",
+                        f"I'm already in {existing_vc.channel.mention}, please join that channel.",  # type: ignore
                         ephemeral=True,
                     )
                     raise discord.ApplicationCommandError(
