@@ -15,11 +15,13 @@ class SlashMusic(commands.Cog):
 
     # TODO: Add remove from queue, loop command
 
-    queues: dict[int, asyncio.Queue[wavelink.YouTubeTrack]] = {}
+    song_queues: dict[int, asyncio.Queue[wavelink.YouTubeTrack]] = {}
     play_next: dict[int, asyncio.Event] = {}
+    node_pool_connected = asyncio.Event()
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.node_pool_connected.clear()
         bot.loop.create_task(self.connect_nodes())
 
     async def connect_nodes(self):
@@ -32,6 +34,8 @@ class SlashMusic(commands.Cog):
             port=int(os.environ["LAVALINK_PORT"]),
             password=os.environ["LAVALINK_PASSWORD"],
         )
+        self.node_pool_connected.set()
+        print("Connected to Lavalink!")
 
     async def get_voice_client(
         self, ctx: discord.ApplicationContext
@@ -39,6 +43,15 @@ class SlashMusic(commands.Cog):
         if ctx.voice_client:
             return ctx.voice_client  # type: ignore
         return await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
+
+    def get_song_queue(
+        self, guild_id: int
+    ) -> asyncio.Queue[wavelink.YouTubeTrack]:
+        if guild_id not in self.song_queues:
+            # Guild queue does not exist, create a new one...
+            self.song_queues[guild_id] = asyncio.Queue()
+
+        return self.song_queues[guild_id]
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def play(self, ctx: discord.ApplicationContext, search: str):
@@ -74,9 +87,18 @@ class SlashMusic(commands.Cog):
             )
             return
 
-        vc = await self.get_voice_client(ctx)
-        await vc.play(search_track)
-        # TODO: song queue
+        # Make sure bot has joined a voice channel
+        await self.get_voice_client(ctx)
+        await self.get_song_queue(ctx.guild_id).put(search_track)
+
+        em = discord.Embed(
+            title="Added to Song Queue",
+            color=THEME,
+        )
+        em.add_field(name="Title", value=search_track.title)
+        em.add_field(name="Author", value=str(search_track.author))
+        em.set_thumbnail(url=search_track.thumbnail)
+        await ctx.respond(embed=em)
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def leave(
@@ -182,7 +204,7 @@ class SlashMusic(commands.Cog):
         View all the songs currently in the queue
         """
 
-        guild_queue = self.queues.get(ctx.guild_id)
+        guild_queue = self.song_queues.get(ctx.guild_id)
         current_player = self.current_players.get(ctx.guild_id)
 
         if not (bot_vc := ctx.guild.voice_client):
@@ -224,6 +246,7 @@ class SlashMusic(commands.Cog):
     @volume.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         await ctx.defer()
+        await self.node_pool_connected.wait()  # Wait for lavalink nodes to connect
 
         if not ctx.guild:
             raise discord.ApplicationCommandError(
