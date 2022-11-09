@@ -24,6 +24,27 @@ class SlashMusic(commands.Cog):
         self.node_pool_connected.clear()
         bot.loop.create_task(self.connect_nodes())
 
+    def get_song_queue(
+        self, ctx: discord.ApplicationContext
+    ) -> asyncio.Queue[wavelink.YouTubeTrack]:
+        guild_id: int = ctx.guild_id  # type: ignore
+
+        if guild_id not in self.song_queues:
+            # Guild queue does not exist, create a new one...
+            self.song_queues[guild_id] = asyncio.Queue()
+            self.play_next[guild_id] = asyncio.Event()
+            self.play_next[guild_id].set()
+            self.bot.loop.create_task(self.process_song_queue(ctx))
+
+        return self.song_queues[guild_id]
+
+    def get_track_embed(self, track: wavelink.YouTubeTrack) -> discord.Embed:
+        em = discord.Embed(color=THEME, url=track.uri)
+        em.add_field(name="Title", value=track.title, inline=False)
+        em.add_field(name="Author", value=str(track.author), inline=False)
+        em.set_thumbnail(url=track.thumbnail)
+        return em
+
     async def connect_nodes(self):
         """Connect to Lavalink Nodes"""
 
@@ -44,14 +65,29 @@ class SlashMusic(commands.Cog):
             return ctx.voice_client  # type: ignore
         return await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
 
-    def get_song_queue(
-        self, guild_id: int
-    ) -> asyncio.Queue[wavelink.YouTubeTrack]:
-        if guild_id not in self.song_queues:
-            # Guild queue does not exist, create a new one...
-            self.song_queues[guild_id] = asyncio.Queue()
+    async def process_song_queue(self, ctx: discord.ApplicationContext):
+        guild_id: int = ctx.guild_id  # type: ignore
 
-        return self.song_queues[guild_id]
+        while True:
+            # Wait till next song should be played
+            await self.play_next[guild_id].wait()
+
+            # Fetch next song and play it
+            next_track = await self.song_queues[guild_id].get()
+            vc = await self.get_voice_client(ctx)
+            await vc.play(next_track)
+            self.play_next[guild_id].clear()
+
+            em = self.get_track_embed(next_track)
+            em.title = "Now Playing"
+            await ctx.channel.send(embed=em)  # type: ignore
+
+    @commands.Cog.listener()
+    async def on_wavelink_track_end(
+        self, player: wavelink.Player, track: wavelink.Track, reason
+    ):
+        # Next song should play now
+        self.play_next[player.guild.id].set()
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def play(self, ctx: discord.ApplicationContext, search: str):
@@ -87,17 +123,11 @@ class SlashMusic(commands.Cog):
             )
             return
 
-        # Make sure bot has joined a voice channel
-        await self.get_voice_client(ctx)
-        await self.get_song_queue(ctx.guild_id).put(search_track)
+        # Add track to the song queue
+        await self.get_song_queue(ctx).put(search_track)
 
-        em = discord.Embed(
-            title="Added to Song Queue",
-            color=THEME,
-        )
-        em.add_field(name="Title", value=search_track.title)
-        em.add_field(name="Author", value=str(search_track.author))
-        em.set_thumbnail(url=search_track.thumbnail)
+        em = self.get_track_embed(search_track)
+        em.title = "Added to Song Queue"
         await ctx.respond(embed=em)
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
