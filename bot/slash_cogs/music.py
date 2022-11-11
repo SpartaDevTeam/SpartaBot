@@ -39,10 +39,22 @@ class SlashMusic(commands.Cog):
         return self.song_queues[guild_id]
 
     def get_track_embed(self, track: wavelink.YouTubeTrack) -> discord.Embed:
-        em = discord.Embed(color=THEME, url=track.uri)
-        em.add_field(name="Title", value=track.title, inline=False)
-        em.add_field(name="Author", value=str(track.author), inline=False)
-        em.set_thumbnail(url=track.thumbnail)
+        clean_title = track.title.replace("`", "")
+        duration_mins, duration_secs = (
+            int(x) for x in divmod(track.duration, 60)
+        )
+
+        desc = f"\
+            Title: `{clean_title}`\n\
+            Author: `{track.author}`\n\
+            Duration: `{duration_mins}:{duration_secs}`\
+        "
+
+        if uri := track.uri:
+            desc += f"\n[YouTube Link]({uri})"
+
+        em = discord.Embed(color=THEME, description=desc)
+        em.set_image(url=track.thumbnail)
         return em
 
     async def connect_nodes(self):
