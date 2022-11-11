@@ -89,6 +89,21 @@ class SlashMusic(commands.Cog):
         # Next song should play now
         self.play_next[player.guild.id].set()
 
+    @commands.slash_command(guilds_ids=TESTING_GUILDS)
+    async def join(self, ctx: discord.ApplicationContext):
+        """
+        Make Sparta rejoin a voice channel, has no effect if already in a VC
+        """
+
+        if not ctx.voice_client:
+            voice_ch: discord.VoiceChannel = ctx.author.voice.channel  # type: ignore
+            await voice_ch.connect()
+            await ctx.respond(f"Joining {voice_ch.mention}...", ephemeral=True)
+        else:
+            await ctx.respond(
+                "I'm already in your voice channel.", ephemeral=True
+            )
+
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def play(self, ctx: discord.ApplicationContext, search: str):
         """
@@ -131,50 +146,14 @@ class SlashMusic(commands.Cog):
         await ctx.respond(embed=em)
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
-    async def leave(
-        self, ctx: discord.ApplicationContext, clear_queue: bool = False
-    ):
-        """
-        Leave the current voice channel
-        """
-
-        is_author_admin: discord.Permissions = (
-            ctx.author.guild_permissions.administrator
-            or ctx.author.id == ctx.guild.owner_id
-        )
-
-        if clear_queue and not is_author_admin:
-            await ctx.respond(
-                "You need `Administrator` permissions to clear the song queue",
-                ephemeral=True,
-            )
-            return
-
-        if bot_vc := ctx.guild.voice_client:
-            if clear_queue:
-                self.clear_guild_queue(ctx.guild_id)
-
-            await bot_vc.disconnect()
-            await ctx.respond("Left the voice channel")
-
-        else:
-            await ctx.respond(
-                "I'm not connected to a voice channel", ephemeral=True
-            )
-
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def skip(self, ctx: discord.ApplicationContext):
         """
-        Skip the current song
+        Skip the currently playing song
         """
 
-        if not ctx.guild.voice_client:
-            await ctx.respond(
-                "There isn't any music playing right now", ephemeral=True
-            )
-
-        self.skip_song[ctx.guild_id] = True
-        await ctx.respond("Song has been skipped")
+        vc = await self.get_voice_client(ctx)
+        await vc.stop()
+        await ctx.respond("⏭️ Song has been skipped!")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def resume(self, ctx: discord.ApplicationContext):
@@ -182,12 +161,19 @@ class SlashMusic(commands.Cog):
         Resume the song that was playing
         """
 
-        if bot_vc := ctx.guild.voice_client:
-            if bot_vc.is_paused():
-                bot_vc.resume()
-                await ctx.respond("Resuming the song...")
+        if not ctx.guild:
+            return
+
+        if ctx.guild.voice_client:
+            vc = await self.get_voice_client(ctx)
+
+            if vc.is_paused():
+                await vc.resume()
+                await ctx.respond("▶️ Resuming the song...")
             else:
-                await ctx.respond("The song is already playing")
+                await ctx.respond(
+                    "The song is already playing...", ephemeral=True
+                )
 
         else:
             await ctx.respond(
@@ -200,12 +186,19 @@ class SlashMusic(commands.Cog):
         Pause the song that is playing
         """
 
-        if bot_vc := ctx.guild.voice_client:
-            if not bot_vc.is_paused():
-                bot_vc.pause()
-                await ctx.respond("Pausing the song...")
+        if not ctx.guild:
+            return
+
+        if ctx.guild.voice_client:
+            vc = await self.get_voice_client(ctx)
+
+            if not vc.is_paused():
+                await vc.pause()
+                await ctx.respond("⏸️ Pausing the song...")
             else:
-                await ctx.respond("The song is already paused")
+                await ctx.respond(
+                    "The song is already paused...", ephemeral=True
+                )
 
         else:
             await ctx.respond(
@@ -270,8 +263,8 @@ class SlashMusic(commands.Cog):
 
         await ctx.respond(embed=queue_embed)
 
+    @join.before_invoke
     @play.before_invoke
-    @leave.before_invoke
     @skip.before_invoke
     @volume.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
