@@ -221,13 +221,17 @@ class SlashMusic(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     async def volume(self, ctx: discord.ApplicationContext, new_volume: int):
         """
-        Change the volume of the song that is playing
+        Set the music volume as a percentage
         """
 
-        if bot_vc := ctx.guild.voice_client:
-            new_volume = max(0, min(new_volume, 100))
-            bot_vc.source.volume = new_volume / 100
-            await ctx.respond(f"Volume changed to **{new_volume}%**")
+        if not ctx.guild:
+            return
+
+        if ctx.guild.voice_client:
+            new_volume = max(0, min(new_volume, 1000))
+            vc = await self.get_voice_client(ctx)
+            await vc.set_volume(new_volume)
+            await ctx.respond(f"🔊 Volume changed to `{new_volume}%`")
         else:
             await ctx.respond(
                 "There isn't any music playing right now", ephemeral=True
