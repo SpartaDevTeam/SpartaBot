@@ -44,11 +44,16 @@ class SlashMusic(commands.Cog):
         duration_mins, duration_secs = (
             int(x) for x in divmod(track.duration, 60)
         )
+        duration_str = (
+            f"{duration_mins}:{duration_secs}"
+            if duration_secs > 9
+            else f"{duration_mins}:0{duration_secs}"
+        )
 
         desc = f"\
             Title: `{clean_title}`\n\
             Author: `{track.author}`\n\
-            Duration: `{duration_mins}:{duration_secs}`\
+            Duration: `{duration_str}`\
         "
 
         if uri := track.uri:
