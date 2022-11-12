@@ -3,7 +3,7 @@ import re
 import asyncio
 import wavelink
 import discord
-from discord.ext import commands
+from discord.ext import commands, pages
 
 from bot import TESTING_GUILDS, THEME
 
@@ -16,6 +16,7 @@ class SlashMusic(commands.Cog):
     # TODO: Add remove from queue, loop command
 
     song_queues: dict[int, asyncio.Queue[wavelink.YouTubeTrack]] = {}
+    currently_playing: dict[int, wavelink.YouTubeTrack] = {}
     play_next: dict[int, asyncio.Event] = {}
     node_pool_connected = asyncio.Event()
 
@@ -84,8 +85,11 @@ class SlashMusic(commands.Cog):
             # Wait till next song should be played
             await self.play_next[guild_id].wait()
 
-            # Fetch next song and play it
+            # Fetch next song...
             next_track = await self.song_queues[guild_id].get()
+            self.currently_playing[guild_id] = next_track
+
+            # ...and play it
             vc = await self.get_voice_client(ctx)
             await vc.play(next_track)
             self.play_next[guild_id].clear()
@@ -243,41 +247,55 @@ class SlashMusic(commands.Cog):
         View all the songs currently in the queue
         """
 
-        guild_queue = self.song_queues.get(ctx.guild_id)
-        current_player = self.current_players.get(ctx.guild_id)
+        if not (ctx.guild and ctx.guild_id):
+            return
 
-        if not (bot_vc := ctx.guild.voice_client):
+        if not ctx.guild.voice_client:
             await ctx.respond(
                 "There isn't any music playing right now", ephemeral=True
             )
             return
 
-        queue_embed = discord.Embed(title="Song Queue", color=THEME)
-        queue_embed.set_footer(
-            text=f"Volume: {int(bot_vc.source.volume * 100)}%"
-        )
-
-        # Current player
-        channel = current_player.data["channel"]
-        duration_mins = str(current_player.data["duration"] // 60)
-        duration_secs = str(current_player.data["duration"] % 60).zfill(2)
-        queue_embed.add_field(
-            name=f"Currently Playing - {current_player.title}",
-            value=f"**Duration:** {duration_mins}:{duration_secs}\n**By:** {channel}",
-            inline=False,
-        )
-
-        for player in guild_queue:
-            channel = player.data["channel"]
-            duration_mins = str(player.data["duration"] // 60)
-            duration_secs = str(player.data["duration"] % 60).zfill(2)
-            queue_embed.add_field(
-                name=player.title,
-                value=f"**Duration:** {duration_mins}:{duration_secs}\n**By:** {channel}",
-                inline=False,
+        if (
+            ctx.guild_id not in self.song_queues
+            or ctx.guild_id not in self.currently_playing
+        ):
+            await ctx.respond(
+                "The song queue is empty right now", ephemeral=True
             )
+            return
 
-        await ctx.respond(embed=queue_embed)
+        guild_queue = self.song_queues[ctx.guild_id]
+        queue_list_copy: list[wavelink.YouTubeTrack] = []
+
+        # Flush all tracks in queue and add them to a list
+        while True:
+            try:
+                queue_list_copy.append(guild_queue.get_nowait())
+            except asyncio.QueueEmpty:
+                break
+
+        # Re-add all tracks from list to original queue
+        for t in queue_list_copy:
+            guild_queue.put_nowait(t)
+
+        queue_embeds = []
+
+        # Add current Track
+        if current_track := self.currently_playing.get(ctx.guild_id):
+            em = self.get_track_embed(current_track)
+            em.title = "Currently Playing"
+            queue_embeds.append(em)
+
+        # Generate track embeds
+        for i, track in enumerate(queue_list_copy):
+            em = self.get_track_embed(track)
+            noun = "song" if i == 0 else "songs"
+            em.title = f"{i + 1} {noun} away..."
+            queue_embeds.append(em)
+
+        paginator = pages.Paginator(pages=queue_embeds)
+        await paginator.respond(ctx.interaction)
 
     @join.before_invoke
     @play.before_invoke
