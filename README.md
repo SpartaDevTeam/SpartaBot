@@ -12,6 +12,9 @@ Moderation, automod, welcome and leave message, reaction roles, fun commands, et
     - `DBL_TOKEN` - Top.gg bot token for receiving vote data.
     - `TESTING_GUILDS` (Optional) - Comma (,) separated string of guild IDs for testing `/` commands. Only applicable when running with `--debug` flag.
     - `DB_URI` - URI string of your database. You may have to install additional modules if you're using something other than PostgreSQL.
+    - `LAVALINK_HOST` - Host address where you're hosting your Lavalink server.
+    - `LAVALINK_PORT` - Port on which you're hosting your Lavalink server.
+    - `LAVALINK_PASSWORD` - Password to connect to your Lavalink server.
 3. Run the command `alembic upgrade head` to run database migrations.
 4. Run `python run.py` to start the bot. You can run the command with `--debug` flag to run in debug mode.
 

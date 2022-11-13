@@ -1,55 +1,11 @@
+import os
+import re
 import asyncio
-import youtube_dl
+import wavelink
 import discord
-from discord.ext import commands
+from discord.ext import commands, pages
 
 from bot import TESTING_GUILDS, THEME
-from bot.utils import search_youtube
-
-youtube_dl.utils.bug_reports_message = lambda: ""
-
-
-class YTDLSource(discord.PCMVolumeTransformer):
-    ytdl_format_options = {
-        "format": "bestaudio/best",
-        "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
-        "restrictfilenames": True,
-        "noplaylist": True,
-        "nocheckcertificate": True,
-        "ignoreerrors": False,
-        "logtostderr": False,
-        "quiet": True,
-        "no_warnings": True,
-        "default_search": "auto",
-        "source_address": "0.0.0.0",  # Bind to ipv4 since ipv6 addresses cause issues at certain times
-    }
-    ffmpeg_options = {"options": "-vn"}
-
-    ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
-
-    def __init__(self, source, *, data, volume=0.5):
-        super().__init__(source, volume)
-
-        self.data = data
-
-        self.title = data.get("title")
-        self.url = data.get("url")
-
-    @classmethod
-    async def from_url(cls, url, *, loop=None, stream=False):
-        loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(
-            None, lambda: cls.ytdl.extract_info(url, download=not stream)
-        )
-
-        if "entries" in data:
-            # Takes the first item from a playlist
-            data = data["entries"][0]
-
-        filename = data["url"] if stream else cls.prepare_filename(data)
-        return cls(
-            discord.FFmpegPCMAudio(filename, **cls.ffmpeg_options), data=data
-        )
 
 
 class SlashMusic(commands.Cog):
@@ -59,145 +15,166 @@ class SlashMusic(commands.Cog):
 
     # TODO: Add remove from queue, loop command
 
-    queues: dict[int, list[YTDLSource]] = {}
-    current_players: dict[int, YTDLSource] = {}
-    play_next: dict[int, bool] = {}
-    skip_song: dict[int, bool] = {}
+    song_queues: dict[int, asyncio.Queue[wavelink.YouTubeTrack]] = {}
+    currently_playing: dict[int, wavelink.YouTubeTrack] = {}
+    play_next: dict[int, asyncio.Event] = {}
+    node_pool_connected = asyncio.Event()
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.node_pool_connected.clear()
+        bot.loop.create_task(self.connect_nodes())
 
-    async def music_queue(self, ctx: discord.ApplicationContext):
-        voice_client: discord.VoiceClient = ctx.guild.voice_client
+    def get_song_queue(
+        self, ctx: discord.ApplicationContext
+    ) -> asyncio.Queue[wavelink.YouTubeTrack]:
+        guild_id: int = ctx.guild_id  # type: ignore
 
-        song_queue: list[YTDLSource] = self.queues[ctx.guild_id]
-        self.play_next[ctx.guild_id] = False
-        self.skip_song[ctx.guild_id] = False
+        if guild_id not in self.song_queues:
+            # Guild queue does not exist, create a new one...
+            self.song_queues[guild_id] = asyncio.Queue()
+            self.play_next[guild_id] = asyncio.Event()
+            self.play_next[guild_id].set()
+            self.bot.loop.create_task(self.process_song_queue(ctx))
 
-        def after_callback(error):
-            if error:
-                print(f"Player error: {error}")
-                asyncio.create_task(
-                    ctx.send("An error occurred while playing the song.")
-                )
+        return self.song_queues[guild_id]
 
-            self.play_next[ctx.guild_id] = True
-            print("Finished playing a song")
-
-        while song_queue:
-            player = song_queue.pop(0)
-            self.current_players[ctx.guild_id] = player
-
-            await ctx.send(f"Now playing: `{player.title}`")
-
-            self.play_next[ctx.guild_id] = False
-            voice_client.play(
-                player,
-                after=after_callback,
-            )
-
-            while (
-                not self.play_next[ctx.guild_id]
-                and not self.skip_song[ctx.guild_id]
-            ):
-                await asyncio.sleep(1)
-
-            # Update local queue
-            voice_client.stop()
-            self.skip_song[ctx.guild_id] = False
-            song_queue = self.queues[ctx.guild_id]
-
-            # Check if vc is not empty
-            ch: discord.VoiceChannel = await ctx.guild.fetch_channel(
-                voice_client.channel.id
-            )
-            if len(ch.members) <= 1:
-                break
-
-        if song_queue:
-            await ctx.send(
-                "Leaving the voice channel because everybody left..."
-            )
-        else:
-            await ctx.send(
-                "Leaving the voice channel because the song queue is over..."
-            )
-
-        self.clear_guild_queue(ctx.guild_id)
-        await voice_client.disconnect()
-
-    def clear_guild_queue(self, guild_id: int):
-        del self.queues[guild_id]
-        del self.current_players[guild_id]
-        del self.play_next[guild_id]
-        del self.skip_song[guild_id]
-
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
-    async def play(self, ctx: discord.ApplicationContext, song_name: str):
-        """
-        Add a song to the queue
-        """
-
-        if not ctx.guild.voice_client:
-            await ctx.author.voice.channel.connect()
-
-        video_url = await search_youtube(song_name)
-        player = await YTDLSource.from_url(
-            video_url, loop=ctx.bot.loop, stream=True
+    def get_track_embed(self, track: wavelink.YouTubeTrack) -> discord.Embed:
+        clean_title = track.title.replace("`", "")
+        duration_mins, duration_secs = (
+            int(x) for x in divmod(track.duration, 60)
+        )
+        duration_str = (
+            f"{duration_mins}:{duration_secs}"
+            if duration_secs > 9
+            else f"{duration_mins}:0{duration_secs}"
         )
 
-        if ctx.guild_id not in self.queues:
-            self.queues[ctx.guild_id] = []
-            asyncio.create_task(self.music_queue(ctx))
+        desc = f"\
+            Title: `{clean_title}`\n\
+            Author: `{track.author}`\n\
+            Duration: `{duration_str}`\
+        "
 
-        self.queues[ctx.guild_id].append(player)
-        await ctx.respond(f"Added to queue: `{player.title}`")
+        if uri := track.uri:
+            desc += f"\n[YouTube Link]({uri})"
 
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
-    async def leave(
-        self, ctx: discord.ApplicationContext, clear_queue: bool = False
+        em = discord.Embed(color=THEME, description=desc)
+        em.set_image(url=track.thumbnail)
+        return em
+
+    async def connect_nodes(self):
+        """Connect to Lavalink Nodes"""
+
+        await self.bot.wait_until_ready()
+        await wavelink.NodePool.create_node(
+            bot=self.bot,
+            host=os.environ["LAVALINK_HOST"],
+            port=int(os.environ["LAVALINK_PORT"]),
+            password=os.environ["LAVALINK_PASSWORD"],
+        )
+        self.node_pool_connected.set()
+        print("Connected to Lavalink!")
+
+    async def get_voice_client(
+        self, ctx: discord.ApplicationContext
+    ) -> wavelink.Player:
+        if ctx.voice_client:
+            return ctx.voice_client  # type: ignore
+        return await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
+
+    async def process_song_queue(self, ctx: discord.ApplicationContext):
+        guild_id: int = ctx.guild_id  # type: ignore
+
+        while True:
+            # Wait till next song should be played
+            await self.play_next[guild_id].wait()
+
+            # Fetch next song...
+            next_track = await self.song_queues[guild_id].get()
+            self.currently_playing[guild_id] = next_track
+
+            # ...and play it
+            vc = await self.get_voice_client(ctx)
+            await vc.play(next_track)
+            self.play_next[guild_id].clear()
+
+            em = self.get_track_embed(next_track)
+            em.title = "Now Playing"
+            await ctx.channel.send(embed=em)  # type: ignore
+
+    @commands.Cog.listener()
+    async def on_wavelink_track_end(
+        self, player: wavelink.Player, track: wavelink.Track, reason
     ):
+        # Next song should play now
+        self.play_next[player.guild.id].set()
+
+    @commands.slash_command(guilds_ids=TESTING_GUILDS)
+    async def join(self, ctx: discord.ApplicationContext):
         """
-        Leave the current voice channel
+        Make Sparta rejoin a voice channel, has no effect if already in a VC
         """
 
-        is_author_admin: discord.Permissions = (
-            ctx.author.guild_permissions.administrator
-            or ctx.author.id == ctx.guild.owner_id
-        )
-
-        if clear_queue and not is_author_admin:
+        if not ctx.voice_client:
+            voice_ch: discord.VoiceChannel = ctx.author.voice.channel  # type: ignore
+            await voice_ch.connect()
+            await ctx.respond(f"Joining {voice_ch.mention}...", ephemeral=True)
+        else:
             await ctx.respond(
-                "You need `Administrator` permissions to clear the song queue",
+                "I'm already in your voice channel.", ephemeral=True
+            )
+
+    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    async def play(self, ctx: discord.ApplicationContext, search: str):
+        """
+        Search a song by name or URL, and add it to the song queue
+        """
+
+        if not ctx.guild_id:
+            return
+
+        search_results = await wavelink.YouTubeTrack.search(search)
+
+        if re.match(
+            r"^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$", search
+        ):
+            filtered_results = [t for t in search_results if t.uri == search]
+
+            if filtered_results:
+                search_track = filtered_results[0]
+            else:
+                await ctx.respond(
+                    "No videos were found that matched the given URL!",
+                    ephemeral=True,
+                )
+                return
+        else:
+            search_track = search_results[0]
+
+        if not search_track:
+            await ctx.respond(
+                "Unable to find a track with the given search query/URL!",
                 ephemeral=True,
             )
             return
 
-        if bot_vc := ctx.guild.voice_client:
-            if clear_queue:
-                self.clear_guild_queue(ctx.guild_id)
+        # Add track to the song queue
+        await self.get_song_queue(ctx).put(search_track)
 
-            await bot_vc.disconnect()
-            await ctx.respond("Left the voice channel")
-
-        else:
-            await ctx.respond(
-                "I'm not connected to a voice channel", ephemeral=True
-            )
+        em = self.get_track_embed(search_track)
+        em.title = "Added to Song Queue"
+        await ctx.respond(embed=em)
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def skip(self, ctx: discord.ApplicationContext):
         """
-        Skip the current song
+        Skip the currently playing song
         """
 
-        if not ctx.guild.voice_client:
-            await ctx.respond(
-                "There isn't any music playing right now", ephemeral=True
-            )
-
-        self.skip_song[ctx.guild_id] = True
-        await ctx.respond("Song has been skipped")
+        vc = await self.get_voice_client(ctx)
+        await vc.stop()
+        await ctx.respond("⏭️ Song has been skipped!")
 
     @commands.slash_command(guild_ids=TESTING_GUILDS)
     async def resume(self, ctx: discord.ApplicationContext):
@@ -205,12 +182,19 @@ class SlashMusic(commands.Cog):
         Resume the song that was playing
         """
 
-        if bot_vc := ctx.guild.voice_client:
-            if bot_vc.is_paused():
-                bot_vc.resume()
-                await ctx.respond("Resuming the song...")
+        if not ctx.guild:
+            return
+
+        if ctx.guild.voice_client:
+            vc = await self.get_voice_client(ctx)
+
+            if vc.is_paused():
+                await vc.resume()
+                await ctx.respond("▶️ Resuming the song...")
             else:
-                await ctx.respond("The song is already playing")
+                await ctx.respond(
+                    "The song is already playing...", ephemeral=True
+                )
 
         else:
             await ctx.respond(
@@ -223,12 +207,19 @@ class SlashMusic(commands.Cog):
         Pause the song that is playing
         """
 
-        if bot_vc := ctx.guild.voice_client:
-            if not bot_vc.is_paused():
-                bot_vc.pause()
-                await ctx.respond("Pausing the song...")
+        if not ctx.guild:
+            return
+
+        if ctx.guild.voice_client:
+            vc = await self.get_voice_client(ctx)
+
+            if not vc.is_paused():
+                await vc.pause()
+                await ctx.respond("⏸️ Pausing the song...")
             else:
-                await ctx.respond("The song is already paused")
+                await ctx.respond(
+                    "The song is already paused...", ephemeral=True
+                )
 
         else:
             await ctx.respond(
@@ -239,13 +230,17 @@ class SlashMusic(commands.Cog):
     @commands.has_guild_permissions(administrator=True)
     async def volume(self, ctx: discord.ApplicationContext, new_volume: int):
         """
-        Change the volume of the song that is playing
+        Set the music volume as a percentage
         """
 
-        if bot_vc := ctx.guild.voice_client:
-            new_volume = max(0, min(new_volume, 100))
-            bot_vc.source.volume = new_volume / 100
-            await ctx.respond(f"Volume changed to **{new_volume}%**")
+        if not ctx.guild:
+            return
+
+        if ctx.guild.voice_client:
+            new_volume = max(0, min(new_volume, 1000))
+            vc = await self.get_voice_client(ctx)
+            await vc.set_volume(new_volume)
+            await ctx.respond(f"🔊 Volume changed to `{new_volume}%`")
         else:
             await ctx.respond(
                 "There isn't any music playing right now", ephemeral=True
@@ -257,54 +252,74 @@ class SlashMusic(commands.Cog):
         View all the songs currently in the queue
         """
 
-        guild_queue = self.queues.get(ctx.guild_id)
-        current_player = self.current_players.get(ctx.guild_id)
+        if not (ctx.guild and ctx.guild_id):
+            return
 
-        if not (bot_vc := ctx.guild.voice_client):
+        if not ctx.guild.voice_client:
             await ctx.respond(
                 "There isn't any music playing right now", ephemeral=True
             )
             return
 
-        queue_embed = discord.Embed(title="Song Queue", color=THEME)
-        queue_embed.set_footer(
-            text=f"Volume: {int(bot_vc.source.volume * 100)}%"
-        )
-
-        # Current player
-        channel = current_player.data["channel"]
-        duration_mins = str(current_player.data["duration"] // 60)
-        duration_secs = str(current_player.data["duration"] % 60).zfill(2)
-        queue_embed.add_field(
-            name=f"Currently Playing - {current_player.title}",
-            value=f"**Duration:** {duration_mins}:{duration_secs}\n**By:** {channel}",
-            inline=False,
-        )
-
-        for player in guild_queue:
-            channel = player.data["channel"]
-            duration_mins = str(player.data["duration"] // 60)
-            duration_secs = str(player.data["duration"] % 60).zfill(2)
-            queue_embed.add_field(
-                name=player.title,
-                value=f"**Duration:** {duration_mins}:{duration_secs}\n**By:** {channel}",
-                inline=False,
+        if (
+            ctx.guild_id not in self.song_queues
+            or ctx.guild_id not in self.currently_playing
+        ):
+            await ctx.respond(
+                "The song queue is empty right now", ephemeral=True
             )
+            return
 
-        await ctx.respond(embed=queue_embed)
+        guild_queue = self.song_queues[ctx.guild_id]
+        queue_list_copy: list[wavelink.YouTubeTrack] = []
 
+        # Flush all tracks in queue and add them to a list
+        while True:
+            try:
+                queue_list_copy.append(guild_queue.get_nowait())
+            except asyncio.QueueEmpty:
+                break
+
+        # Re-add all tracks from list to original queue
+        for t in queue_list_copy:
+            guild_queue.put_nowait(t)
+
+        queue_embeds = []
+
+        # Add current Track
+        if current_track := self.currently_playing.get(ctx.guild_id):
+            em = self.get_track_embed(current_track)
+            em.title = "Currently Playing"
+            queue_embeds.append(em)
+
+        # Generate track embeds
+        for i, track in enumerate(queue_list_copy):
+            em = self.get_track_embed(track)
+            noun = "song" if i == 0 else "songs"
+            em.title = f"{i + 1} {noun} away..."
+            queue_embeds.append(em)
+
+        paginator = pages.Paginator(pages=queue_embeds)
+        await paginator.respond(ctx.interaction)
+
+    @join.before_invoke
     @play.before_invoke
-    @leave.before_invoke
     @skip.before_invoke
     @volume.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         await ctx.defer()
+        await self.node_pool_connected.wait()  # Wait for lavalink nodes to connect
 
-        if author_vc := ctx.author.voice:
+        if not ctx.guild:
+            raise discord.ApplicationCommandError(
+                "Music command was run outisde a guild."
+            )
+
+        if author_vc := ctx.author.voice:  # type: ignore
             if existing_vc := ctx.guild.voice_client:
-                if existing_vc.channel.id != author_vc.channel.id:
+                if existing_vc.channel.id != author_vc.channel.id:  # type: ignore
                     await ctx.respond(
-                        f"I'm already in {existing_vc.channel.mention}, please join that channel.",
+                        f"I'm already in {existing_vc.channel.mention}, please join that channel.",  # type: ignore
                         ephemeral=True,
                     )
                     raise discord.ApplicationCommandError(

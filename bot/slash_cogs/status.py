@@ -8,6 +8,7 @@ class SlashStatus(commands.Cog):
     """
 
     status_msgs = [
+        (discord.ActivityType.listening, "my new music commands"),
         (discord.ActivityType.watching, "[guild_count] servers"),
         (discord.ActivityType.playing, "Hypixel"),
         (discord.ActivityType.competing, "Steel Ball Run"),

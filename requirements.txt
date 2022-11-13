@@ -4,8 +4,7 @@ alembic
 asyncpg
 py-cord
 pycord-prettyhelp
-youtube-dl
-PyNaCl
+wavelink
 pyfiglet
 jishaku
 aiohttp
