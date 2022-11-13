@@ -20,6 +20,10 @@ class SlashMusic(commands.Cog):
     play_next: dict[int, asyncio.Event] = {}
     node_pool_connected = asyncio.Event()
 
+    music_group = discord.SlashCommandGroup(
+        name="music", guild_ids=TESTING_GUILDS
+    )
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.node_pool_connected.clear()
@@ -110,7 +114,7 @@ class SlashMusic(commands.Cog):
         # Next song should play now
         self.play_next[player.guild.id].set()
 
-    @commands.slash_command(guilds_ids=TESTING_GUILDS)
+    @music_group.command()
     async def join(self, ctx: discord.ApplicationContext):
         """
         Make Sparta rejoin a voice channel, has no effect if already in a VC
@@ -125,7 +129,7 @@ class SlashMusic(commands.Cog):
                 "I'm already in your voice channel.", ephemeral=True
             )
 
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    @music_group.command()
     async def play(self, ctx: discord.ApplicationContext, search: str):
         """
         Search a song by name or URL, and add it to the song queue
@@ -166,7 +170,7 @@ class SlashMusic(commands.Cog):
         em.title = "Added to Song Queue"
         await ctx.respond(embed=em)
 
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    @music_group.command()
     async def skip(self, ctx: discord.ApplicationContext):
         """
         Skip the currently playing song
@@ -176,7 +180,7 @@ class SlashMusic(commands.Cog):
         await vc.stop()
         await ctx.respond("⏭️ Song has been skipped!")
 
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    @music_group.command()
     async def resume(self, ctx: discord.ApplicationContext):
         """
         Resume the song that was playing
@@ -201,7 +205,7 @@ class SlashMusic(commands.Cog):
                 "There isn't any music playing right now", ephemeral=True
             )
 
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    @music_group.command()
     async def pause(self, ctx: discord.ApplicationContext):
         """
         Pause the song that is playing
@@ -226,7 +230,7 @@ class SlashMusic(commands.Cog):
                 "There isn't any music playing right now", ephemeral=True
             )
 
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    @music_group.command()
     @commands.has_guild_permissions(administrator=True)
     async def volume(self, ctx: discord.ApplicationContext, new_volume: int):
         """
@@ -246,7 +250,7 @@ class SlashMusic(commands.Cog):
                 "There isn't any music playing right now", ephemeral=True
             )
 
-    @commands.slash_command(guild_ids=TESTING_GUILDS)
+    @music_group.command()
     async def queue(self, ctx: discord.ApplicationContext):
         """
         View all the songs currently in the queue
