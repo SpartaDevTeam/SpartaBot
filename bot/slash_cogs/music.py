@@ -5,7 +5,6 @@ import asyncio
 import wavelink
 import discord
 from discord.ext import commands, pages
-from sqlalchemy.orm import selectinload
 
 from bot import TESTING_GUILDS, THEME
 from bot.db import async_session, models
