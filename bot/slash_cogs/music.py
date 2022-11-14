@@ -1,11 +1,14 @@
 import os
 import re
+import uuid
 import asyncio
 import wavelink
 import discord
 from discord.ext import commands, pages
+from sqlalchemy.orm import selectinload
 
 from bot import TESTING_GUILDS, THEME
+from bot.db import async_session, models
 
 
 class SlashMusic(commands.Cog):
@@ -22,6 +25,9 @@ class SlashMusic(commands.Cog):
 
     music_group = discord.SlashCommandGroup(
         name="music", guild_ids=TESTING_GUILDS
+    )
+    playlist_group = music_group.create_subgroup(
+        name="playlist", guild_ids=TESTING_GUILDS
     )
 
     def __init__(self, bot: commands.Bot):
@@ -305,6 +311,31 @@ class SlashMusic(commands.Cog):
 
         paginator = pages.Paginator(pages=queue_embeds)
         await paginator.respond(ctx.interaction)
+
+    @playlist_group.command(name="create")
+    async def create_playlist(
+        self, ctx: discord.ApplicationContext, name: str
+    ):
+        """
+        Create a new custom playlist
+        """
+
+        if not ctx.author:
+            return
+
+        async with async_session() as session:
+            new_playlist_id = uuid.uuid4()
+            new_playlist = models.Playlist(
+                id=new_playlist_id.hex, owner_id=ctx.author.id, name=name
+            )
+            session.add(new_playlist)
+            await session.commit()
+
+            em = discord.Embed(title="Created new playlist", color=THEME)
+            em.add_field(name="Playlist ID", value=f"`{new_playlist.id}`")
+            em.add_field(name="Playlist Name", value=str(new_playlist.name))
+
+        await ctx.respond(embed=em)
 
     @join.before_invoke
     @play.before_invoke
