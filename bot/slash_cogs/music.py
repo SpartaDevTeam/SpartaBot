@@ -5,9 +5,12 @@ import asyncio
 import wavelink
 import discord
 from discord.ext import commands, pages
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from bot import TESTING_GUILDS, THEME
 from bot.db import async_session, models
+from bot.views import ConfirmView
 
 
 class SlashMusic(commands.Cog):
@@ -335,6 +338,58 @@ class SlashMusic(commands.Cog):
             em.add_field(name="Playlist Name", value=str(new_playlist.name))
 
         await ctx.respond(embed=em)
+
+    @playlist_group.command(name="delete")
+    async def delete_playlist(
+        self, ctx: discord.ApplicationContext, playlist_id: str
+    ):
+        """
+        Delete an existing custom playlist
+        """
+
+        if not ctx.author:
+            return
+
+        async with async_session() as session:
+            query = (
+                select(models.Playlist)
+                .where(models.Playlist.id == playlist_id)
+                .where(models.Playlist.owner_id == ctx.author.id)
+                .options(selectinload(models.Playlist.songs))
+            )
+            playlist: models.Playlist | None = await session.scalar(query)
+
+            if not playlist:
+                await ctx.respond(
+                    "The playlist with the given ID doesn't exist or isn't owned by you.",
+                    ephemeral=True,
+                )
+                return
+
+            em = discord.Embed(
+                title="Delete Playlist?",
+                color=THEME,
+                description="This action cannot be undone!",
+            )
+            em.add_field(name="Playlist ID", value=f"`{playlist.id}`")
+            em.add_field(name="Playlist Name", value=str(playlist.name))
+            em.add_field(name="Songs Count", value=str(len(playlist.songs)))
+
+            confirm_view = ConfirmView(
+                ctx.author.id,
+                confirm_msg="Playlist has been deleted!",
+                cancel_msg="Cancelling playlist deletion...",
+            )
+            await ctx.respond(embed=em, view=confirm_view)
+
+            # Delete original message if view timed out
+            if await confirm_view.wait():
+                await ctx.delete()
+                return
+
+            if confirm_view.do_action:
+                await session.delete(playlist)
+                await session.commit()
 
     @join.before_invoke
     @play.before_invoke
