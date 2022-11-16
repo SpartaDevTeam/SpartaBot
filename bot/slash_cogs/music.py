@@ -4,6 +4,7 @@ import uuid
 import asyncio
 import wavelink
 import discord
+from typing import Iterable
 from discord.ext import commands, pages
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -75,6 +76,27 @@ class SlashMusic(commands.Cog):
         em.set_image(url=track.thumbnail)
         return em
 
+    async def playlist_autocomplete(
+        self, ctx: discord.AutocompleteContext
+    ) -> list[str]:
+        if not ctx.interaction.user:
+            return []
+
+        async with async_session() as session:
+            query = select(models.Playlist).where(
+                models.Playlist.owner_id == ctx.interaction.user.id
+            )
+            playlists: Iterable[models.Playlist] = await session.scalars(query)
+
+            playlist_lst = [
+                str(playlist.id)
+                for playlist in playlists
+                if not ctx.value
+                or ctx.value in playlist.name
+                or ctx.value in playlist.id
+            ]
+            return playlist_lst
+
     async def connect_nodes(self):
         """Connect to Lavalink Nodes"""
 
@@ -94,6 +116,23 @@ class SlashMusic(commands.Cog):
         if ctx.voice_client:
             return ctx.voice_client  # type: ignore
         return await ctx.author.voice.channel.connect(cls=wavelink.Player)  # type: ignore
+
+    async def search_for_youtube_track(
+        self, search_query: str
+    ) -> wavelink.YouTubeTrack | None:
+        search_results = await wavelink.YouTubeTrack.search(search_query)
+
+        if re.match(
+            r"^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$", search_query
+        ):
+            for t in search_results:
+                if t.uri == search_query:
+                    return t
+
+        elif search_results:
+            return search_results[0]
+
+        return None
 
     async def process_song_queue(self, ctx: discord.ApplicationContext):
         guild_id: int = ctx.guild_id  # type: ignore
@@ -138,6 +177,9 @@ class SlashMusic(commands.Cog):
             )
 
     @music_group.command()
+    @discord.option(
+        "search", description="A search query or a YouTube video's URL"
+    )
     async def play(self, ctx: discord.ApplicationContext, search: str):
         """
         Search a song by name or URL, and add it to the song queue
@@ -146,23 +188,7 @@ class SlashMusic(commands.Cog):
         if not ctx.guild_id:
             return
 
-        search_results = await wavelink.YouTubeTrack.search(search)
-
-        if re.match(
-            r"^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$", search
-        ):
-            filtered_results = [t for t in search_results if t.uri == search]
-
-            if filtered_results:
-                search_track = filtered_results[0]
-            else:
-                await ctx.respond(
-                    "No videos were found that matched the given URL!",
-                    ephemeral=True,
-                )
-                return
-        else:
-            search_track = search_results[0]
+        search_track = await self.search_for_youtube_track(search)
 
         if not search_track:
             await ctx.respond(
@@ -340,6 +366,7 @@ class SlashMusic(commands.Cog):
         await ctx.respond(embed=em)
 
     @playlist_group.command(name="delete")
+    @discord.option("playlist_id", autocomplete=playlist_autocomplete)
     async def delete_playlist(
         self, ctx: discord.ApplicationContext, playlist_id: str
     ):
@@ -388,8 +415,144 @@ class SlashMusic(commands.Cog):
                 return
 
             if confirm_view.do_action:
+                # Delete all songs from playlist first...
+                await asyncio.gather(
+                    session.delete(song) for song in playlist.songs
+                )
+
+                # ...then delete the playlist itself
                 await session.delete(playlist)
+
                 await session.commit()
+
+    @playlist_group.command(name="add")
+    @discord.option("playlist_id", autocomplete=playlist_autocomplete)
+    @discord.option(
+        "song_query", description="A search query or a YouTube video's URL"
+    )
+    async def add_song_to_playlist(
+        self,
+        ctx: discord.ApplicationContext,
+        playlist_id: str,
+        song_query: str,
+    ):
+        """
+        Add a song to custom playlist
+        """
+
+        if not ctx.author:
+            return
+
+        search_track = await self.search_for_youtube_track(song_query)
+
+        if not search_track:
+            await ctx.respond(
+                "Unable to find a track with the given search query/URL!",
+                ephemeral=True,
+            )
+            return
+
+        async with async_session() as session:
+            playlist_query = (
+                select(models.Playlist)
+                .where(models.Playlist.id == playlist_id)
+                .where(models.Playlist.owner_id == ctx.author.id)
+            )
+            playlist: models.Playlist | None = await session.scalar(
+                playlist_query
+            )
+
+            if not playlist:
+                await ctx.respond(
+                    "The playlist with the given ID doesn't exist or isn't owned by you.",
+                    ephemeral=True,
+                )
+                return
+
+            existing_song = await session.get(
+                models.PlaylistSong, (search_track.uri, playlist.id)
+            )
+            if existing_song:
+                await ctx.respond(
+                    "This song is already in this playlist.", ephemeral=True
+                )
+                return
+
+            new_song = models.PlaylistSong(
+                uri=search_track.uri, playlist=playlist
+            )
+            session.add(new_song)
+            await session.commit()
+
+            em = self.get_track_embed(search_track)
+            em.title = "Added Song to Playlist"
+            em.color = discord.Color.green()
+            em.add_field(
+                name="Playlist",
+                value=f"ID: `{playlist.id}`\nName: `{playlist.name}`",
+            )
+
+        await ctx.respond(embed=em)
+
+    @playlist_group.command(name="remove")
+    @discord.option("playlist_id", autocomplete=playlist_autocomplete)
+    @discord.option(
+        "song_query", description="A search query or a YouTube video's URL"
+    )
+    async def remove_song_from_playlist(
+        self,
+        ctx: discord.ApplicationContext,
+        playlist_id: str,
+        song_query: str,
+    ):
+        """
+        Remove a song from custom playlist
+        """
+
+        if not ctx.author:
+            return
+
+        search_track = await self.search_for_youtube_track(song_query)
+
+        if not search_track:
+            await ctx.respond(
+                "Unable to find a track with the given search query/URL!",
+                ephemeral=True,
+            )
+            return
+
+        async with async_session() as session:
+            playlist_song_query = (
+                select(models.PlaylistSong)
+                .join(models.Playlist)
+                .where(models.PlaylistSong.uri == search_track.uri)
+                .where(models.PlaylistSong.playlist_id == playlist_id)
+                .where(models.Playlist.owner_id == ctx.author.id)
+                .options(selectinload(models.PlaylistSong.playlist))
+            )
+            playlist_song: models.PlaylistSong | None = await session.scalar(
+                playlist_song_query
+            )
+
+            if not playlist_song:
+                await ctx.respond(
+                    "The given song is not in this playlist, or the playlist is not accessible (provide the song's URL for best results)",
+                    ephemeral=True,
+                )
+                return
+
+            em = self.get_track_embed(search_track)
+            em.title = "Removed Song From Playlist"
+            em.color = discord.Color.brand_red()
+            em.add_field(
+                name="Playlist",
+                value=f"ID: `{playlist_song.playlist.id}`\nName: `{playlist_song.playlist.name}`",
+            )
+
+            await session.delete(playlist_song)
+            await session.commit()
+
+        await ctx.respond(embed=em)
 
     @join.before_invoke
     @play.before_invoke

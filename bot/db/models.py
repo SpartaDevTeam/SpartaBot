@@ -122,6 +122,6 @@ class PlaylistSong(Base):
     uri = Column(String, primary_key=True)
 
     playlist_id = Column(
-        ForeignKey("playlists.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("playlists.id", ondelete="CASCADE"), primary_key=True
     )
     playlist = relationship("Playlist", back_populates="songs")
