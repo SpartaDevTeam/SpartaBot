@@ -2,6 +2,7 @@ import os
 import re
 import uuid
 import asyncio
+import random
 import wavelink
 import discord
 from typing import Iterable
@@ -76,26 +77,32 @@ class SlashMusic(commands.Cog):
         em.set_image(url=track.thumbnail)
         return em
 
-    async def playlist_autocomplete(
-        self, ctx: discord.AutocompleteContext
-    ) -> list[str]:
-        if not ctx.interaction.user:
-            return []
+    @staticmethod
+    def playlist_autocomplete(owned_only: bool):
+        async def inner(ctx: discord.AutocompleteContext) -> list[str]:
+            if not ctx.interaction.user:
+                return []
 
-        async with async_session() as session:
-            query = select(models.Playlist).where(
-                models.Playlist.owner_id == ctx.interaction.user.id
-            )
-            playlists: Iterable[models.Playlist] = await session.scalars(query)
+            async with async_session() as session:
+                query = select(models.Playlist)
 
-            playlist_lst = [
-                str(playlist.id)
-                for playlist in playlists
-                if not ctx.value
-                or ctx.value in playlist.name
-                or ctx.value in playlist.id
-            ]
-            return playlist_lst
+                if owned_only:
+                    query = query.where(
+                        models.Playlist.owner_id == ctx.interaction.user.id
+                    )
+
+                if ctx.value:
+                    query = query.where(
+                        ctx.value in models.Playlist.id
+                        or ctx.value in models.Playlist.name
+                    )
+
+                playlists: Iterable[models.Playlist] = await session.scalars(
+                    query
+                )
+                return [str(playlist.id) for playlist in playlists]
+
+        return inner
 
     async def connect_nodes(self):
         """Connect to Lavalink Nodes"""
@@ -160,6 +167,7 @@ class SlashMusic(commands.Cog):
     ):
         # Next song should play now
         self.play_next[player.guild.id].set()
+        del self.currently_playing[player.guild.id]
 
     @music_group.command()
     async def join(self, ctx: discord.ApplicationContext):
@@ -299,9 +307,9 @@ class SlashMusic(commands.Cog):
             )
             return
 
-        if (
-            ctx.guild_id not in self.song_queues
-            or ctx.guild_id not in self.currently_playing
+        if not (
+            ctx.guild_id in self.song_queues
+            and ctx.guild_id in self.currently_playing
         ):
             await ctx.respond(
                 "The song queue is empty right now", ephemeral=True
@@ -366,7 +374,9 @@ class SlashMusic(commands.Cog):
         await ctx.respond(embed=em)
 
     @playlist_group.command(name="delete")
-    @discord.option("playlist_id", autocomplete=playlist_autocomplete)
+    @discord.option(
+        "playlist_id", autocomplete=playlist_autocomplete(owned_only=True)
+    )
     async def delete_playlist(
         self, ctx: discord.ApplicationContext, playlist_id: str
     ):
@@ -426,7 +436,9 @@ class SlashMusic(commands.Cog):
                 await session.commit()
 
     @playlist_group.command(name="add")
-    @discord.option("playlist_id", autocomplete=playlist_autocomplete)
+    @discord.option(
+        "playlist_id", autocomplete=playlist_autocomplete(owned_only=True)
+    )
     @discord.option(
         "song_query", description="A search query or a YouTube video's URL"
     )
@@ -495,7 +507,9 @@ class SlashMusic(commands.Cog):
         await ctx.respond(embed=em)
 
     @playlist_group.command(name="remove")
-    @discord.option("playlist_id", autocomplete=playlist_autocomplete)
+    @discord.option(
+        "playlist_id", autocomplete=playlist_autocomplete(owned_only=True)
+    )
     @discord.option(
         "song_query", description="A search query or a YouTube video's URL"
     )
@@ -554,10 +568,63 @@ class SlashMusic(commands.Cog):
 
         await ctx.respond(embed=em)
 
+    @playlist_group.command(name="play")
+    @discord.option(
+        "playlist_id", autocomplete=playlist_autocomplete(owned_only=False)
+    )
+    async def play_playlist(
+        self,
+        ctx: discord.ApplicationContext,
+        playlist_id: str,
+        shuffle: bool = False,
+    ):
+        """
+        Play all the songs in a particular custom playlist
+        """
+
+        async with async_session() as session:
+            query = (
+                select(models.Playlist)
+                .where(models.Playlist.id == playlist_id)
+                .options(selectinload(models.Playlist.songs))
+            )
+            playlist: models.Playlist | None = await session.scalar(query)
+
+            if not playlist:
+                await ctx.respond(
+                    "The playlist with the given ID doesn't exist.",
+                    ephemeral=True,
+                )
+                return
+
+            em = discord.Embed(title="Playing Playlist", color=THEME)
+            em.add_field(name="Playlist ID", value=f"`{playlist.id}`")
+            em.add_field(name="Playlist Name", value=str(playlist.name))
+            em.add_field(name="Song Count", value=str(len(playlist.songs)))
+
+            track_search_tasks = [
+                self.search_for_youtube_track(song.uri)
+                for song in playlist.songs
+            ]
+
+        tracks: list[wavelink.YouTubeTrack] = await asyncio.gather(
+            *track_search_tasks
+        )
+        guild_queue = self.get_song_queue(ctx)
+
+        if shuffle:
+            random.shuffle(tracks)
+
+        for track in tracks:
+            await guild_queue.put(track)
+
+        await ctx.respond(embed=em)
+
     @join.before_invoke
     @play.before_invoke
     @skip.before_invoke
     @volume.before_invoke
+    @play_playlist.before_invoke
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         await ctx.defer()
         await self.node_pool_connected.wait()  # Wait for lavalink nodes to connect
