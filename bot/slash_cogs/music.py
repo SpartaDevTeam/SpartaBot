@@ -620,6 +620,51 @@ class SlashMusic(commands.Cog):
 
         await ctx.respond(embed=em)
 
+    @playlist_group.command(name="view")
+    @discord.option(
+        "playlist_id", autocomplete=playlist_autocomplete(owned_only=False)
+    )
+    async def view_playlist(
+        self, ctx: discord.ApplicationContext, playlist_id: str
+    ):
+        """
+        View all the songs inside a custom playlist
+        """
+
+        async with async_session() as session:
+            query = (
+                select(models.Playlist)
+                .where(models.Playlist.id == playlist_id)
+                .options(selectinload(models.Playlist.songs))
+            )
+            playlist: models.Playlist | None = await session.scalar(query)
+
+            if not playlist:
+                await ctx.respond(
+                    "The playlist with the given ID doesn't exist.",
+                    ephemeral=True,
+                )
+                return
+
+            track_search_tasks = [
+                self.search_for_youtube_track(song.uri)
+                for song in playlist.songs
+            ]
+
+        tracks: list[wavelink.YouTubeTrack] = await asyncio.gather(
+            *track_search_tasks
+        )
+        embeds = []
+
+        for i, track in enumerate(tracks):
+            em = self.get_track_embed(track)
+            em.title = f"Song #{i + 1} in {playlist.name}"
+            em.description += f"\nPlaylist ID: `{playlist.id}`"  # type: ignore
+            embeds.append(em)
+
+        paginator = pages.Paginator(embeds)
+        await paginator.respond(ctx.interaction)
+
     @join.before_invoke
     @play.before_invoke
     @skip.before_invoke
