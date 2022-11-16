@@ -5,11 +5,18 @@ from discord import ButtonStyle
 
 
 class ConfirmView(discord.ui.View):
-    do_action: bool
+    do_action: bool = False
 
-    def __init__(self, author_id: int):
+    def __init__(
+        self,
+        author_id: int,
+        confirm_msg: str = "Confirming...",
+        cancel_msg: str = "Cancelling...",
+    ):
         super().__init__()
         self.author_id = author_id
+        self.confirm_msg = confirm_msg
+        self.cancel_msg = cancel_msg
 
     @discord.ui.button(label="Confirm", style=ButtonStyle.danger)
     async def confirm(
@@ -18,7 +25,13 @@ class ConfirmView(discord.ui.View):
         if self.author_id == interaction.user.id:
             self.do_action = True
             self.stop()
-            await interaction.message.edit(content="Confirming...", view=None)
+            await interaction.message.edit(
+                content=self.confirm_msg, view=None, embed=None
+            )
+        else:
+            await interaction.followup.send(
+                "This interaction is not for you", ephemeral=True
+            )
 
     @discord.ui.button(label="Cancel", style=ButtonStyle.grey)
     async def cancel(
@@ -27,7 +40,13 @@ class ConfirmView(discord.ui.View):
         if self.author_id == interaction.user.id:
             self.do_action = False
             self.stop()
-            await interaction.message.edit(content="Cancelling...", view=None)
+            await interaction.message.edit(
+                content=self.cancel_msg, view=None, embed=None
+            )
+        else:
+            await interaction.followup.send(
+                "This interaction is not for you", ephemeral=True
+            )
 
 
 class AutoModButton(discord.ui.Button):

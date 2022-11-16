@@ -5,12 +5,11 @@ import time
 
 import discord
 import topgg
-from discord.ext import commands
+from discord.ext import commands, pages
 from discord.ext.prettyhelp import PrettyHelp
 
 from bot import db
 from bot.db import models
-from bot.views import PaginatedEmbedView
 from bot.errors import DBLVoteRequired
 
 THEME = discord.Color.purple()
@@ -279,15 +278,8 @@ async def help(ctx: discord.ApplicationContext, command: str = None):
         await ctx.respond(embed=help_embed)
 
     else:
-        embed_view = PaginatedEmbedView(ctx.author.id, HELP_EMBEDS)
-        msg = await ctx.respond(embed=HELP_EMBEDS[0], view=embed_view)
-        timed_out = await embed_view.wait()
-
-        if timed_out:
-            if isinstance(msg, discord.Interaction):
-                await msg.delete_original_message()
-            else:
-                await msg.delete()
+        paginator = pages.Paginator(HELP_EMBEDS)  # type: ignore
+        await paginator.respond(ctx.interaction)
 
 
 def add_cogs():

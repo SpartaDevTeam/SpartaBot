@@ -5,8 +5,10 @@ from sqlalchemy import (
     Integer,
     DateTime,
     Boolean,
+    ForeignKey,
 )
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -103,3 +105,23 @@ class ImpersonationLog(Base):
     impersonator_id = Column(BigInteger, nullable=False)
     message = Column(String, nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Playlist(Base):
+    __tablename__ = "playlists"
+
+    id = Column(String, primary_key=True)
+    owner_id = Column(BigInteger, nullable=False)
+    name = Column(String, nullable=False)
+    songs = relationship("PlaylistSong", back_populates="playlist")
+
+
+class PlaylistSong(Base):
+    __tablename__ = "playlist_songs"
+
+    uri = Column(String, primary_key=True)
+
+    playlist_id = Column(
+        ForeignKey("playlists.id", ondelete="CASCADE"), primary_key=True
+    )
+    playlist = relationship("Playlist", back_populates="songs")

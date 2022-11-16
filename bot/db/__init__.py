@@ -27,4 +27,4 @@ async def close_db():
 
 def async_session() -> AsyncSession:
     global ENGINE
-    return AsyncSession(ENGINE)
+    return AsyncSession(ENGINE, expire_on_commit=False)
