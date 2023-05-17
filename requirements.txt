@@ -2,9 +2,9 @@ python-dotenv
 sqlalchemy[asyncio]
 alembic
 asyncpg
-py-cord
+py-cord==2.4.0
 pycord-prettyhelp
-wavelink
+wavelink==1.0.0
 pyfiglet
 jishaku
 aiohttp
