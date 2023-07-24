@@ -12,5 +12,6 @@ pytest
 emoji
 urbanpython
 pillow
+pynacl
 flake8
 black
