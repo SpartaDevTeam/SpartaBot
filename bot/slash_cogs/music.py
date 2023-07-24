@@ -175,14 +175,9 @@ class SlashMusic(commands.Cog):
         Make Sparta rejoin a voice channel, has no effect if already in a VC
         """
 
-        if not ctx.voice_client:
-            voice_ch: discord.VoiceChannel = ctx.author.voice.channel  # type: ignore
-            await voice_ch.connect()
-            await ctx.respond(f"Joining {voice_ch.mention}...", ephemeral=True)
-        else:
-            await ctx.respond(
-                "I'm already in your voice channel.", ephemeral=True
-            )
+        voice_ch: discord.VoiceChannel = ctx.author.voice.channel  # type: ignore
+        await voice_ch.connect()
+        await ctx.respond(f"Joining {voice_ch.mention}...", ephemeral=True)
 
     @music_group.command()
     @discord.option(
