@@ -2,7 +2,7 @@ python-dotenv
 sqlalchemy[asyncio]
 alembic
 asyncpg
-py-cord[voice,speed]==2.4.1
+py-cord[voice,speed]==2.4.0
 pycord-prettyhelp
 wavelink==1.0.0
 pyfiglet
