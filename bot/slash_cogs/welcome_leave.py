@@ -133,7 +133,7 @@ class SlashWelcomeLeave(commands.Cog):
         mask = Image.new("L", bigsize, 0)
         draw = ImageDraw.Draw(mask)
         draw.ellipse((0, 0) + bigsize, fill=255)
-        mask = mask.resize(im.size, Image.ANTIALIAS)
+        mask = mask.resize(im.size, Image.Resampling.BILINEAR)
         im.putalpha(mask)
         im.save(os.path.join(self.cache_dir, "lol.png"))
 
@@ -175,16 +175,17 @@ class SlashWelcomeLeave(commands.Cog):
             server_font = ImageFont.truetype(
                 self.get_asset("earthorbiterxtrabold.ttf"), server_font_size
             )
-            server_bbox_size = server_font.getsize(guild.name)
+            server_length = server_font.getlength(guild.name)
 
             # Check whether text overflows
-            if server_bbox_size[0] >= w_img.size[0]:
+            if server_length >= w_img.size[0]:
                 server_font_size -= 5
             else:
                 break
 
         # Add username to image
-        username_size = username_font.getsize(str(member))
+        username_bbox = username_font.getbbox(str(member))
+        username_size = (username_bbox[2] - username_bbox[0], username_bbox[3] - username_bbox[1])
         username_corner_pos = self.center_to_corner(
             username_center_pos, username_size
         )
@@ -196,7 +197,8 @@ class SlashWelcomeLeave(commands.Cog):
         )
 
         # Add welcome message to image
-        welcome_msg_size = welcome_font.getsize(welcome_msg)
+        welcome_msg_bbox = welcome_font.getbbox(welcome_msg)
+        welcome_msg_size = (welcome_msg_bbox[2] - welcome_msg_bbox[0], welcome_msg_bbox[3] - welcome_msg_bbox[1])
         welcome_msg_corner_pos = self.center_to_corner(
             welcome_msg_center_pos, welcome_msg_size
         )
@@ -208,7 +210,8 @@ class SlashWelcomeLeave(commands.Cog):
         )
 
         # Add server name to image
-        server_size = server_font.getsize(guild.name)
+        server_bbox = server_font.getbbox(guild.name)
+        server_size = (server_bbox[2] - server_bbox[0], server_bbox[3] - server_bbox[1])
         server_corner_pos = self.center_to_corner(
             server_center_pos, server_size
         )
