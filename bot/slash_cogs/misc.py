@@ -87,10 +87,12 @@ class SlashMiscellaneous(commands.Cog):
 
         ping = int(self.bot.latency * 1000)
         guild_count = str(len(self.bot.guilds))
-        total_member_count = 0
+        total_members = set()
 
         for guild in self.bot.guilds:
-            total_member_count += guild.member_count
+            total_members.update(mem.id for mem in guild.members)
+
+        total_member_count = len(total_members)
 
         info_embed = discord.Embed(title="Sparta Bot Information", color=THEME)
         info_embed.set_author(

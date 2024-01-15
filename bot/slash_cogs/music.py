@@ -115,7 +115,6 @@ class SlashMusic(commands.Cog):
             password=os.environ["LAVALINK_PASSWORD"],
         )
         self.node_pool_connected.set()
-        print("Connected to Lavalink!")
 
     async def get_voice_client(
         self, ctx: discord.ApplicationContext
